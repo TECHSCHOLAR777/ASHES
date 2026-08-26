@@ -1,0 +1,63 @@
+import httpx
+
+from src.clients.firms import FIRMSClient
+
+
+CSV_HEADER = "latitude,longitude,frp,acq_date,acq_time,confidence\n"
+
+
+def make_text_response(text, status_code=200):
+    request = httpx.Request("GET", "https://firms.modaps.eosdis.nasa.gov/api/area/csv/x")
+    return httpx.Response(status_code, text=text, request=request)
+
+
+def test_missing_key_returns_unavailable():
+    client = FIRMSClient(map_key="")
+    result = client.get_hotspots(34.0, -118.0)
+    assert result.unavailable is True
+    assert result.count_5km == 0
+    client.close()
+
+
+def test_hotspots_bucketed_by_radius(mocker):
+    client = FIRMSClient(map_key="testkey")
+    # One hotspot ~2km away (falls in all three radii), one ~15km away (10/20 only).
+    # Only the first source (VIIRS_NOAA20_NRT) returns data; the other two sources come
+    # back empty, since a real deployment rarely has all three thermal sensors detect the
+    # same fire in the same pass.
+    csv_text = CSV_HEADER + "34.018,-118.0,12.5,2026-08-27,0100,high\n" + "34.135,-118.0,5.0,2026-08-27,0100,nominal\n"
+    mocker.patch.object(
+        client._client,
+        "get",
+        side_effect=[make_text_response(csv_text), make_text_response(CSV_HEADER), make_text_response(CSV_HEADER)],
+    )
+
+    result = client.get_hotspots(34.0, -118.0)
+
+    assert result.count_5km == 1
+    assert result.count_10km >= 1
+    assert result.frp_sum_5km == 12.5
+    client.close()
+
+
+def test_quota_signal_marks_unavailable(mocker):
+    client = FIRMSClient(map_key="badkey")
+    mocker.patch.object(client._client, "get", return_value=make_text_response("Invalid MAP_KEY, quota exceeded"))
+
+    result = client.get_hotspots(34.0, -118.0)
+
+    assert result.unavailable is True
+    client.close()
+
+
+def test_no_hotspots_returns_zero_counts(mocker):
+    client = FIRMSClient(map_key="testkey")
+    mocker.patch.object(client._client, "get", return_value=make_text_response(CSV_HEADER))
+
+    result = client.get_hotspots(34.0, -118.0)
+
+    assert result.count_5km == 0
+    assert result.count_10km == 0
+    assert result.count_20km == 0
+    assert result.unavailable is False
+    client.close()

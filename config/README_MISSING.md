@@ -5,12 +5,7 @@ mode described below. Fill in `.env` and restart when available.
 
 ## FIRMS_MAP_KEY
 
-Not provided. Register a free key at
-https://firms.modaps.eosdis.nasa.gov/api/map_key/ and set `FIRMS_MAP_KEY` in `.env`.
-
-Default behavior without it: `src/clients/firms.py` raises `FIRMSKeyMissing` internally,
-the caller catches it, sets the `firms_unavailable` flag on the ActionCard, and the policy
-engine treats FIRMS counts as zero/unknown rather than fabricating hotspot data.
+Provided 2026-08-27, stored in `.env`.
 
 ## SLACK_BOT_TOKEN
 
