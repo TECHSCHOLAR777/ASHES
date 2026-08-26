@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
+
 from src.clients.firms import FIRMSResult
 from src.clients.hrrr import HRRRWeather
 from src.clients.nws import CAPAlert, SPCOutlook
@@ -100,4 +102,55 @@ def pack_e(
         wind_ros_ellipse_dist_m=ros_ellipse_dist_m,
         firms_unavailable=firms_unavailable,
         stale_e=bool(hrrr.stale) if hrrr else False,
+    )
+
+
+# Fixed, documented order: this is the E half of the [w_vector*w_mask ; e_vector]
+# concatenation h_fire trains and infers on (SRS 6.3, Step 8 train.py). Changing this order
+# requires retraining every saved model artefact.
+E_VECTOR_FIELD_ORDER = [
+    "rflag",
+    "spc_day1_elevated",
+    "firms_count_5km",
+    "firms_count_10km",
+    "firms_count_20km",
+    "frp_sum_5km",
+    "dist_perim_m",
+    "acres",
+    "containment_pct",
+    "hours_since_discovery",
+    "perimeter_unofficial",
+    "wind_speed_ms",
+    "temp_c",
+    "rh_pct",
+    "wind_ros_ellipse_dist_m",
+]
+
+
+def e_features_to_vector(e: EFeatures) -> np.ndarray:
+    """Flattens EFeatures into the fixed-order numeric vector fed to h_fire.
+
+    Missing optionals (wind/temp/rh/hours_since_discovery) impute to 0.0 - the model
+    also receives `firms_unavailable`/`stale_e` as ActionCard flags, so these zeros are
+    never presented to a human as measured values, only to the model as a neutral default.
+    """
+    return np.array(
+        [
+            1.0 if e.rflag else 0.0,
+            1.0 if e.spc_day1_elevated else 0.0,
+            float(e.firms_count_5km),
+            float(e.firms_count_10km),
+            float(e.firms_count_20km),
+            float(e.frp_sum_5km),
+            float(e.dist_perim_m),
+            float(e.acres),
+            float(e.containment_pct),
+            float(e.hours_since_discovery) if e.hours_since_discovery is not None else 0.0,
+            1.0 if e.perimeter_unofficial else 0.0,
+            float(e.wind_speed_ms) if e.wind_speed_ms is not None else 0.0,
+            float(e.temp_c) if e.temp_c is not None else 0.0,
+            float(e.rh_pct) if e.rh_pct is not None else 0.0,
+            float(e.wind_ros_ellipse_dist_m),
+        ],
+        dtype=np.float64,
     )
