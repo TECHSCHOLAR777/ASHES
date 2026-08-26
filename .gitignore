@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/cache/*.db
+data/logs/*.jsonl
+data/models/*.pkl
+data/models/metrics_*.json
+data/training/*.jsonl
+!data/cache/.gitkeep
+!data/logs/.gitkeep
+!data/models/.gitkeep
+!data/training/.gitkeep
+.pytest_cache/
+*.egg-info/
+build/
+dist/

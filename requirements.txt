@@ -1,0 +1,13 @@
+httpx==0.28.1
+pydantic==2.13.4
+python-dotenv==1.2.3
+apscheduler==3.11.3
+pyproj==3.7.2
+herbie-data==2026.3.0
+numpy==2.5.2
+scikit-learn==1.9.0
+openai==2.54.0
+slack-sdk==3.43.0
+pyyaml==6.0.3
+pytest==8.4.2
+pytest-mock==3.15.1
