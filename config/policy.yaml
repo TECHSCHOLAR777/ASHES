@@ -1,0 +1,38 @@
+version: "v1.0.0"
+dedup_window_minutes: 30
+poll_interval_minutes: 5
+poll_idempotency_minutes: 4
+max_watch_workers: 4
+
+distance_thresholds:
+  monitor_only_km: 15
+  prepare_min_km: 4
+  prepare_max_km: 10
+  protect_km: 4
+  firms_urban_suppress: true
+
+y_hat_thresholds:
+  prepare: 0.4
+  protect: 0.7
+
+ndvi_high_fuel_threshold: 0.5
+
+sigma_thresholds:
+  evacuate_suppress: 0.35
+
+housing_density_evacuate_threshold_per_km2: 500
+
+ros_ellipse:
+  duration_hours: 72
+  ros_wind_factor: 0.5
+
+hazmat_priority_tiers_m:
+  critical: 500
+  high: 2000
+  medium: 5000
+
+fire_station_eta:
+  speed_paved_kmh: 60
+  speed_unpaved_kmh: 30
+
+stale_e_max_age_minutes: 30

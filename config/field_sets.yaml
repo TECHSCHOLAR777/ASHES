@@ -1,0 +1,148 @@
+# Mireye Fire Intelligence Set field list, roles A-J (SRS 2.2.2 / 6.3).
+# Single source of truth for which fields to fetch and how to type-encode them.
+# type: float | int | bool | str | ordered_categorical | unordered_categorical | id
+# parcel_owner is intentionally absent (SRS 1.2 / rule 4): privacy exclusion, not cost.
+
+roles:
+  A:
+    name: "Fuel & vegetation"
+    fields:
+      lcms_class: { type: unordered_categorical, categories: [developed, agriculture, forest, shrubland, grassland, barren, snow_ice, water, wetland, other] }
+      land_use_class: { type: unordered_categorical, categories: [residential, commercial, industrial, agricultural, forest, rangeland, vacant, other] }
+      tree_canopy_pct: { type: float }
+      ndvi_current: { type: float, vintage_role: dynamic }
+      ndvi_change_5y: { type: float, vintage_role: dynamic }
+      cdl_class: { type: unordered_categorical, categories: [corn, soybeans, wheat, alfalfa, fallow_idle, grass_pasture, forest, other] }
+      is_cultivated: { type: bool }
+      dominant_crop_5y: { type: unordered_categorical, categories: [corn, soybeans, wheat, alfalfa, other, none] }
+
+  B:
+    name: "Terrain (spread)"
+    fields:
+      elevation: { type: float }
+      slope_degrees: { type: float }
+      aspect_degrees: { type: float }
+      aspect_cardinal: { type: unordered_categorical, categories: [N, NE, E, SE, S, SW, W, NW, flat] }
+      soil_drainage_class: { type: ordered_categorical, order: [very_poorly_drained, poorly_drained, somewhat_poorly_drained, moderately_well_drained, well_drained, somewhat_excessively_drained, excessively_drained] }
+      surface_water_permanence_pct: { type: float }
+      soil_available_water_capacity: { type: float }
+
+  C:
+    name: "Fire-weather climo (vintage, not live)"
+    fields:
+      mean_wind_speed_100m_ms: { type: float }
+      prevailing_wind_direction_100m_cardinal: { type: unordered_categorical, categories: [N, NE, E, SE, S, SW, W, NW] }
+      weibull_k_100m: { type: float }
+      near_surface_wind_speed_annual_mean_ms: { type: float }
+      mean_annual_dry_bulb_temperature_degc: { type: float }
+      mean_annual_relative_humidity_pct: { type: float }
+      days_above_32c_annual_count: { type: float }
+      drought_category: { type: ordered_categorical, order: [None, D0, D1, D2, D3, D4], vintage_role: dynamic }
+      mean_annual_snow_cover_days: { type: float }
+      aerosol_optical_depth_annual_mean: { type: float }
+
+  D:
+    name: "Fire hazard priors"
+    fields:
+      wildfire_annual_frequency: { type: float }
+      lightning_annual_flash_days: { type: float }
+      fire_hazard_severity_zone_class: { type: ordered_categorical, order: [non_wildland, moderate, high, very_high], low_confidence_outside: [CA] }
+      fire_hazard_responsibility_area: { type: unordered_categorical, categories: [state, federal, local, other] }
+      nearest_fire_perimeter_distance_m: { type: float }
+      most_recent_burn_year: { type: int, nullable: true }
+      landslide_susceptibility_index: { type: float }
+
+  E:
+    name: "Ignition sources"
+    fields:
+      nearest_transmission_line_distance_m: { type: float }
+      nearest_osm_transmission_line_distance_m: { type: float }
+      nearest_major_road_distance_m: { type: float }
+
+  F:
+    name: "Exposure / value"
+    fields:
+      primary_building_height_m: { type: float }
+      primary_building_footprint_sqm: { type: float }
+      primary_building_num_floors: { type: float }
+      primary_building_overture_class: { type: unordered_categorical, categories: [house, commercial, industrial, agricultural, other] }
+      housing_units_within_1km: { type: float }
+      housing_units_density_per_km2: { type: float }
+      poi_count_1km: { type: float }
+
+  G:
+    name: "Access / egress / response"
+    fields:
+      nearest_fire_station_distance_m: { type: float }
+      nearest_fire_station_name: { type: str, join_key: true }
+      nearest_hospital_distance_m: { type: float }
+      nearest_road_distance_m: { type: float }
+      nearest_road_class: { type: ordered_categorical, order: [local, collector, arterial, highway, interstate, unknown] }
+      nearest_road_surface: { type: ordered_categorical, order: [unknown, unpaved, paved] }
+      nearest_major_road_name: { type: str, join_key: true }
+      nearest_major_road_class: { type: ordered_categorical, order: [local, collector, arterial, highway, interstate, unknown] }
+      roads_within_500m_count: { type: float }
+      total_road_length_within_500m_m: { type: float }
+      nearest_school_distance_m: { type: float }
+
+  H:
+    name: "Compounding hazard"
+    fields:
+      nearest_hazardous_facility_distance_m: { type: float }
+      nearest_rcra_tsd_distance_m: { type: float }
+      nearest_ust_facility_distance_m: { type: float }
+      ust_facilities_within_1km_count: { type: float }
+
+  I:
+    name: "Firefighting water / governance"
+    fields:
+      nearest_usgs_gage_daily_discharge_cfs: { type: float }
+      nearest_usgs_gage_id: { type: str, join_key: true }
+      domestic_well_households_per_km2: { type: float }
+      within_water_service_area: { type: bool }
+      surface_management_agency: { type: unordered_categorical, categories: [BLM, USFS, NPS, FWS, DOD, state, local, private, other] }
+
+  J:
+    name: "Response resources (Response Agent add, not fed to h_fire)"
+    model_feature: false
+    fields:
+      nearest_waterbody_name: { type: str, join_key: true }
+      nearest_waterbody_distance_m: { type: float }
+      nearest_flowline_name: { type: str, join_key: true }
+      nearest_flowline_distance_m: { type: float }
+      intersects_nhd_area: { type: bool }
+      wetlands_within_100m_count: { type: float }
+      wetland_acres: { type: float }
+      high_hazard_dams_within_10km: { type: float }
+      nearest_airport_name: { type: str, join_key: true }
+      nearest_airport_distance_m: { type: float }
+      mobile_5g_coverage_class: { type: ordered_categorical, order: [none, partial, full] }
+      nearest_antenna_structure_distance_m: { type: float }
+      nearest_antenna_structure_height_m: { type: float }
+      intersects_critical_habitat: { type: bool }
+      critical_habitat_species: { type: str, join_key: true }
+      intersects_protected_area: { type: bool }
+      protected_area_designation: { type: str, join_key: true }
+      protected_area_manager: { type: str, join_key: true }
+      nearest_wastewater_plant_distance_m: { type: float }
+      nearest_wastewater_plant_name: { type: str, join_key: true }
+      within_sewer_service_area: { type: bool }
+      nearest_osm_substation_distance_m: { type: float }
+      nearest_gas_pipeline_distance_m: { type: float }
+      nearest_petroleum_pipeline_distance_m: { type: float }
+      nearest_transmission_line_distance_m_response: { type: float, source_field: nearest_transmission_line_distance_m }
+
+# Optional V1 parcel-geometry precision (SRS FR-3 / NEW DECISION 11). parcel_owner excluded always.
+optional_parcel_fields:
+  parcel_boundary_geojson: { type: str, credits: 300 }
+  parcel_area_m2: { type: float, credits: 300 }
+
+# Confidence field convention: every role-A-I field SHALL carry a paired `<field>_confidence`
+# (high|medium|low) alongside it in the raw W payload; w_encoder.py appends a `_conf` binary
+# (1 = high/medium, 0 = low/unverified) for every scaled/binary/categorical feature.
+confidence_suffix: "_confidence"
+
+# id / join-key fields: never fed to h_fire as features (SRS FR-17).
+join_key_fields:
+  - tract_geoid
+  - huc_12_name

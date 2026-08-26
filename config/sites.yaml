@@ -1,0 +1,31 @@
+sites:
+  - site_id: "site_001"
+    name: "Riverside Warehouse"
+    lat: 33.9806
+    lng: -117.3755
+    slack_channel: "#fire-alerts"
+    email: "ops@example.com"
+  - site_id: "site_002"
+    name: "Napa Valley Winery"
+    lat: 38.2975
+    lng: -122.2869
+    slack_channel: "#fire-alerts"
+    email: "ops@example.com"
+  - site_id: "site_003"
+    name: "Boulder Distribution Center"
+    lat: 40.0150
+    lng: -105.2705
+    slack_channel: "#fire-alerts"
+    email: "ops@example.com"
+  - site_id: "site_004"
+    name: "Flagstaff Timber Yard"
+    lat: 35.1983
+    lng: -111.6513
+    slack_channel: "#fire-alerts"
+    email: "ops@example.com"
+  - site_id: "site_005"
+    name: "Bozeman Plant"
+    lat: 45.6770
+    lng: -111.0429
+    slack_channel: "#fire-alerts"
+    email: "ops@example.com"
