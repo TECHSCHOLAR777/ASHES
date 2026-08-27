@@ -30,6 +30,20 @@ class HRRRWeather:
 _CARDINALS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
 
 
+def _nearest_grid_index(lat2d, lon2d, lat: float, lng_0_360: float) -> tuple[int, int]:
+    """HRRR's native grid is Lambert Conformal: latitude/longitude are 2D curvilinear
+    coordinates, not a 1D axis, so `.sel(..., method="nearest")` cannot build a pandas
+    index on them (verified against a live fetch - see DECISIONS.md). Nearest neighbor is
+    found by brute-force distance over the ~1.9M-cell CONUS grid instead, which takes
+    milliseconds with numpy.
+    """
+    import numpy as np
+
+    dist2 = (lat2d - lat) ** 2 + (lon2d - lng_0_360) ** 2
+    flat_idx = int(np.argmin(dist2))
+    return np.unravel_index(flat_idx, dist2.shape)
+
+
 def _wind_dir_cardinal(u: float, v: float) -> str:
     # Meteorological "from" direction: wind vector (u,v) points where air is going.
     deg = (math.degrees(math.atan2(-u, -v))) % 360
@@ -58,10 +72,15 @@ class HRRRClient:
                 ds_temp = h.xarray(":TMP:2 m")
                 ds_rh = h.xarray(":RH:2 m")
 
-                u = float(ds_wind["u10"].sel(latitude=lat, longitude=lng % 360, method="nearest").values)
-                v = float(ds_wind["v10"].sel(latitude=lat, longitude=lng % 360, method="nearest").values)
-                temp_k = float(ds_temp["t2m"].sel(latitude=lat, longitude=lng % 360, method="nearest").values)
-                rh = float(ds_rh["r2"].sel(latitude=lat, longitude=lng % 360, method="nearest").values)
+                lng_0_360 = lng % 360
+                y_idx, x_idx = _nearest_grid_index(
+                    ds_wind["latitude"].values, ds_wind["longitude"].values, lat, lng_0_360
+                )
+
+                u = float(ds_wind["u10"].isel(y=y_idx, x=x_idx).values)
+                v = float(ds_wind["v10"].isel(y=y_idx, x=x_idx).values)
+                temp_k = float(ds_temp["t2m"].isel(y=y_idx, x=x_idx).values)
+                rh = float(ds_rh["r2"].isel(y=y_idx, x=x_idx).values)
 
                 latency_ms = (time.monotonic() - start) * 1000
                 tool_logger.log_tool_call(

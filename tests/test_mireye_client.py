@@ -22,8 +22,10 @@ def test_round_robin_cycles_through_all_three_keys(client):
 
 
 def test_rate_limiter_skips_a_saturated_key(client):
-    # Saturate key 0 to the cap (59 requests within the window).
-    for _ in range(59):
+    # Saturate key 0 to the cap (RATE_LIMIT_PER_KEY - safety margin requests in the window).
+    from src.clients.mireye import RATE_LIMIT_PER_KEY, RATE_LIMIT_SAFETY_MARGIN
+
+    for _ in range(RATE_LIMIT_PER_KEY - RATE_LIMIT_SAFETY_MARGIN):
         client._windows[0].timestamps.append(__import__("time").monotonic())
 
     # The round-robin counter starts back at 0 on a fresh client, so the next pick

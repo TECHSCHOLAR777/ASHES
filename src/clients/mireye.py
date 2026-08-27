@@ -18,8 +18,12 @@ import httpx
 from src.logging_ import tool_logger
 
 MIREYE_BASE_URL = "https://api.mireye.com"
-RATE_LIMIT_PER_KEY = 60
-RATE_LIMIT_SAFETY_MARGIN = 1  # skip a key at 59/60 rather than waiting for the 60th to reject
+# The SRS's "60 rpm/key" is a generic figure; the three keys actually issued for this build
+# are on Mireye's Growth plan ($99/mo, 120,000 credits, 300 rpm - confirmed by the user
+# 2026-08-27), so the limiter uses the real per-key cap. Three keys round-robin to an
+# effective ~900 rpm budget.
+RATE_LIMIT_PER_KEY = 300
+RATE_LIMIT_SAFETY_MARGIN = 1  # skip a key at cap-1 rather than waiting for a 429
 RATE_WINDOW_SECONDS = 60.0
 MAX_BATCH_SIZE = 25
 MAX_RETRIES = 3

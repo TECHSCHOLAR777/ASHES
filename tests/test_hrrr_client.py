@@ -1,3 +1,5 @@
+import numpy as np
+
 from src.clients.hrrr import HRRRClient, _wind_dir_cardinal
 
 
@@ -20,15 +22,28 @@ class _FakeValue:
 
 
 class _FakeVar:
+    """Mimics a 2D (y, x) DataArray: `.isel(y=..., x=...)` returns the same scalar
+    regardless of index, matching HRRR's curvilinear-grid nearest-neighbor lookup."""
+
     def __init__(self, value):
         self._value = value
 
-    def sel(self, **kwargs):
+    def isel(self, **kwargs):
         return _FakeValue(self._value)
+
+
+class _FakeLatLon:
+    """A 2x2 fake curvilinear grid so `_nearest_grid_index` has something to search."""
+
+    @property
+    def values(self):
+        return np.array([[34.0, 34.0], [34.0, 34.0]])
 
 
 class _FakeDataset(dict):
     def __getitem__(self, key):
+        if key in ("latitude", "longitude"):
+            return _FakeLatLon()
         return _FakeVar(super().__getitem__(key))
 
 

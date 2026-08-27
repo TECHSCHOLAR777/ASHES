@@ -33,6 +33,15 @@ One line per decision, in build order.
   `range_interpolation`) from the underlying geocodio provider. `GeoPoint.confidence` is set
   to `accuracy_type` directly, and `range_interpolation` is set to `True` whenever
   `accuracy_type` is present and not in `{rooftop, point}`.
+- [2026-08-27] Mireye rate limit set to 300 rpm/key (not the SRS's generic 60 rpm): the
+  user confirmed the three issued keys are on Mireye's Growth plan ($99/mo, 120,000 credits,
+  300 rpm). Three keys round-robin to an effective ~900 rpm budget.
+- [2026-08-27] HRRR's native grid is Lambert Conformal - `latitude`/`longitude` come back
+  as 2D curvilinear coordinates, not a 1D axis, so `xarray`'s `.sel(..., method="nearest")`
+  cannot build a pandas index on them (confirmed against a live fetch: "Could not
+  automatically create PandasIndex for coord 'latitude' with 2 dimensions"). Nearest
+  neighbor is instead found by brute-force squared-distance argmin over the full ~1.9M-cell
+  CONUS grid (`_nearest_grid_index` in `hrrr.py`), which is fast (<10ms) with numpy.
 - [2026-08-27] Unordered categorical one-hot vocabularies (`lcms_class`, `land_use_class`,
   `overture_class`) are fixed, finite category lists taken from the source catalogs' published
   class lists, with an explicit `other` bucket for anything unseen, so the feature vector length
