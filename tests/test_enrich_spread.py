@@ -83,7 +83,7 @@ def test_enrich_script_attaches_spread_without_mireye(tmp_path, monkeypatch):
             pass
 
     monkeypatch.setattr(enrich, "MTBSClient", lambda: FakeMTBS())
-    monkeypatch.setattr(enrich, "LANDFIREClient", lambda: FakeLF())
+    monkeypatch.setattr(enrich, "LANDFIREClient", FakeLF)
     monkeypatch.setattr(
         "sys.argv",
         ["enrich_spread_vectors.py", "--input", str(inp), "--output", str(out)],
