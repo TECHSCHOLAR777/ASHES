@@ -241,3 +241,59 @@ def attach_spread_vector(result: SampleBuildResult, spread) -> SampleBuildResult
         float(spread.p_burn_72) if spread.p_burn_72 is not None else 0.0,
     ]
     return result
+
+
+def reconstruct_sample_point(
+    fire: MTBSFire,
+    dist_m: float,
+    y: int,
+    ros_target: float | None = None,
+    wind_u: float | None = None,
+    wind_v: float | None = None,
+    n_bearings: int = 360,
+) -> tuple[float, float] | None:
+    """Recover a site lat/lng from a V1 jsonl row that did not store coordinates.
+
+    V1 samples record geodesic distance to the ignition centroid (`e_vector` dist_perim_m)
+    and the in/out label `y`, but not (lat, lng). Path B needs a point to sample the
+    delegated field. Walk the centroid circle and keep points whose in/out status matches
+    `y`. When wind is available, break ties by the stored ROS-ellipse feature.
+
+    This is an honest reconstruction, not the original RNG point. Same radius from
+    ignition, same final-perimeter membership. Documented as `coords_source=
+    reconstructed_centroid_circle`.
+    """
+    if fire.centroid_lat is None or fire.centroid_lng is None:
+        return None
+    if dist_m is None or dist_m < 0:
+        dist_m = 0.0
+    want_inside = int(y) == 1
+    matches: list[tuple[float, float, float]] = []  # (score, lat, lng)
+    step = 360.0 / max(n_bearings, 1)
+    for i in range(max(n_bearings, 1)):
+        bearing = i * step
+        lng, lat, _ = _GEOD.fwd(fire.centroid_lng, fire.centroid_lat, bearing, dist_m)
+        inside = point_in_multipolygon(lat, lng, fire.geometry_rings)
+        if inside != want_inside:
+            continue
+        score = 0.0
+        if ros_target is not None:
+            ros = compute_ros_ellipse_feature(
+                site_lat=lat,
+                site_lng=lng,
+                fire_lat=fire.centroid_lat,
+                fire_lng=fire.centroid_lng,
+                wind_u=wind_u,
+                wind_v=wind_v,
+                acres=None,
+                dist_perim_m=dist_m,
+            )
+            score = -abs(float(ros) - float(ros_target))
+        matches.append((score, lat, lng))
+    if matches:
+        matches.sort(key=lambda item: item[0], reverse=True)
+        return matches[0][1], matches[0][2]
+    if want_inside:
+        return fire.centroid_lat, fire.centroid_lng
+    lng, lat, _ = _GEOD.fwd(fire.centroid_lng, fire.centroid_lat, 0.0, max(dist_m, 1.0))
+    return lat, lng

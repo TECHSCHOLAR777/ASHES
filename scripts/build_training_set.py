@@ -265,51 +265,15 @@ def main() -> None:
     landfire = None
     if args.with_spread:
         from src.clients.landfire import LANDFIREClient  # noqa: E402
-        from src.clients.wfigs import WFIGSPerimeter  # noqa: E402
-        from src.geometry.aoi import aoi_bbox_for_fetch, build_incident_aoi  # noqa: E402
-        from src.model.training_data import ignition_datetime  # noqa: E402
-        from src.spread.client import spread_run  # noqa: E402
+        from src.spread.historic import spread_field_for_fire as _spread_field_for_fire  # noqa: E402
 
         landfire = LANDFIREClient()
 
-        def _mtbs_perimeter(fire) -> WFIGSPerimeter:
-            rings = []
-            for polygon in fire.geometry_rings or []:
-                rings.extend(polygon)
-            return WFIGSPerimeter(irwin_id=fire.event_id, name=fire.incident_name or fire.event_id, geometry_rings=rings)
-
         def field_for_fire(fire):
             with spread_lock:
-                cached = spread_fields.get(fire.event_id)
-                if cached is not None or fire.event_id in spread_fields:
-                    return cached
-            t0 = ignition_datetime(fire)
-            perim = _mtbs_perimeter(fire)
-            bbox = aoi_bbox_for_fetch(perim, None, None)
-            if bbox is None:
-                with spread_lock:
-                    spread_fields[fire.event_id] = None
-                return None
-            try:
-                stack = landfire.fetch_aoi(*bbox, site_id=fire.event_id)
-                geom = build_incident_aoi(perim, stack, wind_u=None, wind_v=None)
-                weather = {"wind_u": 0.0, "wind_v": 0.0, "rh_pct": None, "temp_c": None, "valid_time": t0.isoformat() if t0 else None}
-                field = spread_run(
-                    incident_id=fire.event_id,
-                    landfire=stack,
-                    aoi=geom,
-                    weather=weather,
-                    perimeter_rings=[list(ring) for ring in perim.geometry_rings],
-                    ignition_points=(
-                        [{"lat": fire.centroid_lat, "lng": fire.centroid_lng}]
-                        if fire.centroid_lat is not None and fire.centroid_lng is not None
-                        else []
-                    ),
-                    site_id=fire.event_id,
-                )
-            except Exception as exc:
-                logger.warning("spread_run/LANDFIRE failed for fire %s: %s", fire.event_id, exc)
-                field = None
+                if fire.event_id in spread_fields:
+                    return spread_fields[fire.event_id]
+            field = _spread_field_for_fire(fire, landfire)
             with spread_lock:
                 spread_fields[fire.event_id] = field
             return field

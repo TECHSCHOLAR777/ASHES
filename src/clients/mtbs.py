@@ -12,6 +12,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Any, Iterable
 
 import httpx
 
@@ -30,6 +31,27 @@ class MTBSFire:
     centroid_lat: float | None
     centroid_lng: float | None
     geometry_rings: list[list[list[tuple[float, float]]]]  # MultiPolygon: list of polygons of rings
+
+
+def _feature_to_fire(feature: dict[str, Any]) -> MTBSFire:
+    props = feature.get("properties", {}) or {}
+    ig_date_raw = props.get("ig_date")
+    ig_date = None
+    if ig_date_raw:
+        try:
+            ig_date = datetime.fromisoformat(str(ig_date_raw).rstrip("Z")).date()
+        except ValueError:
+            ig_date = None
+    lat_str, lng_str = props.get("burnbndlat"), props.get("burnbndlon")
+    return MTBSFire(
+        event_id=props.get("event_id", "") or "",
+        incident_name=props.get("incid_name", "unknown"),
+        ignition_date=ig_date,
+        acres=float(props["burnbndac"]) if props.get("burnbndac") is not None else None,
+        centroid_lat=float(lat_str) if lat_str else None,
+        centroid_lng=float(lng_str) if lng_str else None,
+        geometry_rings=_parse_multipolygon(feature.get("geometry", {}) or {}),
+    )
 
 
 def _parse_multipolygon(geometry: dict) -> list[list[list[tuple[float, float]]]]:
@@ -126,28 +148,54 @@ class MTBSClient:
         tool_logger.log_tool_call(
             "mtbs:get_fires_in_bbox", params, {"count": len(data.get("features", []))}, None, latency_ms
         )
+        return [_feature_to_fire(feature) for feature in data.get("features", [])]
 
+    def get_fires_by_event_ids(
+        self, event_ids: Iterable[str], batch_size: int = 40
+    ) -> list[MTBSFire]:
+        """Looks up MTBS fires by exact event_id. Used by Path B enrichment so we can
+        rebuild perimeters without re-querying a bbox (and without re-spending Mireye)."""
+        ids = [eid for eid in dict.fromkeys(event_ids) if eid]
+        if not ids:
+            return []
         fires: list[MTBSFire] = []
-        for feature in data.get("features", []):
-            props = feature.get("properties", {})
-            ig_date_raw = props.get("ig_date")
-            ig_date = None
-            if ig_date_raw:
-                try:
-                    ig_date = datetime.fromisoformat(ig_date_raw.rstrip("Z")).date()
-                except ValueError:
-                    ig_date = None
-
-            lat_str, lng_str = props.get("burnbndlat"), props.get("burnbndlon")
-            fires.append(
-                MTBSFire(
-                    event_id=props.get("event_id", ""),
-                    incident_name=props.get("incid_name", "unknown"),
-                    ignition_date=ig_date,
-                    acres=float(props["burnbndac"]) if props.get("burnbndac") is not None else None,
-                    centroid_lat=float(lat_str) if lat_str else None,
-                    centroid_lng=float(lng_str) if lng_str else None,
-                    geometry_rings=_parse_multipolygon(feature.get("geometry", {})),
+        for start_idx in range(0, len(ids), batch_size):
+            batch = ids[start_idx : start_idx + batch_size]
+            quoted = ",".join(f"'{eid.replace(chr(39), '')}'" for eid in batch)
+            params = {
+                "service": "WFS",
+                "version": "1.0.0",
+                "request": "GetFeature",
+                "typeName": MTBS_TYPE_NAME,
+                "outputFormat": "application/json",
+                "srsName": "EPSG:4326",
+                "maxFeatures": str(len(batch)),
+                "CQL_FILTER": f"event_id IN ({quoted})",
+            }
+            start = time.monotonic()
+            try:
+                resp = self._client.get(MTBS_WFS_URL, params=params)
+                resp.raise_for_status()
+                data = resp.json()
+            except httpx.HTTPError as exc:
+                latency_ms = (time.monotonic() - start) * 1000
+                tool_logger.log_tool_call(
+                    "mtbs:get_fires_by_event_ids",
+                    {"n": len(batch)},
+                    None,
+                    None,
+                    latency_ms,
+                    error=str(exc),
                 )
+                continue
+            latency_ms = (time.monotonic() - start) * 1000
+            features = data.get("features", [])
+            tool_logger.log_tool_call(
+                "mtbs:get_fires_by_event_ids",
+                {"n": len(batch)},
+                {"count": len(features)},
+                None,
+                latency_ms,
             )
+            fires.extend(_feature_to_fire(feature) for feature in features)
         return fires

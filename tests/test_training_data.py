@@ -108,3 +108,16 @@ def test_attach_spread_vector_copies_real_sample():
     )
     assert attach_spread_vector(blank, None).spread_vector is None
 
+
+def test_reconstruct_sample_point_respects_inside_outside_label():
+    from src.clients.mtbs import point_in_multipolygon
+    from src.model.training_data import reconstruct_sample_point
+
+    fire = _square_fire()
+    inside = reconstruct_sample_point(fire, dist_m=1000.0, y=1)
+    outside = reconstruct_sample_point(fire, dist_m=25_000.0, y=0)
+    assert inside is not None
+    assert outside is not None
+    assert point_in_multipolygon(inside[0], inside[1], fire.geometry_rings) is True
+    assert point_in_multipolygon(outside[0], outside[1], fire.geometry_rings) is False
+

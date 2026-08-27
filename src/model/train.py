@@ -50,9 +50,16 @@ class TrainingSample:
     dist_source: str | None = None
 
 
+def _has_spread(sample: TrainingSample) -> bool:
+    return sample.spread_vector is not None and len(sample.spread_vector) >= 5
+
+
 def load_samples(training_dir: Path | str = TRAINING_DIR) -> list[TrainingSample]:
+    """Load jsonl rows. Duplicate site_ids keep the copy that already has spread_vector
+    so Path B's sidecar file can sit next to V1's original jsonl without double-counting."""
     training_dir = Path(training_dir)
-    samples: list[TrainingSample] = []
+    by_id: dict[str, TrainingSample] = {}
+    order: list[str] = []
     for path in sorted(training_dir.glob("*.jsonl")):
         with open(path, "r", encoding="utf-8") as f:
             for line in f:
@@ -60,20 +67,24 @@ def load_samples(training_dir: Path | str = TRAINING_DIR) -> list[TrainingSample
                 if not line:
                     continue
                 record = json.loads(line)
-                samples.append(
-                    TrainingSample(
-                        site_id=record["site_id"],
-                        event_id=record["event_id"],
-                        t0=record["t0"],
-                        w_vector=record["w_vector"],
-                        w_mask=record["w_mask"],
-                        e_vector=record["e_vector"],
-                        y=int(record["y"]),
-                        spread_vector=record.get("spread_vector"),
-                        dist_source=record.get("dist_source"),
-                    )
+                sample = TrainingSample(
+                    site_id=record["site_id"],
+                    event_id=record["event_id"],
+                    t0=record["t0"],
+                    w_vector=record["w_vector"],
+                    w_mask=record["w_mask"],
+                    e_vector=record["e_vector"],
+                    y=int(record["y"]),
+                    spread_vector=record.get("spread_vector"),
+                    dist_source=record.get("dist_source"),
                 )
-    return samples
+                prev = by_id.get(sample.site_id)
+                if prev is None:
+                    by_id[sample.site_id] = sample
+                    order.append(sample.site_id)
+                elif _has_spread(sample) and not _has_spread(prev):
+                    by_id[sample.site_id] = sample
+    return [by_id[site_id] for site_id in order]
 
 
 def _build_feature_matrix(
@@ -350,6 +361,7 @@ def evaluate_h2_claim(
             "No real MTBS/WFIGS event set with delegated spread_vector was present "
             f"(found {len(v2_samples)} spread-labeled samples across {len(real_events)} events). "
             "SRS 6.6 requires event/HUC/state held-out fires. Collect with "
+            "scripts/enrich_spread_vectors.py (Path B, no extra Mireye credits) or "
             "scripts/build_training_set.py --with-spread, then rerun this gate. "
             "The synthetic_probe key only verifies that the comparison code runs."
         )

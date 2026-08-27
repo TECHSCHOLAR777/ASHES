@@ -55,6 +55,35 @@ def test_get_fires_in_bbox_parses_real_schema(mocker):
     client.close()
 
 
+def test_get_fires_by_event_ids_parses_in_filter(mocker):
+    client = MTBSClient()
+    body = {
+        "features": [
+            {
+                "properties": {
+                    "event_id": "CA1234512020",
+                    "incid_name": "TEST FIRE",
+                    "ig_date": "2020-08-01Z",
+                    "burnbndac": 5000,
+                    "burnbndlat": "39.5",
+                    "burnbndlon": "-121.5",
+                },
+                "geometry": {
+                    "type": "MultiPolygon",
+                    "coordinates": [[[[-121.6, 39.4], [-121.4, 39.4], [-121.4, 39.6], [-121.6, 39.6]]]],
+                },
+            }
+        ]
+    }
+    mocker.patch.object(client._client, "get", return_value=make_response(body))
+
+    fires = client.get_fires_by_event_ids(["CA1234512020", "CA1234512020"])
+
+    assert len(fires) == 1
+    assert fires[0].event_id == "CA1234512020"
+    client.close()
+
+
 def test_get_fires_http_failure_returns_empty(mocker):
     client = MTBSClient()
     mocker.patch.object(client._client, "get", side_effect=httpx.ConnectError("down"))
