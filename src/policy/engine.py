@@ -30,7 +30,7 @@ class PolicyInput:
     spc_elevated: bool
     firms_count_5km: int
     perimeter_unofficial: bool
-    lcms_class: Optional[str] = None
+    land_use_class: Optional[str] = None  # e.g. "Developed" - USFS LCMS Land_Use taxonomy
     ndvi_current: Optional[float] = None
     housing_density_per_km2: Optional[float] = None
     road_access_limited: Optional[bool] = None
@@ -81,7 +81,7 @@ def apply_policy(y_hat: Optional[float], sigma: float, pin: PolicyInput, config:
     # single urban hotspot (developed LCMS) - guards against flares/industry false positives.
     if has_firms and not has_wfigs:
         flags.append("perimeter_unofficial")
-        if pin.lcms_class == "developed":
+        if pin.land_use_class == "Developed":
             reasons.append("FIRMS hotspot on developed land with no WFIGS confirmation (likely non-wildfire source)")
         else:
             reasons.append("FIRMS hotspot detected with no WFIGS confirmation yet")

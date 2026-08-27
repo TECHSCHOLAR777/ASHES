@@ -33,7 +33,7 @@ def test_firms_without_wfigs_gives_monitor_with_unofficial_flag():
 
 def test_firms_on_developed_land_never_prepares():
     result = apply_policy(
-        y_hat=0.6, sigma=0.2, pin=_pin(firms_count_5km=5, lcms_class="developed"), config=CFG
+        y_hat=0.6, sigma=0.2, pin=_pin(firms_count_5km=5, land_use_class="Developed"), config=CFG
     )
     assert result.action == "monitor"
 

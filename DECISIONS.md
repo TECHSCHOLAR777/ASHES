@@ -42,6 +42,22 @@ One line per decision, in build order.
   automatically create PandasIndex for coord 'latitude' with 2 dimensions"). Nearest
   neighbor is instead found by brute-force squared-distance argmin over the full ~1.9M-cell
   CONUS grid (`_nearest_grid_index` in `hrrr.py`), which is fast (<10ms) with numpy.
+- [2026-08-27] Corrected every categorical field's taxonomy in `config/field_sets.yaml`
+  against real live-API values (probed at four diverse US points: LA urban, Sierra forest,
+  Central Valley agriculture, Napa wine country) rather than the original guessed
+  taxonomies: `lcms_class` uses the real USFS LCMS Land_Cover classes ("Trees", "Barren or
+  Impervious", ...), `land_use_class` uses the real LCMS Land_Use classes ("Developed",
+  "Forest", ...), `fire_hazard_severity_zone_class` uses title-case hyphenated CAL FIRE
+  strings ("Non-Wildland", "Very High"), `nearest_road_class`/`nearest_major_road_class`
+  use Overture Transportation classes ("secondary", "unclassified", "service", ..., not
+  local/collector/arterial), `surface_management_agency` uses "private_or_unknown" (not
+  "private"), `primary_building_overture_class` uses real Overture building classes
+  ("retail", "hospital", ...), and `mobile_5g_coverage_class` uses the real FCC BDC classes
+  ("5g_high_speed", "5g_basic", "5g_marginal"). The policy engine's urban-hotspot guard
+  (FR-7/FR-8) was moved from checking `lcms_class == "developed"` to checking
+  `land_use_class == "Developed"`, since `land_use_class` is the field whose real value
+  literally means "developed/urban" - `lcms_class`'s closest real analogue ("Barren or
+  Impervious") is a land-cover, not land-use, concept and is a poorer semantic match.
 - [2026-08-27] Unordered categorical one-hot vocabularies (`lcms_class`, `land_use_class`,
   `overture_class`) are fixed, finite category lists taken from the source catalogs' published
   class lists, with an explicit `other` bucket for anything unseen, so the feature vector length

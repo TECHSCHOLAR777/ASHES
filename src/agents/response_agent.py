@@ -48,7 +48,14 @@ RESPONSE_BRIEF_SYSTEM_PROMPT = (
     "verbatim. Do not invent any new numbers, distances, or names. Return only the prose."
 )
 
-ROAD_CLASS_PRIORITY = {"interstate": 5, "highway": 4, "arterial": 3, "collector": 2, "local": 1, "unknown": 0}
+# Overture Transportation road classes, verified against the live Mireye API 2026-08-27
+# (see DECISIONS.md) - not the generic interstate/highway/arterial guess this originally
+# shipped with.
+ROAD_CLASS_PRIORITY = {
+    "motorway": 9, "trunk": 8, "primary": 7, "secondary": 6, "tertiary": 5,
+    "residential": 4, "living_street": 3, "unclassified": 2, "service": 1,
+    "track": 0, "unknown": 0,
+}
 SURFACE_PRIORITY = {"paved": 2, "unpaved": 1, "unknown": 0}
 
 
@@ -244,9 +251,9 @@ def _build_access_routes(raw_w: dict[str, Any]) -> list[AccessRoute]:
 
     routes.sort(key=sort_key, reverse=True)
     for i, route in enumerate(routes):
-        if i == 0 and route.road_class in ("interstate", "highway", "arterial") and route.surface == "paved":
+        if i == 0 and route.road_class in ("motorway", "trunk", "primary") and route.surface == "paved":
             route.usability = "excellent"
-        elif route.road_class in ("local", "unknown") or route.surface == "unpaved":
+        elif route.road_class in ("unclassified", "unknown") or route.surface == "unpaved":
             route.usability = "limited"
         else:
             route.usability = "good"

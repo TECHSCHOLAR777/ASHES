@@ -24,9 +24,9 @@ def test_present_float_field_masks_one():
 
 
 def test_categorical_one_hot_known_value():
-    raw = {"lcms_class": "forest"}
+    raw = {"lcms_class": "Trees"}
     result = encode_w(raw)
-    pos = result.feature_names.index("lcms_class__forest")
+    pos = result.feature_names.index("lcms_class__Trees")
     assert result.vector[pos] == 1.0
     other_pos = result.feature_names.index("lcms_class__other")
     assert result.vector[other_pos] == 0.0

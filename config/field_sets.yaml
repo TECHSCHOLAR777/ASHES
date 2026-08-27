@@ -7,14 +7,20 @@ roles:
   A:
     name: "Fuel & vegetation"
     fields:
-      lcms_class: { type: unordered_categorical, categories: [developed, agriculture, forest, shrubland, grassland, barren, snow_ice, water, wetland, other] }
-      land_use_class: { type: unordered_categorical, categories: [residential, commercial, industrial, agricultural, forest, rangeland, vacant, other] }
+      # Categories verified against live fetches 2026-08-27 (see DECISIONS.md): USFS LCMS
+      # Land_Cover taxonomy, not the generic guess this file originally shipped with.
+      lcms_class: { type: unordered_categorical, categories: [Trees, "Tall Shrubs & Trees Mix", "Shrubs & Trees Mix", "Grass/Forb/Herb & Trees Mix", "Barren & Trees Mix", "Tall Shrubs", Shrubs, "Grass/Forb/Herb & Shrubs Mix", "Barren & Shrubs Mix", "Grass/Forb/Herb", "Barren & Grass/Forb/Herb Mix", "Barren or Impervious", "Snow or Ice", Water, "Non-Processing Area", other] }
+      # USFS LCMS Land_Use taxonomy (verified live); "Developed" is the field the policy
+      # engine's urban-hotspot guard checks (FR-7/FR-8), not lcms_class.
+      land_use_class: { type: unordered_categorical, categories: [Agriculture, Developed, Forest, "Non-Forest Wetland", Other, "Rangeland or Pasture", Water] }
       tree_canopy_pct: { type: float }
       ndvi_current: { type: float, vintage_role: dynamic }
       ndvi_change_5y: { type: float, vintage_role: dynamic }
-      cdl_class: { type: unordered_categorical, categories: [corn, soybeans, wheat, alfalfa, fallow_idle, grass_pasture, forest, other] }
+      # USDA CDL has 100+ classes; only the fire-relevant ones are enumerated here, exact
+      # strings verified live (e.g. "Developed/High Intensity"). Anything else -> other.
+      cdl_class: { type: unordered_categorical, categories: [Corn, Soybeans, "Winter Wheat", Alfalfa, "Fallow/Idle Cropland", "Grassland/Pasture", Forest, Shrubland, "Developed/Open Space", "Developed/Low Intensity", "Developed/Med Intensity", "Developed/High Intensity", other] }
       is_cultivated: { type: bool }
-      dominant_crop_5y: { type: unordered_categorical, categories: [corn, soybeans, wheat, alfalfa, other, none] }
+      dominant_crop_5y: { type: unordered_categorical, categories: [Corn, Soybeans, "Winter Wheat", Alfalfa, other, none] }
 
   B:
     name: "Terrain (spread)"
@@ -46,7 +52,9 @@ roles:
     fields:
       wildfire_annual_frequency: { type: float }
       lightning_annual_flash_days: { type: float }
-      fire_hazard_severity_zone_class: { type: ordered_categorical, order: [non_wildland, moderate, high, very_high], low_confidence_outside: [CA] }
+      # Exact strings verified live 2026-08-27: CAL FIRE FHSZ returns "Non-Wildland",
+      # "Moderate", "High", "Very High" (title case, hyphenated), not lowercase codes.
+      fire_hazard_severity_zone_class: { type: ordered_categorical, order: ["Non-Wildland", Moderate, High, "Very High"], low_confidence_outside: [CA] }
       fire_hazard_responsibility_area: { type: unordered_categorical, categories: [state, federal, local, other] }
       nearest_fire_perimeter_distance_m: { type: float }
       most_recent_burn_year: { type: int, nullable: true }
@@ -65,7 +73,9 @@ roles:
       primary_building_height_m: { type: float }
       primary_building_footprint_sqm: { type: float }
       primary_building_num_floors: { type: float }
-      primary_building_overture_class: { type: unordered_categorical, categories: [house, commercial, industrial, agricultural, other] }
+      # Overture building classes verified live 2026-08-27 ("retail", "hospital"), broader
+      # than the original house/commercial/industrial/agricultural guess.
+      primary_building_overture_class: { type: unordered_categorical, categories: [residential, commercial, retail, industrial, agricultural, civic, education, hospital, religious, entertainment, outbuilding, other] }
       housing_units_within_1km: { type: float }
       housing_units_density_per_km2: { type: float }
       poi_count_1km: { type: float }
@@ -77,10 +87,12 @@ roles:
       nearest_fire_station_name: { type: str, join_key: true }
       nearest_hospital_distance_m: { type: float }
       nearest_road_distance_m: { type: float }
-      nearest_road_class: { type: ordered_categorical, order: [local, collector, arterial, highway, interstate, unknown] }
+      # Overture Transportation road classes verified live 2026-08-27 ("secondary",
+      # "unclassified", "service"), not the generic local/collector/arterial/highway guess.
+      nearest_road_class: { type: ordered_categorical, order: [unknown, track, service, unclassified, living_street, residential, tertiary, secondary, primary, trunk, motorway] }
       nearest_road_surface: { type: ordered_categorical, order: [unknown, unpaved, paved] }
       nearest_major_road_name: { type: str, join_key: true }
-      nearest_major_road_class: { type: ordered_categorical, order: [local, collector, arterial, highway, interstate, unknown] }
+      nearest_major_road_class: { type: ordered_categorical, order: [unknown, track, service, unclassified, living_street, residential, tertiary, secondary, primary, trunk, motorway] }
       roads_within_500m_count: { type: float }
       total_road_length_within_500m_m: { type: float }
       nearest_school_distance_m: { type: float }
@@ -102,7 +114,8 @@ roles:
       nearest_usgs_gage_id: { type: str, join_key: true }
       domestic_well_households_per_km2: { type: float }
       within_water_service_area: { type: bool }
-      surface_management_agency: { type: unordered_categorical, categories: [BLM, USFS, NPS, FWS, DOD, state, local, private, other] }
+      # "private_or_unknown" verified live 2026-08-27 (not "private").
+      surface_management_agency: { type: unordered_categorical, categories: [BLM, USFS, NPS, FWS, DOD, state, local, private_or_unknown, other] }
 
   J:
     name: "Response resources (Response Agent add, not fed to h_fire)"
@@ -120,7 +133,9 @@ roles:
       high_hazard_dams_within_10km: { type: float }
       nearest_airport_name: { type: str, join_key: true }
       nearest_airport_distance_m: { type: float }
-      mobile_5g_coverage_class: { type: ordered_categorical, order: [none, partial, full] }
+      # Verified live 2026-08-27: FCC BDC modeled classes are "5g_marginal"/"5g_basic"/
+      # "5g_high_speed" (null when no 5G-NR is modeled), not none/partial/full.
+      mobile_5g_coverage_class: { type: ordered_categorical, order: ["5g_marginal", "5g_basic", "5g_high_speed"] }
       nearest_antenna_structure_distance_m: { type: float }
       nearest_antenna_structure_height_m: { type: float }
       intersects_critical_habitat: { type: bool }

@@ -68,7 +68,7 @@ def test_active_incident_close_by_escalates(tmp_path, monkeypatch, mocker):
     mocker.patch.object(
         deps.mireye,
         "fetch",
-        return_value={"housing_units_density_per_km2": 2000.0, "nearest_road_class": "local"},
+        return_value={"housing_units_density_per_km2": 2000.0, "nearest_road_class": "unclassified"},
     )
 
     card = build_action_card(deps, site)

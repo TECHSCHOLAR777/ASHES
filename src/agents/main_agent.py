@@ -299,14 +299,14 @@ def build_action_card(deps: MainAgentDeps, site: Site) -> ActionCard:
     prior_state = deps.site_state.get_state(site.site_id)
     previously_in_play = bool(prior_state and prior_state.last_action not in (None, "no_action", "monitor"))
 
-    road_access_limited = raw_w.get("nearest_road_class") in ("local", "unknown", None)
+    road_access_limited = raw_w.get("nearest_road_class") in ("unclassified", "service", "track", "unknown", None)
     pin = PolicyInput(
         dist_perim_m=e_features.dist_perim_m,
         red_flag=e_features.rflag,
         spc_elevated=e_features.spc_day1_elevated,
         firms_count_5km=e_features.firms_count_5km,
         perimeter_unofficial=e_features.perimeter_unofficial,
-        lcms_class=raw_w.get("lcms_class"),
+        land_use_class=raw_w.get("land_use_class"),
         ndvi_current=raw_w.get("ndvi_current"),
         housing_density_per_km2=raw_w.get("housing_units_density_per_km2"),
         road_access_limited=road_access_limited,
