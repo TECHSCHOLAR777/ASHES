@@ -137,6 +137,10 @@ model without touching the agent.
   `src/clients/hrrr.py` and `DECISIONS.md`.
 - **Mireye has no waterbody/flowline distance field**, only the name - `ResponseCard`'s
   `WaterSource.distance_m` is `null` for those two source types rather than a guess.
+- **SPC's Day-1 fire weather outlook has no reliable plain-text feed.** The client points at
+  the real serving HTML page and does best-effort keyword extraction, which is biased
+  toward false negatives (never a fabricated "elevated" reading). This is an explicitly
+  low-priority slow signal (SRS 2.2.1) and never blocks the pipeline either way.
 - Slack and email delivery run in log-only mode until `SLACK_BOT_TOKEN`/`SMTP_*` are set in
   `.env` (see `config/README_MISSING.md`).
 

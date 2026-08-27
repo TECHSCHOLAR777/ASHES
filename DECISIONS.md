@@ -42,6 +42,13 @@ One line per decision, in build order.
   automatically create PandasIndex for coord 'latitude' with 2 dimensions"). Nearest
   neighbor is instead found by brute-force squared-distance argmin over the full ~1.9M-cell
   CONUS grid (`_nearest_grid_index` in `hrrr.py`), which is fast (<10ms) with numpy.
+- [2026-08-27] SPC's Day-1 fire weather outlook has no stable plain-text product URL: the
+  originally assumed `fwdy1.txt` 404s, and SPC's "FWD" (Fire Weather Outlook Discussion)
+  text product is not exposed per-office (KWNS) on `api.weather.gov/products`. Pointed the
+  client at `fwdy1.html`, the real serving page, which is a graphical map viewer - keyword
+  extraction on it is best-effort and biased toward false negatives, never a fabricated
+  "elevated" reading. This is an explicitly low-priority slow signal (SRS 2.2.1) that never
+  blocks the pipeline regardless of outcome.
 - [2026-08-27] Corrected every categorical field's taxonomy in `config/field_sets.yaml`
   against real live-API values (probed at four diverse US points: LA urban, Sierra forest,
   Central Valley agriculture, Napa wine country) rather than the original guessed

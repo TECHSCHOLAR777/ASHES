@@ -15,7 +15,14 @@ import httpx
 from src.logging_ import tool_logger
 
 NWS_BASE_URL = "https://api.weather.gov"
-SPC_OUTLOOK_URL = "https://www.spc.noaa.gov/products/fire_wx/fwdy1.txt"
+# [NEW DECISION, see DECISIONS.md] SPC does not publish the Day-1 fire weather outlook as a
+# plain-text product at a stable URL (the originally assumed `fwdy1.txt` 404s; SPC's FWD
+# text product is not exposed per-office on api.weather.gov either). `fwdy1.html` is the
+# real, currently-serving page for this product; it is a graphical map viewer, so keyword
+# extraction on its markup is best-effort and biased toward false negatives (never a false
+# "elevated"), consistent with this being an explicitly low-priority "slow signal" (SRS
+# 2.2.1) that never blocks the pipeline either way.
+SPC_OUTLOOK_URL = "https://www.spc.noaa.gov/products/fire_wx/fwdy1.html"
 USER_AGENT = "fire-copilot/1.0 (contact@example.com)"
 
 RED_FLAG_EVENT_NAMES = {"red flag warning", "fire weather watch", "extreme fire danger"}
