@@ -159,32 +159,47 @@ model without touching the agent.
 
 ## How to collect real training data
 
-`src/model/train.py` expects `.jsonl` samples in `data/training/`, one line per sample:
+This is implemented, not just described - `scripts/build_training_set.py` builds real
+samples from MTBS's final-perimeter database (30,000+ fires nationally, public domain):
 
-```json
-{"site_id": "...", "event_id": "...", "t0": "2019-06-01T00:00:00Z",
- "w_vector": [...], "w_mask": [...], "e_vector": [...], "y": 0}
+```bash
+python scripts/build_training_set.py \
+  --bbox -125 24 -66 49 \
+  --year-start 2010 --year-end 2023 \
+  --min-acres 1000 \
+  --max-fires 1000 \
+  --positives-per-fire 3 --hard-negatives-per-fire 3 --easy-negatives-per-fire 2 \
+  --credit-target 290000 \
+  --output data/training/real_conus_2010_2023.jsonl
 ```
 
-To build a real set (not synthetic):
+For each matching fire it samples points inside the final perimeter (positive), 2-20 km
+outside it (hard negative), and far from any known fire (easy negative, per SRS 6.2), then
+builds one real sample per point: a real Mireye `fetch` for W, a real FIRMS-archive query
+for historical hotspots at that date, and a real HRRR-archive fetch for wind at that hour.
+`--credit-target` stops the run once cumulative Mireye spend hits a target (credits are
+priced at 1/field/location, confirmed live, so cost is exact, not estimated).
 
-1. Pick historical fires with a clean perimeter time series: MTBS final perimeters (public
-   domain, ~1yr lag, large fires only) as the gold label source, or WFIGS final/YTD
-   perimeters for smaller/recent fires.
-2. For each `(site, event, t0)`, reconstruct **E as of t0** - FIRMS/WFIGS archive data and
-   HRRR archive weather at that historical time, never today's values (that would leak the
-   final outcome into the input).
-3. Reconstruct **W at t0's vintage** via Mireye, masking any field (NDVI, drought category)
-   that cannot be honestly backdated to that date; static fields (terrain, hazard zone
-   geometry) are treated as stable.
-4. Encode with `src/features/w_encoder.encode_w` and `src/features/e_packer.e_features_to_vector`
-   to get `w_vector`/`w_mask`/`e_vector` in the exact same order the live pipeline uses.
-5. Label `y = 1` if the site fell inside the fire's final perimeter within 72h of `t0`, else `0`.
-6. Run `python scripts/train_model.py` - it evaluates on an event-held-out split and reports
-   PR-AUC, Brier score, and the random-W collapse probe (SRS AC-7/AC-8: this is exactly what
-   settles whether cited W actually earns its keep, or whether the system should ship as
-   honest orchestration alone).
+**Read `src/model/training_data.py`'s module docstring before trusting the labels for a
+real H1 claim.** The honest limitation: MTBS publishes only the fire's ignition *date* and
+*final* perimeter, not a perimeter time series, so `dist_perim_m` here is distance to the
+fire's ignition centroid, not "distance to the perimeter as it existed at t0" (SRS 6.3's
+actual definition) - using the *final* perimeter's distance would leak the outcome (SRS
+6.1's leakage rule), so the weaker ignition-centroid proxy is used instead. `acres` and
+`containment_pct` are left null for the same reason, not backfilled from the final MTBS
+acreage. Vintage-dynamic W fields (`ndvi_current`, `ndvi_change_5y`, `drought_category`)
+are stripped before encoding since Mireye only serves today's value for those, never a
+historical one (SRS 6.2: "never use 2026 NDVI on a 2018 fire"). A stronger version of this
+pipeline would reconstruct t0 from a real historical WFIGS/NIFC perimeter-snapshot archive
+instead of proxying off MTBS's ignition date alone - that is the next real improvement, not
+yet built.
 
-This is genuine ETL work spanning several public data sources plus per-site-per-date Mireye
-calls; it was deliberately deferred so V1's codebase, tests, and pipeline could be complete
-and correct first.
+Once a real set exists at `data/training/*.jsonl`, run:
+
+```bash
+python scripts/train_model.py
+```
+
+It evaluates on an event-held-out split and reports PR-AUC, Brier score, and the random-W
+collapse probe (SRS AC-7/AC-8: this is exactly what settles whether cited W earns its keep,
+or whether the system should ship as honest orchestration alone).
