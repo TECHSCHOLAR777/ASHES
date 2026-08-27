@@ -76,6 +76,9 @@ def test_enrich_script_attaches_spread_without_mireye(tmp_path, monkeypatch):
             pass
 
     class FakeLF:
+        def __init__(self, *args, **kwargs):
+            pass
+
         def close(self):
             pass
 
@@ -90,3 +93,15 @@ def test_enrich_script_attaches_spread_without_mireye(tmp_path, monkeypatch):
     assert written["spread_vector"] == [9.0, 2.0, 0.2, 0.4, 0.6]
     assert written["coords_source"] == "reconstructed_centroid_circle"
     assert written["site_lat"] is not None
+
+
+def test_historic_bbox_clamp_keeps_centroid_window():
+    from src.spread.historic import _clamp_bbox_to_centroid
+
+    west, south, east, north = _clamp_bbox_to_centroid(
+        (-130.0, 20.0, -60.0, 50.0), lat0=40.0, lng0=-120.0, max_deg=0.35
+    )
+    assert east - west <= 0.35 + 1e-9
+    assert north - south <= 0.35 + 1e-9
+    assert west <= -120.0 <= east
+    assert south <= 40.0 <= north

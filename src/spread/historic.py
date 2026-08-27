@@ -17,6 +17,30 @@ from src.spread.client import SpreadField, spread_run
 
 logger = logging.getLogger("fire_copilot.spread.historic")
 
+# LFPS hangs or 300s-times-out on huge historic perimeters. Cap the fetch window
+# around the ignition centroid so Path B jobs stay inside a workable tile. Live
+# V2 ask/watch still uses the full wind-projected incident AOI.
+MAX_HISTORIC_AOI_DEG = 0.35
+
+
+def _clamp_bbox_to_centroid(
+    bbox: tuple[float, float, float, float],
+    lat0: float | None,
+    lng0: float | None,
+    max_deg: float = MAX_HISTORIC_AOI_DEG,
+) -> tuple[float, float, float, float]:
+    west, south, east, north = bbox
+    if lat0 is None or lng0 is None:
+        return bbox
+    half = max_deg / 2.0
+    west = max(west, lng0 - half)
+    east = min(east, lng0 + half)
+    south = max(south, lat0 - half)
+    north = min(north, lat0 + half)
+    if west >= east or south >= north:
+        return bbox
+    return west, south, east, north
+
 
 def mtbs_as_perimeter(fire: MTBSFire) -> WFIGSPerimeter:
     rings: list[list[tuple[float, float]]] = []
@@ -44,6 +68,7 @@ def spread_field_for_fire(
     bbox = aoi_bbox_for_fetch(perim, None, None)
     if bbox is None:
         return None
+    bbox = _clamp_bbox_to_centroid(bbox, fire.centroid_lat, fire.centroid_lng)
     t0 = ignition_datetime(fire)
     if weather is None:
         weather = {
