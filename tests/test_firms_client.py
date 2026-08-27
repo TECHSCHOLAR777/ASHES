@@ -1,6 +1,8 @@
+from datetime import date
+
 import httpx
 
-from src.clients.firms import FIRMSClient
+from src.clients.firms import ARCHIVE_SOURCES, FIRMSClient
 
 
 CSV_HEADER = "latitude,longitude,frp,acq_date,acq_time,confidence\n"
@@ -47,6 +49,19 @@ def test_quota_signal_marks_unavailable(mocker):
     result = client.get_hotspots(34.0, -118.0)
 
     assert result.unavailable is True
+    client.close()
+
+
+def test_historical_hotspots_uses_archive_sources_and_date_path(mocker):
+    client = FIRMSClient(map_key="testkey")
+    mock_get = mocker.patch.object(client._client, "get", return_value=make_text_response(CSV_HEADER))
+
+    client.get_historical_hotspots(39.5, -122.9, on_date=date(2020, 9, 10))
+
+    called_urls = [call.args[0] for call in mock_get.call_args_list]
+    assert len(called_urls) == len(ARCHIVE_SOURCES)
+    assert all("2020-09-10" in url for url in called_urls)
+    assert all(any(src in url for src in ARCHIVE_SOURCES) for url in called_urls)
     client.close()
 
 

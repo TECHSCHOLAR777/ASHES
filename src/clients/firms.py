@@ -20,6 +20,11 @@ FIRMS_AREA_URL_TEMPLATE = (
     "https://firms.modaps.eosdis.nasa.gov/api/area/csv/{map_key}/{source}/{bbox}/{days}"
 )
 SOURCES = ["VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT", "MODIS_NRT"]
+# Historical/reprocessed ("Standard Processing") sources, verified live 2026-08-27 against
+# the 2020 August Complex fire (see DECISIONS.md). NOAA-21 has no SP archive product yet
+# (`VIIRS_NOAA21_SP` returns "Invalid source" - its reprocessing pipeline lags the sensor's
+# 2022 launch), so historical queries use only these two VIIRS archives plus MODIS.
+ARCHIVE_SOURCES = ["VIIRS_NOAA20_SP", "VIIRS_SNPP_SP", "MODIS_SP"]
 RADII_KM = [5, 10, 20]
 KM_PER_DEGREE_LAT = 111.0
 
@@ -85,6 +90,19 @@ class FIRMSClient:
     def get_hotspots(
         self, lat: float, lng: float, days: int = 1, site_id: str | None = None
     ) -> FIRMSResult:
+        """Live/near-real-time hotspots (used by the watch loop)."""
+        return self._fetch(lat, lng, days=days, on_date=None, site_id=site_id)
+
+    def get_historical_hotspots(
+        self, lat: float, lng: float, on_date, site_id: str | None = None
+    ) -> FIRMSResult:
+        """Archive hotspots for one historical UTC date (training-data use, SRS 6.2:
+        "E_hist: FIRMS/WFIGS as of t0"). `on_date` is a `datetime.date`."""
+        return self._fetch(lat, lng, days=1, on_date=on_date, site_id=site_id)
+
+    def _fetch(
+        self, lat: float, lng: float, days: int, on_date, site_id: str | None
+    ) -> FIRMSResult:
         if not self._map_key:
             tool_logger.log_tool_call(
                 "firms:get_hotspots", {"lat": lat, "lng": lng}, None, site_id, 0.0, error="FIRMSKeyMissing"
@@ -95,11 +113,14 @@ class FIRMSClient:
         bbox = _bbox_for_radius(lat, lng, max_radius)
         all_hotspots: list[Hotspot] = []
         unavailable = False
+        sources = ARCHIVE_SOURCES if on_date is not None else SOURCES
 
-        for source in SOURCES:
+        for source in sources:
             url = FIRMS_AREA_URL_TEMPLATE.format(
                 map_key=self._map_key, source=source, bbox=bbox, days=days
             )
+            if on_date is not None:
+                url = f"{url}/{on_date.isoformat()}"
             start = time.monotonic()
             try:
                 resp = self._client.get(url)

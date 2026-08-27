@@ -114,12 +114,21 @@ class HRRRClient:
                     del self._dataset_cache[min(self._dataset_cache)]
             return ds_wind, ds_temp, ds_rh
 
-    def get_weather(self, lat: float, lng: float, site_id: str | None = None) -> HRRRWeather:
-        now = datetime.now(timezone.utc)
+    def get_weather(
+        self, lat: float, lng: float, site_id: str | None = None, at: datetime | None = None
+    ) -> HRRRWeather:
+        """Wind/temp/RH nearest to `at` (default: now). Training-data reconstruction (SRS
+        6.2: "HRRR archive/reanalysis wind at t0") passes a historical `at`; HRRR's public
+        NODD archive on AWS goes back to 2014-07-30, and Herbie fetches any date in range
+        with the same code path used for live polling - no separate historical client
+        needed. Falls back to earlier hours the same way live polling does, since an
+        archived hour can also be missing/corrupt.
+        """
+        reference = at or datetime.now(timezone.utc)
         last_error: Exception | None = None
 
         for hours_back in range(self._max_hours_back):
-            run_time = (now - timedelta(hours=hours_back)).replace(minute=0, second=0, microsecond=0)
+            run_time = (reference - timedelta(hours=hours_back)).replace(minute=0, second=0, microsecond=0)
             start = time.monotonic()
             try:
                 ds_wind, ds_temp, ds_rh = self._get_datasets(run_time, site_id)

@@ -93,6 +93,26 @@ def test_get_weather_falls_back_to_previous_hour(mocker):
     assert weather.wind_speed_ms == 1.0
 
 
+def test_get_weather_at_historical_datetime(mocker):
+    from datetime import datetime, timezone
+
+    fake_instance = mocker.MagicMock()
+    fake_instance.xarray.side_effect = [
+        _FakeDataset({"u10": 0.0, "v10": 3.0}),
+        _FakeDataset({"t2m": 280.0}),
+        _FakeDataset({"r2": 70.0}),
+    ]
+    mock_herbie_cls = mocker.patch("herbie.Herbie", return_value=fake_instance)
+
+    client = HRRRClient()
+    historical = datetime(2020, 9, 10, 18, 0, tzinfo=timezone.utc)
+    weather = client.get_weather(39.5, -122.9, at=historical)
+
+    assert weather.wind_speed_ms == 3.0
+    called_run_time = mock_herbie_cls.call_args[0][0]
+    assert called_run_time.startswith("2020-09-10")
+
+
 def test_dataset_shared_across_sites_for_same_hour(mocker):
     """Two sites asking for the same hour should trigger exactly one Herbie fetch - this is
     the fix for the live watch-loop run that took over an hour because every site
