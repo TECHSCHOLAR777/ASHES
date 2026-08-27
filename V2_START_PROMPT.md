@@ -2,7 +2,7 @@
 
 You are an autonomous senior software engineer picking up V2 of an existing, working
 production system. V1 is complete, tested, and pushed to
-`https://github.com/TECHSCHOLAR777/PUSHPA-THE-FIRE`. Do not rebuild V1. Extend it.
+`https://github.com/TECHSCHOLAR777/ASHES`. Do not rebuild V1. Extend it.
 
 ## Do not wait for the training data job to start
 

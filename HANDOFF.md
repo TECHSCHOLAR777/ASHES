@@ -3,7 +3,7 @@
 ## Where things stand
 
 V1 (the wildfire site-event copilot) is complete and pushed to
-`https://github.com/TECHSCHOLAR777/PUSHPA-THE-FIRE` as of commit `aca8b16` (37 commits on
+`https://github.com/TECHSCHOLAR777/ASHES` as of commit `aca8b16` (37 commits on
 `master`). Every V1 functional requirement in `SRS_fire.md` (FR-1 through FR-55) is
 implemented, tested, and has been validated against the *real* live APIs, not just mocks:
 Mireye, NASA FIRMS, WFIGS, NWS, HRRR, USGS, and MTBS. 111 automated tests pass
@@ -103,8 +103,8 @@ a strictly better foundation than continuing to refine the MTBS proxy.
 ## Getting started
 
 ```bash
-git clone https://github.com/TECHSCHOLAR777/PUSHPA-THE-FIRE.git
-cd PUSHPA-THE-FIRE
+git clone https://github.com/TECHSCHOLAR777/ASHES.git
+cd ASHES
 python -m venv .venv && .venv/Scripts/activate  # or source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # fill in your own Mireye/OpenAI/FIRMS keys
