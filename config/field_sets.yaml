@@ -55,7 +55,9 @@ roles:
       # Exact strings verified live 2026-08-27: CAL FIRE FHSZ returns "Non-Wildland",
       # "Moderate", "High", "Very High" (title case, hyphenated), not lowercase codes.
       fire_hazard_severity_zone_class: { type: ordered_categorical, order: ["Non-Wildland", Moderate, High, "Very High"], low_confidence_outside: [CA] }
-      fire_hazard_responsibility_area: { type: unordered_categorical, categories: [state, federal, local, other] }
+      # CAL FIRE responsibility-area codes verified live 2026-08-27 ("LRA"), not the
+      # spelled-out state/federal/local guess.
+      fire_hazard_responsibility_area: { type: unordered_categorical, categories: [SRA, FRA, LRA, other] }
       nearest_fire_perimeter_distance_m: { type: float }
       most_recent_burn_year: { type: int, nullable: true }
       landslide_susceptibility_index: { type: float }

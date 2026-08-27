@@ -42,6 +42,14 @@ One line per decision, in build order.
   automatically create PandasIndex for coord 'latitude' with 2 dimensions"). Nearest
   neighbor is instead found by brute-force squared-distance argmin over the full ~1.9M-cell
   CONUS grid (`_nearest_grid_index` in `hrrr.py`), which is fast (<10ms) with numpy.
+- [2026-08-27] `cfgrib`/ecCodes is not thread-safe: a live 5-site watch-loop poll cycle
+  (each site fetching HRRR in its own worker thread, per FR-30's parallel E-fetch) produced
+  "fatal flex scanner internal error--end of buffer missed" and ecCodes parser errors from
+  concurrent GRIB2 parsing, stalling the entire poll cycle. Fixed by serializing all
+  Herbie/cfgrib access (both the file download and the parse) behind one process-wide
+  `threading.Lock` in `hrrr.py`. Sites requesting the same HRRR hour after the first still
+  benefit from Herbie's on-disk cache, so this costs one real download per poll cycle, not
+  one per site.
 - [2026-08-27] SPC's Day-1 fire weather outlook has no stable plain-text product URL: the
   originally assumed `fwdy1.txt` 404s, and SPC's "FWD" (Fire Weather Outlook Discussion)
   text product is not exposed per-office (KWNS) on `api.weather.gov/products`. Pointed the

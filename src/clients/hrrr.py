@@ -8,11 +8,18 @@ live weather in the system (SRS 10.3: "NDVI/W are vintage - never call live").
 from __future__ import annotations
 
 import math
+import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from src.logging_ import tool_logger
+
+# cfgrib/ecCodes is not thread-safe: parsing GRIB2 files concurrently from multiple threads
+# corrupts its C-level parser state ("fatal flex scanner internal error", confirmed against
+# a live watch-loop run with 5 sites polling in parallel - see DECISIONS.md). All Herbie/
+# cfgrib access is serialized process-wide through this lock.
+_HRRR_PARSE_LOCK = threading.Lock()
 
 
 @dataclass
@@ -67,10 +74,11 @@ class HRRRClient:
             run_time = (now - timedelta(hours=hours_back)).replace(minute=0, second=0, microsecond=0)
             start = time.monotonic()
             try:
-                h = Herbie(run_time.strftime("%Y-%m-%d %H:%M"), model="hrrr", product="sfc", fxx=0)
-                ds_wind = h.xarray(":UGRD:10 m|:VGRD:10 m")
-                ds_temp = h.xarray(":TMP:2 m")
-                ds_rh = h.xarray(":RH:2 m")
+                with _HRRR_PARSE_LOCK:
+                    h = Herbie(run_time.strftime("%Y-%m-%d %H:%M"), model="hrrr", product="sfc", fxx=0)
+                    ds_wind = h.xarray(":UGRD:10 m|:VGRD:10 m")
+                    ds_temp = h.xarray(":TMP:2 m")
+                    ds_rh = h.xarray(":RH:2 m")
 
                 lng_0_360 = lng % 360
                 y_idx, x_idx = _nearest_grid_index(
