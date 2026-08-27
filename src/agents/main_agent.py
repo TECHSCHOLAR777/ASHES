@@ -407,6 +407,9 @@ def deliver_action_card_and_state(
 ESCALATION_ACTIONS = {"protect_asset", "evacuate_site"}
 
 
+response_cards: dict[str, Any] = {}  # ActionCard.card_id -> ResponseCard, for ask-mode callers
+
+
 def _trigger_response_agent(deps: MainAgentDeps, site: Site, card: ActionCard, background: bool) -> Any:
     from src.agents.response_agent import run_response_agent
 
@@ -415,7 +418,9 @@ def _trigger_response_agent(deps: MainAgentDeps, site: Site, card: ActionCard, b
 
         threading.Thread(target=run_response_agent, args=(deps, site, card), daemon=True).start()
         return None
-    return run_response_agent(deps, site, card)
+    response_card = run_response_agent(deps, site, card)
+    response_cards[card.card_id] = response_card
+    return response_card
 
 
 def run_site(deps: MainAgentDeps, site: Site, mode: str = "ask") -> ActionCard:
