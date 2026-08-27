@@ -20,7 +20,9 @@ def make_deps(tmp_path, monkeypatch, mocker, seed_roles: dict[str, dict] | None 
         deps.w_cache.put("s1", role, fields, {})
 
     mocker.patch.object(deps.mireye, "fetch", return_value={})  # role J fetch: nothing extra
+    mocker.patch.object(deps.mireye, "fetch_batch", return_value=[])
     mocker.patch.object(deps.usgs, "get_gage_discharge", return_value=_fake_gage())
+    mocker.patch.object(deps.osm, "route_to_nearest_station", return_value=None)
     return deps
 
 
@@ -140,3 +142,67 @@ def test_response_card_never_invents_missing_fields(tmp_path, monkeypatch, mocke
     assert card.water_sources == []
     assert card.hazmat_sites == []
     assert card.responsible_agency == "local"  # explicit fallback, not fabricated agency name
+
+
+def test_osm_network_eta_used_when_route_exists(tmp_path, monkeypatch, mocker):
+    from src.clients.osm import OsmFireStation, OsmRoute
+
+    deps = make_deps(tmp_path, monkeypatch, mocker)
+    route = OsmRoute(
+        eta_minutes=12.5,
+        distance_m=4000.0,
+        station=OsmFireStation(name="OSM Station", lat=34.01, lng=-118.02, osm_id=1),
+        n_edges=4,
+        source_url="https://overpass-api.de/api/interpreter",
+    )
+    mocker.patch.object(deps.osm, "route_to_nearest_station", return_value=route)
+    site = Site(site_id="s1", name="Test Site", lat=34.0, lng=-118.0)
+
+    card = run_response_agent(deps, site, _action_card())
+
+    assert card.fire_station.eta_source == "osm_network"
+    assert card.fire_station.eta_minutes_estimate == 12.5
+    assert card.fire_station.name == "OSM Station"
+    assert card.fire_station.distance_m == 4000.0
+    assert card.response_card_version == "v2.0.0"
+
+
+def test_aoi_water_map_is_spatially_referenced(tmp_path, monkeypatch, mocker):
+    from src.agents import main_agent as main_agent_mod
+    from src.geometry.aoi import Cell, Geometry
+
+    deps = make_deps(tmp_path, monkeypatch, mocker)
+    main_agent_mod.site_aois["s1"] = Geometry(
+        mode="aoi",
+        geom={
+            "type": "Polygon",
+            "coordinates": [[
+                [-118.02, 33.99], [-117.98, 33.99], [-117.98, 34.01], [-118.02, 34.01], [-118.02, 33.99]
+            ]],
+        },
+        cells=[Cell(lat=34.0, lng=-118.0, row=0, col=0, fbfm40=122)],
+        source_layer="test",
+        vintage="LF2024",
+        west=-118.02,
+        south=33.99,
+        east=-117.98,
+        north=34.01,
+    )
+
+    def fake_batch(coords, fields, site_ids=None):
+        return [{"nearest_waterbody_name": "Lake Test"} for _ in coords]
+
+    mocker.patch.object(deps.mireye, "fetch_batch", side_effect=fake_batch)
+    site = Site(site_id="s1", name="Test Site", lat=34.0, lng=-118.0)
+    try:
+        card = run_response_agent(deps, site, _action_card())
+    finally:
+        main_agent_mod.site_aois.pop("s1", None)
+
+    lakes = [w for w in card.water_sources if w.type == "lake_reservoir"]
+    assert lakes
+    assert lakes[0].name == "Lake Test"
+    assert lakes[0].lat is not None
+    assert lakes[0].lng is not None
+    assert 33.99 <= lakes[0].lat <= 34.01
+    assert -118.02 <= lakes[0].lng <= -117.98

@@ -45,6 +45,9 @@ class WaterSource(BaseModel):
     note: Optional[str] = None
     source_url: str
     fetched_at: str
+    # FR-56: grid cell where this source was observed. None for the V1 site-point sources.
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 class AccessRoute(BaseModel):
@@ -59,6 +62,8 @@ class FireStation(BaseModel):
     name: Optional[str] = None
     distance_m: float
     eta_minutes_estimate: Optional[float] = None
+    # FR-57: "osm_network" when Overpass routing succeeded; "distance_proxy" is the V1 fallback.
+    eta_source: Optional[Literal["osm_network", "distance_proxy"]] = None
 
 
 class Airport(BaseModel):
