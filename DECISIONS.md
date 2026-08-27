@@ -42,6 +42,15 @@ One line per decision, in build order.
   automatically create PandasIndex for coord 'latitude' with 2 dimensions"). Nearest
   neighbor is instead found by brute-force squared-distance argmin over the full ~1.9M-cell
   CONUS grid (`_nearest_grid_index` in `hrrr.py`), which is fast (<10ms) with numpy.
+- [2026-08-27] Raising `--workers` from 12 to 24 to try to spend more Mireye credit in the
+  same wall-clock window backfired: it overwhelmed Mireye's own backend, not the client's
+  rate limiter. Live logs showed 695 read-timeouts, 69 HTTP 500s, and 46 HTTP 429s in ~7
+  minutes at 24 workers, versus a clean run at 12 workers - each of the 61 fields in a
+  fetch does its own geospatial lookup server-side, and that clearly doesn't scale linearly
+  with client-side concurrency past some point. Net effect at 24 workers was *worse*
+  throughput (17 samples/15min, mostly wasted retries) than at 12 (34 samples in 512s
+  cleanly). Reverted to 12 workers, the last concurrency level validated to complete
+  requests cleanly rather than mostly retry-and-fail.
 - [2026-08-27] `build_training_set.py`'s first concurrent version shuffled individual
   sample tasks (not just fire order) before submitting them to the thread pool, on the
   theory that interleaving fires kept early progress diverse. In practice this defeated the
