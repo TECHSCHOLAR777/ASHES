@@ -175,7 +175,26 @@ class MireyeClient:
                 time.sleep(2**attempt)
                 continue
 
-            resp.raise_for_status()
+            if resp.status_code >= 400:
+                # A 4xx is a client-side error (bad field name, too many fields, ...) that
+                # will not fix itself on retry, but it must still be logged - it previously
+                # wasn't: `raise_for_status()` raised before the log call ever ran, so a
+                # sample-building or W-fetch failure's actual response body (e.g.
+                # `fields_unknown`) was silently lost, violating NFR-14's "every tool call
+                # is reconstructable from logs." Confirmed against a live 400 that vanished
+                # from the JSONL log entirely before this fix (see DECISIONS.md).
+                body_preview = resp.text[:500]
+                tool_logger.log_tool_call(
+                    f"mireye:{path}",
+                    json_body or {},
+                    {"status_code": resp.status_code, "body": body_preview},
+                    site_id,
+                    latency_ms,
+                    key_index,
+                    error=f"HTTP {resp.status_code}",
+                )
+                raise MireyeRequestFailed(f"{path} returned HTTP {resp.status_code}: {body_preview}")
+
             data = resp.json()
             tool_logger.log_tool_call(f"mireye:{path}", json_body or {}, data, site_id, latency_ms, key_index)
             return data

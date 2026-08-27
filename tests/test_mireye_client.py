@@ -50,6 +50,25 @@ def test_retries_on_429_then_succeeds(client, mocker):
     assert mock_request.call_count == 3
 
 
+def test_400_is_logged_before_raising(client, mocker, tmp_path, monkeypatch):
+    """A 4xx must not vanish silently: it needs to appear in the tool log (NFR-14), not
+    just raise. Points tool_logger at a temp dir so this test doesn't touch real logs."""
+    from src.logging_ import tool_logger
+
+    monkeypatch.setattr(tool_logger, "_LOG_DIR", tmp_path)
+    mocker.patch.object(
+        client._client, "request", return_value=make_response(400, {"detail": {"error": "fields_unknown"}})
+    )
+
+    with pytest.raises(MireyeRequestFailed):
+        client._request("POST", "/v1/fetch", {"fields": ["bogus_field"]})
+
+    log_files = list(tmp_path.glob("*.jsonl"))
+    assert len(log_files) == 1
+    logged_line = log_files[0].read_text(encoding="utf-8")
+    assert "fields_unknown" in logged_line
+
+
 def test_retries_exhausted_raises(client, mocker):
     mocker.patch("time.sleep")
     mocker.patch.object(client._client, "request", return_value=make_response(500))
