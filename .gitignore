@@ -3,6 +3,9 @@ __pycache__/
 *.pyc
 .env
 data/cache/*.db
+data/cache/landfire/*
+!data/cache/landfire/.gitkeep
+data/logs/*.jsonl
 data/logs/*.jsonl
 data/models/*.pkl
 data/models/metrics_*.json

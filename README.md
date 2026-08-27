@@ -1,4 +1,19 @@
-# Wildfire Site-Event Copilot (V1)
+# Wildfire Site-Event Copilot (V1 + V2 spread)
+
+An unattended, cited fire-week copilot for a book of named US sites. While a wildfire is
+live or imminent near a site, it joins live fire signals (NWS Red Flag alerts, NASA FIRMS
+thermal hotspots, WFIGS incidents and operational perimeters, HRRR wind/weather), cited
+site physics from the Mireye API (fuels, terrain, hazard zone, access, burn history), and a
+trained model into a closed, cited ActionCard: monitor, prepare, protect_asset,
+evacuate_site, inspect_after, or no_action. V2 adds an incident-first AOI, LANDFIRE fuel
+rasters, an out-of-process spread engine (`spread_run`) that emits ETA / P(burn by T) with
+ensemble sigma, ETA-keyed policy, OSM truck routing, and an AOI water map. When a site
+escalates to protect_asset or evacuate_site, a second Response Support Agent produces a
+ResponseCard: ranked water sources, access routes, fire-station ETA, hazmat priorities,
+environmental constraints, and responsible agency, all deterministic and cited, no trained
+model involved. The action is always decided by a versioned policy table, never the LLM;
+the LLM only writes a copy-only prose brief, which is rejected and replaced if it
+introduces a single number not already on the card.
 
 An unattended, cited fire-week copilot for a book of named US sites. While a wildfire is
 live or imminent near a site, it joins live fire signals (NWS Red Flag alerts, NASA FIRMS
@@ -20,9 +35,10 @@ evacuation order.
 ## Prerequisites
 
 - Python 3.11+ (built and tested on 3.12.13)
-- Three Mireye API keys (round-robin rotation; this build assumes a Growth-plan key, 300
+- Two or three Mireye API keys (round-robin; this build assumes a Growth-plan key, 300
   requests/minute each)
-- A NASA FIRMS `MAP_KEY` (free, register at https://firms.modaps.eosdis.nasa.gov/api/map_key/)
+- A NASA FIRMS `MAP_KEY` (free, register at https://firms.modaps.eosdis.nasa.gov/api/map_key/;
+  optional - the pipeline degrades with `firms_unavailable` if unset)
 - An OpenAI API key (for the copy-only brief; the system runs without one, using a
   deterministic fallback brief)
 - Optionally: a Slack bot token and SMTP credentials for real delivery (both delivery
@@ -142,9 +158,15 @@ model without touching the agent.
   transactions/10 minutes). `FIRMSClient` self-throttles against it and exposes
   `get_quota_status()` for a live check; the `firms_unavailable` degraded-flag path is kept
   as defense in depth, not because the limit is unknown.
-- **No ELMFIRE / delegated spread engine in V1.** The spread signal is a wind-projected ROS
-  ellipse feature (a crude proxy, explicitly not Rothermel physics) - see
-  `src/features/ros_ellipse.py`. The delegated operational engine is V2 scope.
+- **No compiled ELMFIRE binary in this tree.** V2 still runs a delegated spread engine
+  *out of process* (`spread_service/`, `POST /spread_run`). The process currently uses an
+  original Rothermel+Huygens solver fed by LANDFIRE FBFM40 + HRRR; set `SPREAD_ENGINE_BIN`
+  to exec a real elmfire wrapper that speaks the JSON file contract. See `DECISIONS.md`.
+  V1's wind-projected ROS ellipse remains as an E-side feature.
+- **H2 is not yet evaluable on real fires.** `data/training/` has no MTBS/LANDFIRE/spread
+  JSONL in this checkout. `python scripts/evaluate_h2.py` reports
+  `unevaluable_no_real_spread_labels` and runs a synthetic probe only. That is the honest
+  AC-13-adjacent outcome until `--with-spread` collection exists.
 - **HRRR's grid is Lambert Conformal** (2D curvilinear lat/lon), so nearest-point lookup is
   done by brute-force distance argmin, not `xarray.sel(method="nearest")` - see
   `src/clients/hrrr.py` and `DECISIONS.md`.
@@ -178,7 +200,14 @@ outside it (hard negative), and far from any known fire (easy negative, per SRS 
 builds one real sample per point: a real Mireye `fetch` for W, a real FIRMS-archive query
 for historical hotspots at that date, and a real HRRR-archive fetch for wind at that hour.
 `--credit-target` stops the run once cumulative Mireye spend hits a target (credits are
-priced at 1/field/location, confirmed live, so cost is exact, not estimated).
+priced at 1/field/location, confirmed live, so cost is exact, not estimated). Add
+`--with-spread` to fetch LANDFIRE once per fire and attach a delegated `spread_vector`
+for the H2 calibration head. Then:
+
+```bash
+python scripts/train_model.py
+python scripts/evaluate_h2.py
+```
 
 **Read `src/model/training_data.py`'s module docstring before trusting the labels for a
 real H1 claim.** The honest limitation: MTBS publishes only the fire's ignition *date* and

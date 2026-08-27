@@ -138,3 +138,43 @@ One line per decision, in build order.
   `overture_class`) are fixed, finite category lists taken from the source catalogs' published
   class lists, with an explicit `other` bucket for anything unseen, so the feature vector length
   never depends on what W happens to return in a given call.
+- [2026-08-27] V2 LANDFIRE is not the old ArcGIS GPServer `submitJob`. A live probe of
+  `https://lfps.usgs.gov/arcgis/rest/services/LandfireProductService/GPServer/.../submitJob`
+  returned the Next.js HTML form. The machine API is `GET /api/healthCheck`,
+  `GET /api/products`, `POST /api/job/submit` (JSON: `Email`, `Layer_List`,
+  `Area_of_Interest` as `W S E N` EPSG:4326, `Resample_Resolution`, `Output_Projection`),
+  `GET /api/job/status?JobId=`. Submit returns a UUID `jobId`. Status `outputFile` is a zip
+  of a multi-band GeoTIFF, dtype int16, nodata -9999, band descriptions like
+  `LF2024_FBFM40_CONUS`. Default CRS is a local Albers centered on the AOI; we pass
+  `Output_Projection: "4326"`. CH/CBH are stored as m*10, CBD as kg/m3*100. Layer picker
+  prefers newest `geoAreas == "All"` (LF2024 fuels, LF2020 Elev/SlpD/Asp). LF2025 FBFM40
+  is only SW/NW; seasonal `LF2025_FBFM40_SP26` must not win. Non-burnable FBFM40 codes
+  used for AOI clipping: {0, 91, 92, 93, 98, 99}.
+- [2026-08-27] ELMFIRE Fortran was not compiled in this environment (no Docker, no
+  pre-built `elmfire` binary). Cell2Fire (GPL-3.0) is not used. The licensing seam is
+  still real: `spread_service/` is a separate HTTP process; `src/` talks to it only via
+  `POST /spread_run` and never imports it (enforced by `tests/test_licensing_seam.py`).
+  The process currently runs an original Rothermel-rate + Huygens elliptical raster
+  solver using published Scott & Burgan FBFM40 characteristic ROS (not a copy of ELMFIRE
+  or Cell2Fire). If `SPREAD_ENGINE_BIN` points at a binary that speaks
+  `bin inputs.json outputs.json` with the same output keys, the server execs it instead
+  and falls back to the internal solver on failure. Ensemble member 0 is unperturbed;
+  members 1..N-1 perturb wind speed/direction and RH.
+- [2026-08-27] NIFC Interagency Fire Perimeter History
+  (`InterAgencyFirePerimeterHistory_All_Years_View`) is live and queryable, but it is a
+  *final* mapped perimeter layer (`FEATURE_CA` typically "Wildfire Final Fire Perimeter";
+  `DATE_CUR` is the map date, e.g. `20061102000000`). Native coordinates are not WGS84;
+  `outSR=4326` is required (verified: first vertex `-123.23, 47.86`). These polygons are
+  not t0 operational snapshots. Using them as E-side `dist_perim_m` at ignition would leak
+  the outcome (SRS 6.1). Training still uses the ignition-centroid proxy for t0 distance
+  and attaches a delegated `spread_vector` via `--with-spread` instead. IRWINID is often
+  null on older historic records.
+- [2026-08-27] This V2 run was issued two Mireye keys (not three) and no FIRMS MAP_KEY,
+  Slack, or SMTP. Existing degraded paths apply: FIRMS sets `firms_unavailable`; delivery
+  is log-only. Two keys round-robin at 300 rpm each on the Growth plan.
+- [2026-08-27] H2 (W-conditioned calibration beats raw delegated field on event/HUC/state
+  held-out fires) is implemented as `scripts/evaluate_h2.py`. There is no real
+  `data/training/*.jsonl` with spread labels in this checkout, so the gate reports
+  `unevaluable_no_real_spread_labels` rather than inventing a pass. A synthetic probe
+  checks that the comparison machinery runs; it is not an AC-12 research result. Collect
+  with `scripts/build_training_set.py --with-spread` and rerun the gate.
