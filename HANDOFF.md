@@ -16,11 +16,15 @@ found the SRS's assumptions did not match the real APIs (field taxonomies, CRS h
 rate limits, scheduler behavior) and how each was fixed, with the live evidence that proved
 it. Skipping it means re-discovering the same bugs by hand.
 
-A large real-data collection job may still be running or may have finished by the time this
-is read - check `data/training/real_conus_2015_2023.jsonl` and the tail of whatever log file
-was last used with `scripts/build_training_set.py`. If it finished, run
-`python scripts/train_model.py` to get a real-data-trained `h_fire` model and its metrics
-before starting V2 work, so V2 has an honest baseline to beat.
+**Update (2026-08-27): the real training data collection finished and H1 is validated.**
+`data/training/real_conus_2015_2023.jsonl` holds 4,300 real samples across 458 distinct
+MTBS fires (2015-2023, CONUS-wide, ~262,300 real Mireye credits spent). `h_fire` has been
+retrained on it (`h_fire_v20260827T181439Z.pkl`, not committed - gitignored, regenerate with
+`python scripts/train_model.py` if needed): **PR-AUC 0.7414, Brier 0.1666, and the random-W
+collapse probe drops PR-AUC to 0.6382 when W is shuffled - a real 0.103 AP loss.** That is
+the SRS's own H1 gate (AC-7): cited Mireye W measurably improves the score beyond E alone,
+on real held-out fires. H1 is validated, not just plumbing-tested. V2 should treat this as
+the baseline `h_fire` (Variant A) result to beat with the W-conditioned calibration head.
 
 ## What V1 actually is
 

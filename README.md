@@ -132,11 +132,15 @@ model without touching the agent.
 
 ## Known limitations
 
-- **The shipped model has no real skill yet.** `data/models/h_fire_v*.pkl` is trained on
-  `scripts/generate_synthetic_training_data.py`'s 500 samples with **random 50/50 labels**,
-  purely so the pipeline (train -> infer -> policy -> card) runs end to end before real
-  historical fire data has been collected. Its PR-AUC and random-W collapse numbers are not
-  a research result - see "How to collect training data" below for what real training needs.
+- ~~The shipped model has no real skill yet~~ - updated 2026-08-27: `h_fire` has been
+  retrained on 4,300 real MTBS-labeled samples across 458 real fires (2015-2023, CONUS-wide).
+  Real result: **PR-AUC 0.7414, Brier 0.1666, random-W collapse delta AP 0.103** - shuffling
+  the Mireye W fields measurably hurts the score on held-out fires, which is the SRS's own
+  H1 validation gate (AC-7). H1 is validated on this data, not just pipeline-tested. The
+  synthetic 500-sample bootstrap (`generate_synthetic_training_data.py`) still exists for
+  fast local smoke-testing without live API calls, but is no longer what's trained on by
+  default - see `HANDOFF.md` for the real dataset's location and the honest caveats on its
+  `dist_perim_m` proxy.
 - ~~FIRMS MAP_KEY quota is UNVERIFIED~~ - fixed 2026-08-27: it's a real, documented,
   checkable limit (`GET /mapserver/mapkey_status/?MAP_KEY=...` returns 5,000
   transactions/10 minutes). `FIRMSClient` self-throttles against it and exposes
