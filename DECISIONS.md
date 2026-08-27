@@ -42,6 +42,15 @@ One line per decision, in build order.
   automatically create PandasIndex for coord 'latitude' with 2 dimensions"). Nearest
   neighbor is instead found by brute-force squared-distance argmin over the full ~1.9M-cell
   CONUS grid (`_nearest_grid_index` in `hrrr.py`), which is fast (<10ms) with numpy.
+- [2026-08-27] MTBS's WFS returns geometry in its native projected CRS (meters), not
+  lat/lng degrees, unless `srsName=EPSG:4326` is passed explicitly - the scalar
+  `burnbndlat`/`burnbndlon` properties are correctly in degrees regardless, which masked
+  this in earlier spot-checks that only printed those properties. A live 1000-fire training
+  run caught it immediately: every sample's positive/hard-negative point (derived from the
+  unprojected geometry) was a raw meter coordinate fed to Mireye as "lat/lng", and every
+  single one came back `coord_out_of_bounds`. Fixed by adding `srsName: "EPSG:4326"` to
+  `MTBSClient.get_fires_in_bbox`'s WFS request params; verified the returned coordinates
+  are real CA/OR degree values after the fix.
 - [2026-08-27] The SRS marks FIRMS MAP_KEY quota "UNVERIFIED" (10.2), but it is directly
   checkable: `GET https://firms.modaps.eosdis.nasa.gov/mapserver/mapkey_status/?MAP_KEY=...`
   returns `{"transaction_limit": 5000, "current_transactions": N, "transaction_interval":

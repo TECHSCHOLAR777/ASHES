@@ -102,6 +102,12 @@ class MTBSClient:
             "request": "GetFeature",
             "typeName": MTBS_TYPE_NAME,
             "outputFormat": "application/json",
+            # [NEW DECISION, see DECISIONS.md] Without this, GeoServer returns geometry in
+            # the layer's native projected CRS (meters), not lat/lng degrees, while the
+            # scalar burnbndlat/burnbndlon properties are correctly in degrees regardless -
+            # a live run fed those raw projected coordinates straight into Mireye as
+            # "lat/lng" and got `coord_out_of_bounds` on every sample before this was caught.
+            "srsName": "EPSG:4326",
             "maxFeatures": str(max_features),
             "CQL_FILTER": " AND ".join(cql_parts),
         }
