@@ -53,6 +53,12 @@ One line per decision, in build order.
 - [2026-08-27] Added `scripts/credit_report.py` (not explicitly named in the SRS, but
   required by NFR-6/AC-5's "a live credit tracker SHALL surface spend against the envelope"):
   sums `credit_usage` log records and reports spend against the 300K-400K V1 envelope.
+- [2026-08-27] `scheduler.add_job(..., next_run_time=None)` in the original `watch_loop.py`
+  does not mean "schedule normally" - APScheduler treats an explicit `None` as "start this
+  job paused, with no automatic runs ever." A live run confirmed this: exactly one poll
+  cycle happened (the manual `tick()` call immediately after `scheduler.start()`), and the
+  scheduled interval job never fired again even after 10+ minutes. Fixed by omitting the
+  argument so APScheduler computes its own next-run time (now + interval) as intended.
 - [2026-08-27] `cfgrib`/ecCodes is not thread-safe: a live 5-site watch-loop poll cycle
   (each site fetching HRRR in its own worker thread, per FR-30's parallel E-fetch) produced
   "fatal flex scanner internal error--end of buffer missed" and ecCodes parser errors from

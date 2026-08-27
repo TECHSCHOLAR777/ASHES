@@ -44,11 +44,17 @@ def main() -> None:
         run_watch_cycle(deps, sites)
         logger.info("Poll cycle complete")
 
+    # `next_run_time` is intentionally left at its default here: passing `None` explicitly
+    # (as an earlier version of this file did) tells APScheduler the job starts paused with
+    # no automatic runs at all, not "schedule normally" - confirmed live, it silently
+    # produced exactly one poll cycle (the manual `tick()` below) and then nothing ever
+    # again (see DECISIONS.md). Leaving the argument out lets APScheduler compute the
+    # normal recurring schedule (first automatic fire at now + interval).
     scheduler = BackgroundScheduler()
-    scheduler.add_job(tick, "interval", minutes=poll_interval_minutes, next_run_time=None)
+    scheduler.add_job(tick, "interval", minutes=poll_interval_minutes)
     scheduler.start()
 
-    tick()  # run the first cycle immediately rather than waiting a full interval
+    tick()  # also run once immediately, rather than waiting a full interval for the first card
 
     try:
         while True:
