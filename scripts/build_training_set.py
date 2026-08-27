@@ -57,6 +57,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--easy-negatives-per-fire", type=int, default=2)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output", type=str, required=True)
+    parser.add_argument(
+        "--key", type=int, choices=[1, 2, 3], default=None,
+        help="Use only this one MIREYE_KEY_N for the whole run (concentrates spend on one "
+             "account instead of round-robining across all three). Default: use all keys.",
+    )
+    parser.add_argument(
+        "--credit-target", type=float, default=None,
+        help="Stop once cumulative Mireye credits spent this run reaches this amount.",
+    )
     return parser.parse_args()
 
 
@@ -64,10 +73,15 @@ def main() -> None:
     args = parse_args()
     rng = random.Random(args.seed)
 
-    keys = [os.environ.get(f"MIREYE_KEY_{i}") for i in (1, 2, 3)]
-    keys = [k for k in keys if k]
-    if not keys:
-        raise RuntimeError("No MIREYE_KEY_* found in environment")
+    if args.key is not None:
+        keys = [os.environ.get(f"MIREYE_KEY_{args.key}")]
+        if not keys[0]:
+            raise RuntimeError(f"MIREYE_KEY_{args.key} not found in environment")
+    else:
+        keys = [os.environ.get(f"MIREYE_KEY_{i}") for i in (1, 2, 3)]
+        keys = [k for k in keys if k]
+        if not keys:
+            raise RuntimeError("No MIREYE_KEY_* found in environment")
 
     mireye = MireyeClient(keys)
     firms = FIRMSClient()
@@ -80,18 +94,44 @@ def main() -> None:
         min_acres=args.min_acres, year_start=args.year_start, year_end=args.year_end,
         max_features=args.max_fires,
     )
+    rng.shuffle(fires)  # avoid always exhausting the same alphabetically-first fires first
     logger.info("Found %d MTBS fires matching the filter", len(fires))
 
     all_centroids = [
         (f.centroid_lat, f.centroid_lng) for f in fires if f.centroid_lat is not None and f.centroid_lng is not None
     ]
 
+    # Deterministic per-sample cost: the live API charges 1 credit/field/location
+    # (confirmed 2026-08-27 via a real /v1/fetch/quote call), and every sample fetches the
+    # same fixed field list, so cumulative spend is exactly `n_successful_samples *
+    # n_fetch_fields` - no need to re-parse the log to track it live.
+    from src.features.w_encoder import load_field_catalog
+
+    catalog = load_field_catalog()
+    n_fetch_fields = len(
+        {
+            field_name
+            for role in catalog["roles"].values()
+            if role.get("model_feature") is not False
+            for field_name, meta in role["fields"].items()
+            if meta.get("type") != "id" and not meta.get("join_key")
+        }
+    )
+    logger.info("Each sample costs %d credits (1/field x %d fields)", n_fetch_fields, n_fetch_fields)
+
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     n_written = 0
-    with open(output_path, "w", encoding="utf-8") as out:
+    credits_spent = 0.0
+    target = args.credit_target
+
+    with open(output_path, "w", encoding="utf-8", buffering=1) as out:
         for fire in fires:
+            if target is not None and credits_spent >= target:
+                logger.info("Credit target %.0f reached; stopping", target)
+                break
+
             positives = sample_positive_points(fire, args.positives_per_fire, rng)
             hard_negatives = sample_hard_negative_points(fire, args.hard_negatives_per_fire, rng)
             other_centroids = [c for c in all_centroids if c != (fire.centroid_lat, fire.centroid_lng)]
@@ -104,6 +144,8 @@ def main() -> None:
             )
 
             for i, (lat, lng, label) in enumerate(labeled_points):
+                if target is not None and credits_spent >= target:
+                    break
                 sample_id = f"{fire.event_id}_{i:03d}"
                 sample = build_sample(mireye, firms, hrrr, fire, lat, lng, label, sample_id)
                 if sample is None:
@@ -123,10 +165,16 @@ def main() -> None:
                     + "\n"
                 )
                 n_written += 1
+                credits_spent += n_fetch_fields
 
-            logger.info("Fire %s (%s): wrote %d samples so far", fire.event_id, fire.incident_name, n_written)
+            logger.info(
+                "Fire %s (%s): wrote %d samples so far, ~%.0f credits spent",
+                fire.event_id, fire.incident_name, n_written, credits_spent,
+            )
 
-    logger.info("Done: wrote %d real training samples to %s", n_written, output_path)
+    logger.info(
+        "Done: wrote %d real training samples (~%.0f credits) to %s", n_written, credits_spent, output_path
+    )
 
 
 if __name__ == "__main__":

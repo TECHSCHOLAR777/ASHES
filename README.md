@@ -137,8 +137,11 @@ model without touching the agent.
   purely so the pipeline (train -> infer -> policy -> card) runs end to end before real
   historical fire data has been collected. Its PR-AUC and random-W collapse numbers are not
   a research result - see "How to collect training data" below for what real training needs.
-- **FIRMS MAP_KEY quota is UNVERIFIED** (per the SRS): the client degrades to a
-  `firms_unavailable` flag on a quota signal rather than blocking the pipeline.
+- ~~FIRMS MAP_KEY quota is UNVERIFIED~~ - fixed 2026-08-27: it's a real, documented,
+  checkable limit (`GET /mapserver/mapkey_status/?MAP_KEY=...` returns 5,000
+  transactions/10 minutes). `FIRMSClient` self-throttles against it and exposes
+  `get_quota_status()` for a live check; the `firms_unavailable` degraded-flag path is kept
+  as defense in depth, not because the limit is unknown.
 - **No ELMFIRE / delegated spread engine in V1.** The spread signal is a wind-projected ROS
   ellipse feature (a crude proxy, explicitly not Rothermel physics) - see
   `src/features/ros_ellipse.py`. The delegated operational engine is V2 scope.

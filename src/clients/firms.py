@@ -1,15 +1,22 @@
 """NASA FIRMS active-fire thermal hotspot client (SRS 4.1, FR-7).
 
-FIRMS MAP_KEY quota is UNVERIFIED (SRS 10.2); this client raises `FIRMSQuotaWarning` on
-signals of quota exhaustion and `FIRMSKeyMissing` if no key is configured, and both are
-caught by the caller to set a degraded flag rather than block the pipeline.
+[NEW DECISION, see DECISIONS.md] The SRS calls the FIRMS MAP_KEY quota "UNVERIFIED"
+(SRS 10.2), but it is directly checkable and was verified live 2026-08-27: FIRMS exposes
+`GET /mapserver/mapkey_status/?MAP_KEY=...`, returning `{"transaction_limit": 5000,
+"current_transactions": N, "transaction_interval": "10 minutes"}` - i.e. a real, documented
+5,000-request/10-minute budget, not an unknown one. This client self-throttles against that
+verified limit with a sliding window (same pattern as `MireyeClient`'s key rate limiter)
+and exposes `get_quota_status()` for a live check. `FIRMSQuotaWarning`/degraded-flag
+handling is kept as defense in depth for any quota FIRMS enforces beyond this documented one.
 """
 from __future__ import annotations
 
 import csv
 import io
 import os
+import threading
 import time
+from collections import deque
 from dataclasses import dataclass
 
 import httpx
@@ -19,6 +26,7 @@ from src.logging_ import tool_logger
 FIRMS_AREA_URL_TEMPLATE = (
     "https://firms.modaps.eosdis.nasa.gov/api/area/csv/{map_key}/{source}/{bbox}/{days}"
 )
+FIRMS_QUOTA_STATUS_URL = "https://firms.modaps.eosdis.nasa.gov/mapserver/mapkey_status/"
 SOURCES = ["VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT", "MODIS_NRT"]
 # Historical/reprocessed ("Standard Processing") sources, verified live 2026-08-27 against
 # the 2020 August Complex fire (see DECISIONS.md). NOAA-21 has no SP archive product yet
@@ -27,6 +35,11 @@ SOURCES = ["VIIRS_NOAA20_NRT", "VIIRS_NOAA21_NRT", "MODIS_NRT"]
 ARCHIVE_SOURCES = ["VIIRS_NOAA20_SP", "VIIRS_SNPP_SP", "MODIS_SP"]
 RADII_KM = [5, 10, 20]
 KM_PER_DEGREE_LAT = 111.0
+
+# Verified live 2026-08-27 via /mapserver/mapkey_status/ - see module docstring.
+QUOTA_TRANSACTION_LIMIT = 5000
+QUOTA_WINDOW_SECONDS = 600.0
+QUOTA_SAFETY_MARGIN = 50  # self-throttle a little before the real limit, not at it
 
 
 class FIRMSKeyMissing(RuntimeError):
@@ -83,9 +96,32 @@ class FIRMSClient:
     def __init__(self, map_key: str | None = None, timeout: float = 20.0):
         self._map_key = map_key or os.environ.get("FIRMS_MAP_KEY") or ""
         self._client = httpx.Client(timeout=timeout)
+        self._call_times: deque = deque()
+        self._throttle_lock = threading.Lock()
 
     def close(self) -> None:
         self._client.close()
+
+    def get_quota_status(self) -> dict:
+        """Live quota check against the real, documented endpoint (see module docstring)."""
+        resp = self._client.get(FIRMS_QUOTA_STATUS_URL, params={"MAP_KEY": self._map_key})
+        resp.raise_for_status()
+        return resp.json()
+
+    def _throttle(self) -> None:
+        """Blocks briefly if this process is about to exceed FIRMS's verified 5,000/10min
+        transaction budget, rather than firing a burst and hoping."""
+        with self._throttle_lock:
+            now = time.monotonic()
+            while self._call_times and now - self._call_times[0] > QUOTA_WINDOW_SECONDS:
+                self._call_times.popleft()
+            if len(self._call_times) >= QUOTA_TRANSACTION_LIMIT - QUOTA_SAFETY_MARGIN:
+                sleep_for = QUOTA_WINDOW_SECONDS - (now - self._call_times[0]) + 1
+                time.sleep(max(0.0, sleep_for))
+                now = time.monotonic()
+                while self._call_times and now - self._call_times[0] > QUOTA_WINDOW_SECONDS:
+                    self._call_times.popleft()
+            self._call_times.append(now)
 
     def get_hotspots(
         self, lat: float, lng: float, days: int = 1, site_id: str | None = None
@@ -121,6 +157,7 @@ class FIRMSClient:
             )
             if on_date is not None:
                 url = f"{url}/{on_date.isoformat()}"
+            self._throttle()
             start = time.monotonic()
             try:
                 resp = self._client.get(url)

@@ -65,6 +65,35 @@ def test_historical_hotspots_uses_archive_sources_and_date_path(mocker):
     client.close()
 
 
+def test_quota_status_hits_real_endpoint_shape(mocker):
+    client = FIRMSClient(map_key="testkey")
+    body = {"transaction_limit": 5000, "current_transactions": 58, "transaction_interval": "10 minutes"}
+    mocker.patch.object(client._client, "get", return_value=make_text_response(""))
+    mocker.patch.object(client._client.get.return_value, "json", return_value=body, create=True)
+    mocker.patch.object(client._client.get.return_value, "raise_for_status", lambda: None, create=True)
+
+    status = client.get_quota_status()
+
+    assert status["transaction_limit"] == 5000
+    client.close()
+
+
+def test_throttle_sleeps_when_near_the_verified_limit(mocker):
+    from src.clients import firms as firms_module
+
+    client = FIRMSClient(map_key="testkey")
+    mock_sleep = mocker.patch("time.sleep")
+    # Fill the window to just under the limit so the next call must throttle.
+    now = __import__("time").monotonic()
+    for _ in range(firms_module.QUOTA_TRANSACTION_LIMIT - firms_module.QUOTA_SAFETY_MARGIN):
+        client._call_times.append(now)
+
+    client._throttle()
+
+    assert mock_sleep.called
+    client.close()
+
+
 def test_no_hotspots_returns_zero_counts(mocker):
     client = FIRMSClient(map_key="testkey")
     mocker.patch.object(client._client, "get", return_value=make_text_response(CSV_HEADER))

@@ -42,6 +42,14 @@ One line per decision, in build order.
   automatically create PandasIndex for coord 'latitude' with 2 dimensions"). Nearest
   neighbor is instead found by brute-force squared-distance argmin over the full ~1.9M-cell
   CONUS grid (`_nearest_grid_index` in `hrrr.py`), which is fast (<10ms) with numpy.
+- [2026-08-27] The SRS marks FIRMS MAP_KEY quota "UNVERIFIED" (10.2), but it is directly
+  checkable: `GET https://firms.modaps.eosdis.nasa.gov/mapserver/mapkey_status/?MAP_KEY=...`
+  returns `{"transaction_limit": 5000, "current_transactions": N, "transaction_interval":
+  "10 minutes"}` - confirmed live 2026-08-27 (58 transactions already used on the shared
+  key at check time). `FIRMSClient` now self-throttles against this real 5,000/10min budget
+  with a sliding window (mirroring `MireyeClient`'s per-key limiter) and exposes
+  `get_quota_status()`. This does not change SRS 10.2's status marker (that's the
+  document's own text), but the client no longer treats the number as unknowable.
 - [2026-08-27] FR-29/FR-30's "typed tools" the agent orchestrates are implemented as a fixed
   deterministic Python call sequence (`build_action_card` in `main_agent.py`), not as OpenAI
   function-calling tools the LLM chooses to invoke. The SRS's own hard constraints (2.6.3,
