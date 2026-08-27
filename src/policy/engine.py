@@ -36,6 +36,8 @@ class PolicyInput:
     road_access_limited: Optional[bool] = None
     containment_pct: Optional[float] = None
     previously_in_play: bool = False
+    eta_hours: Optional[float] = None
+    eta_sigma_hours: Optional[float] = None
 
 
 @dataclass
@@ -89,11 +91,18 @@ def apply_policy(y_hat: Optional[float], sigma: float, pin: PolicyInput, config:
 
     dist_cfg = cfg["distance_thresholds"]
     y_cfg = cfg["y_hat_thresholds"]
+    eta_cfg = cfg.get("eta_thresholds") or {}
+    eta_sig_cfg = cfg.get("eta_sigma_thresholds") or {}
+    evacuate_h = float(eta_cfg.get("evacuate_hours", 6))
+    prepare_lo = float(eta_cfg.get("prepare_min_hours", 24))
+    prepare_hi = float(eta_cfg.get("prepare_max_hours", 72))
+    eta_sig_cut = float(eta_sig_cfg.get("evacuate_suppress_hours", 12))
 
     # Rule 3: WFIGS distance > 15 km and low y_hat -> monitor.
     if has_wfigs and dist_km > dist_cfg["monitor_only_km"] and (y_hat or 0.0) < 0.3:
-        reasons.append(f"perimeter is {dist_km:.1f} km away and model score is low")
-        return PolicyResult("monitor", reasons, policy_version, flags)
+        if pin.eta_hours is None or pin.eta_hours > prepare_hi:
+            reasons.append(f"perimeter is {dist_km:.1f} km away and model score is low")
+            return PolicyResult("monitor", reasons, policy_version, flags)
 
     # Rule 4: dist 4-10 km + Red Flag + high fuel W (NDVI) + moderate y_hat -> prepare.
     high_ndvi = pin.ndvi_current is not None and pin.ndvi_current > cfg["ndvi_high_fuel_threshold"]
@@ -108,9 +117,15 @@ def apply_policy(y_hat: Optional[float], sigma: float, pin: PolicyInput, config:
         )
         return PolicyResult("prepare", reasons, policy_version, flags)
 
-    # Rule 5: dist small or high y_hat -> protect_asset / evacuate_site, keyed on housing
-    # density and road access, never downgrading a NWS warning underneath this rule.
-    if dist_km < dist_cfg["protect_km"] or (y_hat or 0.0) > y_cfg["protect"]:
+    # FR-38: ETA in the 24-72 h window is prepare, unless a closer/higher-score
+    # protect/evacuate rule below already applies.
+    eta_prepare = (
+        pin.eta_hours is not None and prepare_lo <= pin.eta_hours <= prepare_hi
+    )
+    eta_imminent = pin.eta_hours is not None and pin.eta_hours < evacuate_h
+
+    # Rule 5: dist small or high y_hat or imminent ETA -> protect_asset / evacuate_site.
+    if dist_km < dist_cfg["protect_km"] or (y_hat or 0.0) > y_cfg["protect"] or eta_imminent:
         high_density = (
             pin.housing_density_per_km2 is not None
             and pin.housing_density_per_km2 > cfg["housing_density_evacuate_threshold_per_km2"]
@@ -121,18 +136,34 @@ def apply_policy(y_hat: Optional[float], sigma: float, pin: PolicyInput, config:
                 f"perimeter {dist_km:.1f} km away or y_hat={y_hat}, high housing density and limited road egress"
             )
             action = "evacuate_site"
+        elif eta_imminent and high_density and limited_egress:
+            reasons.append(f"ETA {pin.eta_hours:.1f} h with high housing density and limited egress")
+            action = "evacuate_site"
+        elif eta_imminent:
+            reasons.append(f"ETA {pin.eta_hours:.1f} h (arrival estimate with sigma); protecting the asset")
+            action = "protect_asset"
         else:
             reasons.append(f"perimeter {dist_km:.1f} km away or y_hat={y_hat}, protecting the asset")
             action = "protect_asset"
 
-        # Rule 7: high sigma suppresses an overconfident evacuate (NFR-17 hard boundary).
+        # Rule 7: high sigma (y_hat or ETA) suppresses an overconfident evacuate (NFR-17 / FR-38).
         sigma_cfg = cfg["sigma_thresholds"]
-        if action == "evacuate_site" and sigma >= sigma_cfg["evacuate_suppress"]:
+        high_eta_sigma = pin.eta_sigma_hours is not None and pin.eta_sigma_hours >= eta_sig_cut
+        if action == "evacuate_site" and (sigma >= sigma_cfg["evacuate_suppress"] or high_eta_sigma):
             flags.append("no_ros_high_sigma")
-            reasons.append(f"sigma={sigma:.2f} too high for an overconfident evacuate; downgraded to protect_asset")
+            if high_eta_sigma:
+                reasons.append(
+                    f"eta_sigma_hours={pin.eta_sigma_hours:.1f} too high for an overconfident evacuate; downgraded to protect_asset"
+                )
+            else:
+                reasons.append(f"sigma={sigma:.2f} too high for an overconfident evacuate; downgraded to protect_asset")
             action = "protect_asset"
 
         return PolicyResult(action, reasons, policy_version, flags)
+
+    if eta_prepare:
+        reasons.append(f"ETA {pin.eta_hours:.1f} h is inside the 24-72 h prepare window (arrival estimate with sigma)")
+        return PolicyResult("prepare", reasons, policy_version, flags)
 
     # Fallback: fire signal present but none of the escalation thresholds met -> monitor.
     reasons.append("active fire signal present but below prepare/protect thresholds")

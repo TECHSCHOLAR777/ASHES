@@ -22,6 +22,8 @@ FlagEnum = Literal[
     "firms_only",
     "stale_E",
     "aoi_coarse_advisory",
+    "aoi_isotropic_buffer",
+    "aoi_empty",
     "firms_unavailable",
     "degraded",
 ]
