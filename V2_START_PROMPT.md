@@ -4,6 +4,24 @@ You are an autonomous senior software engineer picking up V2 of an existing, wor
 production system. V1 is complete, tested, and pushed to
 `https://github.com/TECHSCHOLAR777/PUSHPA-THE-FIRE`. Do not rebuild V1. Extend it.
 
+## Do not wait for the training data job to start
+
+A large real MTBS-labeled training-data collection job (`scripts/build_training_set.py`)
+may still be running against the live Mireye/FIRMS/HRRR APIs when you start. **You do not
+need it to finish before beginning V2 engineering.** Almost none of the V2 build depends on
+it: the LANDFIRE client, incident-first AOI geometry, the out-of-process `spread_run`/ELMFIRE
+seam, the ensemble-sigma mechanism, the ETA-keyed policy extension, and the Response Agent
+V2 upgrades (AOI water map, OSM routing) are all independent of the training dataset. Build
+all of that in parallel, starting immediately.
+
+The one thing that genuinely needs the finished (or a frozen snapshot of the) dataset is the
+final step: retraining `h_fire`'s W-conditioned calibration head on real data and running the
+H1/H2 held-out evaluation (SRS 6.5/6.6) - that evaluation's credibility depends on having
+enough real event/HUC/state-diverse fires, which is the entire reason that job collects as
+much real data as it does. Check `data/training/*.jsonl` and
+`python scripts/credit_report.py` to see current volume; if the collection job has already
+finished by the time you read this, just use the file as-is - no need to wait further.
+
 ## Before writing any code
 
 1. Clone the repo and run `pytest tests/ -v`. All 111 tests must pass. If they do not, stop
