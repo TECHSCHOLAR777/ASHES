@@ -88,3 +88,23 @@ def test_strip_dynamic_vintage_fields_removes_ndvi_and_drought():
     assert "ndvi_current_confidence" not in stripped
     assert "drought_category" not in stripped
     assert stripped["elevation"] == 500.0
+
+
+def test_attach_spread_vector_copies_real_sample():
+    from types import SimpleNamespace
+
+    from src.model.training_data import SampleBuildResult, attach_spread_vector
+
+    result = SampleBuildResult(
+        site_id="s", event_id="e", t0="t", w_vector=[], w_mask=[], e_vector=[], y=1
+    )
+    spread = SimpleNamespace(
+        eta_hours=9.0, eta_sigma_hours=2.0, p_burn_24=0.2, p_burn_48=0.4, p_burn_72=0.6
+    )
+    out = attach_spread_vector(result, spread)
+    assert out.spread_vector == [9.0, 2.0, 0.2, 0.4, 0.6]
+    blank = SampleBuildResult(
+        site_id="s2", event_id="e", t0="t", w_vector=[], w_mask=[], e_vector=[], y=0
+    )
+    assert attach_spread_vector(blank, None).spread_vector is None
+
