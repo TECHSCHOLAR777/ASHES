@@ -87,6 +87,16 @@ applies the policy, prints the ActionCard JSON and its brief, and - if the actio
 - `data/cache/site_state.db` - per-site state (last poll, last action, last delivery) used
   for watch-loop idempotency and de-duplication.
 
+## Credit usage
+
+```bash
+python scripts/credit_report.py --days 30
+```
+
+Sums the `quote`-before-`fetch` credit log entries and reports spend against the V1
+quality envelope (~300,000-400,000 credits, SRS NFR-6). Credits are not rationed - this is
+a visibility tool, not a spending cap.
+
 ## Architecture
 
 ```

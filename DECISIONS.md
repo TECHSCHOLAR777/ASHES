@@ -42,6 +42,17 @@ One line per decision, in build order.
   automatically create PandasIndex for coord 'latitude' with 2 dimensions"). Nearest
   neighbor is instead found by brute-force squared-distance argmin over the full ~1.9M-cell
   CONUS grid (`_nearest_grid_index` in `hrrr.py`), which is fast (<10ms) with numpy.
+- [2026-08-27] FR-29/FR-30's "typed tools" the agent orchestrates are implemented as a fixed
+  deterministic Python call sequence (`build_action_card` in `main_agent.py`), not as OpenAI
+  function-calling tools the LLM chooses to invoke. The SRS's own hard constraints (2.6.3,
+  3.1) require the exact fixed order regardless of what an LLM might otherwise decide, and
+  forbid the LLM from computing any number - a deterministic wrapper the LLM cannot deviate
+  from satisfies that more robustly than exposing the same tools via function-calling and
+  then constraining the LLM's choices after the fact. The LLM's only role remains what FR-36
+  specifies: writing a copy-only brief from the finished ActionCard.
+- [2026-08-27] Added `scripts/credit_report.py` (not explicitly named in the SRS, but
+  required by NFR-6/AC-5's "a live credit tracker SHALL surface spend against the envelope"):
+  sums `credit_usage` log records and reports spend against the 300K-400K V1 envelope.
 - [2026-08-27] `cfgrib`/ecCodes is not thread-safe: a live 5-site watch-loop poll cycle
   (each site fetching HRRR in its own worker thread, per FR-30's parallel E-fetch) produced
   "fatal flex scanner internal error--end of buffer missed" and ecCodes parser errors from
