@@ -350,8 +350,10 @@ def build_action_card(deps: MainAgentDeps, site: Site) -> ActionCard:
         incident=IncidentInfo(
             irwin_id=nearest_incident.irwin_id if nearest_incident else None,
             incident_name=nearest_incident.name if nearest_incident else None,
-            acres=e_features.acres if nearest_incident else None,
-            containment_pct=e_features.containment_pct if nearest_incident else None,
+            # Raw WFIGS values, not the model's zero-filled e_features copy: a genuinely
+            # unreported acres/containment must render as null, never a false "0" (FR-40).
+            acres=nearest_incident.acres if nearest_incident else None,
+            containment_pct=nearest_incident.containment_pct if nearest_incident else None,
             dist_perimeter_m=dist_perim_m,
             hours_since_discovery=e_features.hours_since_discovery,
         ),
