@@ -92,6 +92,8 @@ roles:
       nearest_rcra_tsd_distance_m: { type: float }
       nearest_ust_facility_distance_m: { type: float }
       ust_facilities_within_1km_count: { type: float }
+      nearest_gas_pipeline_distance_m: { type: float }
+      nearest_petroleum_pipeline_distance_m: { type: float }
 
   I:
     name: "Firefighting water / governance"
@@ -106,10 +108,12 @@ roles:
     name: "Response resources (Response Agent add, not fed to h_fire)"
     model_feature: false
     fields:
+      # [NEW DECISION, see DECISIONS.md] Mireye has no waterbody/flowline *distance* field,
+      # only the name - verified against the live API 2026-08-27 (fields_unknown error).
+      # The Response Agent reports these without a distance (ResponseCard.WaterSource.distance_m
+      # is Optional for exactly this reason) rather than inventing one.
       nearest_waterbody_name: { type: str, join_key: true }
-      nearest_waterbody_distance_m: { type: float }
       nearest_flowline_name: { type: str, join_key: true }
-      nearest_flowline_distance_m: { type: float }
       intersects_nhd_area: { type: bool }
       wetlands_within_100m_count: { type: float }
       wetland_acres: { type: float }
@@ -128,9 +132,8 @@ roles:
       nearest_wastewater_plant_name: { type: str, join_key: true }
       within_sewer_service_area: { type: bool }
       nearest_osm_substation_distance_m: { type: float }
-      nearest_gas_pipeline_distance_m: { type: float }
-      nearest_petroleum_pipeline_distance_m: { type: float }
-      nearest_transmission_line_distance_m_response: { type: float, source_field: nearest_transmission_line_distance_m }
+      # nearest_transmission_line_distance_m (role E) doubles as a hazmat-priority input for
+      # the Response Agent; no separate J-role field needed.
 
 # Optional V1 parcel-geometry precision (SRS FR-3 / NEW DECISION 11). parcel_owner excluded always.
 optional_parcel_fields:

@@ -35,7 +35,10 @@ class SiteRef(BaseModel):
 class WaterSource(BaseModel):
     type: WaterSourceType
     name: Optional[str] = None
-    distance_m: float
+    # [NEW DECISION, see DECISIONS.md] Optional, not required: Mireye has no waterbody/
+    # flowline distance field, only the name (verified against the live API), so this is
+    # left null rather than inventing a distance for those two source types.
+    distance_m: Optional[float] = None
     discharge_cfs: Optional[float] = None
     permanence_pct: Optional[float] = None
     availability: AvailabilityEnum

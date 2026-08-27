@@ -123,7 +123,7 @@ def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, A
             WaterSource(
                 type="stream",
                 name=raw_w.get("nearest_flowline_name"),
-                distance_m=float(raw_w.get("nearest_flowline_distance_m", 0.0) or 0.0),
+                distance_m=None,  # Mireye has no flowline distance field, only the name
                 discharge_cfs=gage.discharge_cfs,
                 permanence_pct=permanence,
                 availability=avail,
@@ -139,7 +139,7 @@ def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, A
             WaterSource(
                 type="lake_reservoir",
                 name=raw_w.get("nearest_waterbody_name"),
-                distance_m=float(raw_w.get("nearest_waterbody_distance_m", 0.0) or 0.0),
+                distance_m=None,  # Mireye has no waterbody distance field, only the name
                 discharge_cfs=None,
                 permanence_pct=permanence,
                 availability=avail,
@@ -170,7 +170,7 @@ def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, A
             WaterSource(
                 type="municipal_water",
                 name="municipal water service area",
-                distance_m=0.0,
+                distance_m=None,  # within_water_service_area is boolean; no distance field
                 discharge_cfs=None,
                 permanence_pct=None,
                 availability="high",

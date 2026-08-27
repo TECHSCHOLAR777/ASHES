@@ -55,7 +55,10 @@ def _compose_body(action_card: ActionCard, action_brief: str, response_card: Res
             f"Fire station: {response_card.fire_station.name or 'unknown'} "
             f"({response_card.fire_station.distance_m:.0f} m, ETA {response_card.fire_station.eta_minutes_estimate} min)",
             "Water sources:",
-            *[f"- {w.type} {w.name or ''} ({w.distance_m:.0f} m, {w.availability})" for w in response_card.water_sources],
+            *[
+                f"- {w.type} {w.name or ''} ({f'{w.distance_m:.0f} m' if w.distance_m is not None else 'distance unknown'}, {w.availability})"
+                for w in response_card.water_sources
+            ],
             "Hazmat priority:",
             *[f"- {h.type} {h.name or ''} ({h.distance_m:.0f} m, {h.priority})" for h in response_card.hazmat_sites],
             "",

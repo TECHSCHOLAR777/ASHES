@@ -85,7 +85,8 @@ def deliver_action_card(card: ActionCard, brief: str, channel: str) -> DeliveryR
 
 def _response_card_blocks(card: ResponseCard, brief: str) -> list[dict]:
     water_lines = [
-        f"- {w.type} {w.name or ''} ({w.distance_m:.0f} m, {w.availability})" for w in card.water_sources
+        f"- {w.type} {w.name or ''} ({f'{w.distance_m:.0f} m' if w.distance_m is not None else 'distance unknown'}, {w.availability})"
+        for w in card.water_sources
     ]
     access_lines = [f"- {a.road_name or 'unnamed'} ({a.road_class}/{a.surface}, {a.distance_m:.0f} m)" for a in card.access_routes]
     hazmat_lines = [f"- {h.type} {h.name or ''} ({h.distance_m:.0f} m, {h.priority})" for h in card.hazmat_sites]
