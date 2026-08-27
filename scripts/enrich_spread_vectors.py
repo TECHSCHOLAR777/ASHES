@@ -15,7 +15,9 @@ import json
 import logging
 import sys
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+import threading
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -60,6 +62,13 @@ def parse_args() -> argparse.Namespace:
         "--resume",
         action="store_true",
         help="Skip site_ids that already have a spread_vector in --output.",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="Concurrent LANDFIRE+spread_run jobs (each fire is independent). "
+        "Default 1. Live bulk runs can use 3-4; LFPS is the limiter.",
     )
     return parser.parse_args()
 
@@ -141,73 +150,109 @@ def main() -> None:
         len(done),
     )
 
-    landfire = LANDFIREClient()
+    landfire_workers = max(int(args.workers), 1)
+    write_lock = threading.Lock()
     n_written = 0
     n_labeled = 0
     n_failed_fires = 0
-    try:
-        with open(args.output, write_mode, encoding="utf-8", buffering=1) as out:
-            for i, event_id in enumerate(event_order, start=1):
-                samples = by_event[event_id]
-                pending = [rec for rec in samples if rec["site_id"] not in done]
-                if not pending:
-                    continue
-                fire = fires.get(event_id)
-                field = spread_field_for_fire(fire, landfire) if fire is not None else None
-                if field is None:
-                    n_failed_fires += 1
-                    logger.warning(
-                        "No spread field for %s (%s); writing unlabeled rows",
-                        event_id,
-                        "mtbs miss" if fire is None else "LANDFIRE/spread_run failed",
-                    )
-                for rec in pending:
-                    result = _row_to_result(rec)
-                    coords_source = None
-                    site_lat = rec.get("site_lat")
-                    site_lng = rec.get("site_lng")
-                    if field is not None and fire is not None:
-                        e_vec = rec.get("e_vector") or []
-                        dist_m = float(e_vec[DIST_IDX]) if len(e_vec) > DIST_IDX else 0.0
-                        ros_target = float(e_vec[ROS_IDX]) if len(e_vec) > ROS_IDX else None
-                        point = reconstruct_sample_point(
-                            fire, dist_m, int(rec["y"]), ros_target=ros_target
-                        )
-                        if point is not None:
-                            site_lat, site_lng = point
-                            coords_source = "reconstructed_centroid_circle"
-                            result = attach_spread_vector(result, field.sample(site_lat, site_lng))
-                    payload = {
-                        "site_id": result.site_id,
-                        "event_id": result.event_id,
-                        "t0": result.t0,
-                        "w_vector": result.w_vector,
-                        "w_mask": result.w_mask,
-                        "e_vector": result.e_vector,
-                        "y": result.y,
-                        "dist_source": result.dist_source,
-                        "spread_vector": result.spread_vector,
-                    }
-                    if site_lat is not None and site_lng is not None:
-                        payload["site_lat"] = site_lat
-                        payload["site_lng"] = site_lng
-                    if coords_source:
-                        payload["coords_source"] = coords_source
-                    out.write(json.dumps(payload) + "\n")
-                    n_written += 1
-                    if result.spread_vector is not None:
-                        n_labeled += 1
-                        done.add(result.site_id)
-                logger.info(
-                    "Fire %d/%d %s: labeled_this_run=%d field=%s",
-                    i,
-                    len(event_order),
-                    event_id,
-                    sum(1 for rec in pending if rec["site_id"] in done),
-                    "ok" if field is not None else "none",
+
+    def process_fire(event_id: str, index: int) -> tuple[int, int, bool]:
+        samples = by_event[event_id]
+        pending = [rec for rec in samples if rec["site_id"] not in done]
+        if not pending:
+            return 0, 0, False
+        fire = fires.get(event_id)
+        lf = LANDFIREClient()
+        try:
+            field = spread_field_for_fire(fire, lf) if fire is not None else None
+        finally:
+            lf.close()
+        failed = field is None
+        if failed:
+            logger.warning(
+                "No spread field for %s (%s); skipping",
+                event_id,
+                "mtbs miss" if fire is None else "LANDFIRE/spread_run failed",
+            )
+        wrote = 0
+        labeled = 0
+        lines: list[str] = []
+        labeled_ids: list[str] = []
+        for rec in pending:
+            result = _row_to_result(rec)
+            coords_source = None
+            site_lat = rec.get("site_lat")
+            site_lng = rec.get("site_lng")
+            if field is not None and fire is not None:
+                e_vec = rec.get("e_vector") or []
+                dist_m = float(e_vec[DIST_IDX]) if len(e_vec) > DIST_IDX else 0.0
+                ros_target = float(e_vec[ROS_IDX]) if len(e_vec) > ROS_IDX else None
+                point = reconstruct_sample_point(
+                    fire, dist_m, int(rec["y"]), ros_target=ros_target
                 )
-    finally:
-        landfire.close()
+                if point is not None:
+                    site_lat, site_lng = point
+                    coords_source = "reconstructed_centroid_circle"
+                    result = attach_spread_vector(result, field.sample(site_lat, site_lng))
+            if result.spread_vector is None:
+                continue
+            payload = {
+                "site_id": result.site_id,
+                "event_id": result.event_id,
+                "t0": result.t0,
+                "w_vector": result.w_vector,
+                "w_mask": result.w_mask,
+                "e_vector": result.e_vector,
+                "y": result.y,
+                "dist_source": result.dist_source,
+                "spread_vector": result.spread_vector,
+            }
+            if site_lat is not None and site_lng is not None:
+                payload["site_lat"] = site_lat
+                payload["site_lng"] = site_lng
+            if coords_source:
+                payload["coords_source"] = coords_source
+            lines.append(json.dumps(payload) + "\n")
+            wrote += 1
+            labeled += 1
+            labeled_ids.append(result.site_id)
+        with write_lock:
+            if lines:
+                out.writelines(lines)
+            done.update(labeled_ids)
+            logger.info(
+                "Fire %d/%d %s: labeled_this_run=%d field=%s",
+                index,
+                len(event_order),
+                event_id,
+                labeled,
+                "ok" if field is not None else "none",
+            )
+        return wrote, labeled, failed
+
+    with open(args.output, write_mode, encoding="utf-8", buffering=1) as out:
+        if landfire_workers == 1:
+            for i, event_id in enumerate(event_order, start=1):
+                w, lab, failed = process_fire(event_id, i)
+                n_written += w
+                n_labeled += lab
+                n_failed_fires += int(failed)
+        else:
+            with ThreadPoolExecutor(max_workers=landfire_workers) as pool:
+                futs = {
+                    pool.submit(process_fire, event_id, i): event_id
+                    for i, event_id in enumerate(event_order, start=1)
+                }
+                for fut in as_completed(futs):
+                    try:
+                        w, lab, failed = fut.result()
+                    except Exception as exc:
+                        logger.warning("Unhandled fire %s: %s", futs[fut], exc)
+                        n_failed_fires += 1
+                        continue
+                    n_written += w
+                    n_labeled += lab
+                    n_failed_fires += int(failed)
 
     logger.info(
         "Done: wrote %d rows (%d with spread_vector, %d fires without a field) to %s",
