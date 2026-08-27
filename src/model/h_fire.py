@@ -97,7 +97,10 @@ def _spread_features(spread: Any) -> np.ndarray:
 def _p_burn_dict(spread: Any | None) -> dict[str, float | None] | None:
     if spread is None:
         return None
-    return {"24": spread.p_burn_24, "48": spread.p_burn_48, "72": spread.p_burn_72}
+    payload = {"24": spread.p_burn_24, "48": spread.p_burn_48, "72": spread.p_burn_72}
+    if all(v is None for v in payload.values()):
+        return None
+    return payload
 
 
 def _sigma_from_eta(eta_sigma_hours: float | None, y_hat: float) -> float:

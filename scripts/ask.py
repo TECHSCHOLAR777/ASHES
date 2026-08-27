@@ -49,7 +49,7 @@ def main() -> None:
     card = run_site(deps, site, mode="ask")
 
     print("=== ActionCard ===")
-    print(card.model_dump_json(indent=2))
+    print(card.model_dump_json(indent=2, by_alias=True))
 
     response_card = response_cards.pop(card.card_id, None)
     if response_card is not None:
