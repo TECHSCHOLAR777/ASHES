@@ -1,0 +1,117 @@
+# V1 → V2 Handoff
+
+## Where things stand
+
+V1 (the wildfire site-event copilot) is complete and pushed to
+`https://github.com/TECHSCHOLAR777/PUSHPA-THE-FIRE` as of commit `aca8b16` (37 commits on
+`master`). Every V1 functional requirement in `SRS_fire.md` (FR-1 through FR-55) is
+implemented, tested, and has been validated against the *real* live APIs, not just mocks:
+Mireye, NASA FIRMS, WFIGS, NWS, HRRR, USGS, and MTBS. 111 automated tests pass
+(`pytest tests/ -v`). The watch loop has completed real multi-cycle polling runs against 5
+live sites; `ask` mode and the Response Agent have produced real ActionCard/ResponseCard
+output end to end.
+
+Read `DECISIONS.md` before touching anything - it is a running log of every place this build
+found the SRS's assumptions did not match the real APIs (field taxonomies, CRS handling,
+rate limits, scheduler behavior) and how each was fixed, with the live evidence that proved
+it. Skipping it means re-discovering the same bugs by hand.
+
+A large real-data collection job may still be running or may have finished by the time this
+is read - check `data/training/real_conus_2015_2023.jsonl` and the tail of whatever log file
+was last used with `scripts/build_training_set.py`. If it finished, run
+`python scripts/train_model.py` to get a real-data-trained `h_fire` model and its metrics
+before starting V2 work, so V2 has an honest baseline to beat.
+
+## What V1 actually is
+
+An unattended, cited copilot for a book of named US sites: watches live fire signals
+(NWS Red Flag, NASA FIRMS hotspots, WFIGS incidents/perimeters, HRRR weather), enriches each
+site with cited Mireye physics (fuel, terrain, hazard, access, water, ~61 fields), scores it
+with a small trained model, and applies a deterministic policy table to produce one of six
+actions (`no_action`, `monitor`, `prepare`, `protect_asset`, `evacuate_site`,
+`inspect_after`). On `protect_asset`/`evacuate_site` a second Response Support Agent produces
+a tactical dossier (water sources, access routes, hazmat, agency, comms) with zero
+LLM-invented numbers - an automated validator rejects any brief that introduces a number not
+already on the card.
+
+## Project layout (start here)
+
+- `SRS_fire.md` - the engineering contract. Read this fully before writing any V2 code.
+- `DECISIONS.md` - every real-world correction made during the V1 build. Required reading.
+- `README.md` - install, quick start, architecture diagram, known limitations.
+- `src/clients/` - one file per external API (`mireye.py`, `firms.py`, `wfigs.py`, `nws.py`,
+  `hrrr.py`, `usgs.py`, `mtbs.py`). All are real, tested, and rate-limit-aware.
+- `src/features/` - `w_encoder.py` (typed/masked Mireye encoding), `e_packer.py` (live E
+  feature packing), `ros_ellipse.py` (the V1 crude wind-ellipse spread proxy V2 replaces).
+- `src/model/` - `h_fire.py` (the stable `model_infer` contract V2 must keep), `train.py`
+  (CPU training pipeline), `training_data.py` (real MTBS-labeled sample construction).
+- `src/agents/` - `main_agent.py` (the fixed-order pipeline), `response_agent.py`,
+  `watch_runner.py` (scheduling/dedup).
+- `src/policy/engine.py` - the deterministic policy table. V2 adds ETA-keyed rules here
+  (FR-38) without touching the agent.
+- `config/field_sets.yaml` - the Mireye field catalog with real, live-verified taxonomies.
+- `scripts/build_training_set.py` - real MTBS-labeled training data collector, with adaptive
+  concurrency control and resume support. This is the pattern to extend for V2's richer
+  training needs (LANDFIRE tiles, ELMFIRE ensemble runs).
+
+## What V2 actually needs to build (from SRS section 8.2)
+
+V1's `model_infer` and ActionCard contracts are **stable across V1 and V2** by design - V2
+changes what happens *behind* the contract, not the agent or the schema shape. Concretely,
+per the SRS:
+
+1. **Incident-first AOI geometry** (FR-4): a wind-projected buffer around an active WFIGS
+   perimeter, clipped to burnable fuel, replacing V1's point/parcel-only geometry.
+2. **LANDFIRE integration** (FR-21): FBFM40 fuel, canopy (CBD/CBH/CC/CH), DEM as raster
+   inputs to the spread engine - never fed to Mireye's role, never used as a Rothermel model
+   substitute for Mireye's own fields.
+3. **Delegated spread engine, ELMFIRE** (FR-20, licensing constraint in SRS 2.6.1/7.7): run
+   **out-of-process** behind a `spread_run` internal API so EPL-2.0 code never links into
+   this proprietary agent/model code. This is a hard licensing requirement, not a style
+   choice - read SRS 2.6.1 before picking an integration approach.
+4. **Ensemble runs for sigma** (FR-22): wind/moisture perturbations to produce per-site
+   arrival-time uncertainty.
+5. **W-conditioned calibration head** (FR-26): `h_fire` becomes
+   `h_fire(raw_field_at_site, Mireye W, E) -> calibrated ETA, P(burn<=T), sigma`, replacing
+   V1's plain MLP - but through the *same* `model_infer` contract in `src/model/h_fire.py`.
+6. **ETA-keyed policy** (FR-38): extend `src/policy/engine.py`'s table with ETA thresholds,
+   keeping the existing sigma-suppression-of-evacuate safety rule (NFR-17).
+7. **Response Agent upgrades** (FR-56/FR-57): AOI water map (dense Mireye grid over the
+   incident AOI) and OSM road-network routing to replace the V1 distance-proxy ETA.
+8. **Research claim H2** (SRS 6.6): W-conditioned calibration must beat *raw ELMFIRE* on
+   event/HUC/state held-out fires, with the same random-W collapse gate V1 used for H1. This
+   is the actual point of V2 - do not skip the falsification probes to save time.
+
+**Do not build**: a learned-from-scratch spread model (SRS explicitly rejects this, backed
+by the WSTS+ SOTA ceiling in 6.2), Cell2Fire as the primary engine (GPL-3.0, use ELMFIRE),
+or any live EO chip on the hot path (smoke-blocked, too slow - see SRS 6.3).
+
+## Honest state of the real training data
+
+V1 shipped with a synthetic-bootstrap `h_fire` model (random labels, 500 samples) purely so
+the pipeline was runnable end to end before real data existed - this was intentional per the
+SRS itself, not a shortcut. A real MTBS-labeled dataset was being collected at handoff time
+(`scripts/build_training_set.py`, targeting real Mireye/FIRMS-archive/HRRR-archive data
+across thousands of real fire samples). Read `src/model/training_data.py`'s module docstring
+for the one honest limitation in that pipeline: `dist_perim_m` is proxied off the fire's
+ignition centroid, not a true t0 perimeter, because MTBS publishes only ignition date +
+final perimeter, not a time series. **V2's incident-first AOI and ELMFIRE work makes this
+proxy unnecessary** - once ELMFIRE runs are available, real perimeter time series (or
+ELMFIRE's own arrival field) become the ground truth for `dist_perim_m`/E features, which is
+a strictly better foundation than continuing to refine the MTBS proxy.
+
+## Getting started
+
+```bash
+git clone https://github.com/TECHSCHOLAR777/PUSHPA-THE-FIRE.git
+cd PUSHPA-THE-FIRE
+python -m venv .venv && .venv/Scripts/activate  # or source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # fill in your own Mireye/OpenAI/FIRMS keys
+pytest tests/ -v       # confirm all 111 tests pass before changing anything
+python scripts/ask.py --lat 34.05 --lng -118.24 --q "test"   # confirm live pipeline works
+```
+
+Then read `SRS_fire.md` section 8.2/8.3 in full, and start with the licensing seam
+(`spread_run` as an out-of-process API) since every other V2 piece depends on that boundary
+existing first.
