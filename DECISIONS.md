@@ -63,6 +63,15 @@ One line per decision, in build order.
   baseline). Fixed by keeping tasks grouped by fire (only the fire order is shuffled) so the
   thread pool naturally assigns several workers to the same fire's samples at once - one
   pays the real HRRR cost, the rest hit the in-memory cache almost immediately.
+- [2026-08-27] `src/model/train.py` globs every `*.jsonl` in `data/training/` - after the
+  real 4,300-sample collection run finished, `data/training/synthetic_001.jsonl` (the
+  random-label bootstrap) was still sitting in the same directory and would have been mixed
+  into the real training run, silently contaminating it with noise. Moved the synthetic file
+  (and a local-only backup copy of the real dataset) out to `data/training_synthetic_archive/`
+  before retraining. **Do not re-run `scripts/generate_synthetic_training_data.py` with its
+  default output path while a real dataset lives in `data/training/`** - it writes there by
+  default. If synthetic data is ever needed again (e.g. for a fast offline smoke test with no
+  live API calls), point its output at a different directory explicitly.
 - [2026-08-27] MTBS's WFS returns geometry in its native projected CRS (meters), not
   lat/lng degrees, unless `srsName=EPSG:4326` is passed explicitly - the scalar
   `burnbndlat`/`burnbndlon` properties are correctly in degrees regardless, which masked
