@@ -17,6 +17,22 @@ One line per decision, in build order.
   `soil_drainage_class`) are encoded with a fixed lookup table baked into `w_encoder.py` rather
   than fit from data, since V1 has no historical training corpus yet; the mapping is documented
   inline where defined.
+- [2026-08-27] Verified the live Mireye API against the real keys and found three shapes
+  the SRS did not specify, all now implemented in `src/clients/mireye.py`: (1) an explicit
+  field list over 50 fields is rejected with `fields_too_many` (presets are exempt) - the
+  client now chunks any field list at 50 and sums quoted credits across chunks; (2) `/v1/fetch`
+  and `/v1/fetch/batch` return a nested `{"fields": {name: {value, confidence, source_url,
+  dataset_vintage, ...}}}` shape, not a flat dict - the client flattens this into the
+  `field`/`field_confidence`/`field_source_url`/`field_vintage` convention the rest of the
+  codebase (`w_encoder.py`, `response_agent.py`) already used; (3) batch quoting takes
+  `{"locations": <count>}` (an integer), not the actual coordinate list, since quote cost is
+  location-count-dependent, not location-specific; and `/v1/fetch/batch` itself takes
+  `{"locations": [{"lat","lng"}, ...]}`, not `{"coords": [...]}`.
+- [2026-08-27] The live `/v1/geocode` response has no `confidence` or `range_interpolation`
+  field; it returns `accuracy` (0-1 float) and `accuracy_type` (e.g. `rooftop`,
+  `range_interpolation`) from the underlying geocodio provider. `GeoPoint.confidence` is set
+  to `accuracy_type` directly, and `range_interpolation` is set to `True` whenever
+  `accuracy_type` is present and not in `{rooftop, point}`.
 - [2026-08-27] Unordered categorical one-hot vocabularies (`lcms_class`, `land_use_class`,
   `overture_class`) are fixed, finite category lists taken from the source catalogs' published
   class lists, with an explicit `other` bucket for anything unseen, so the feature vector length

@@ -57,28 +57,72 @@ def test_retries_exhausted_raises(client, mocker):
 
 
 def test_fetch_calls_quote_before_fetch(client, mocker):
-    quote_resp = make_response(200, {"credits": 60.0})
-    fetch_resp = make_response(200, {"credits_used": 60.0, "elevation": 123.4})
+    quote_resp = make_response(200, {"credits_total": 60.0})
+    fetch_resp = make_response(
+        200,
+        {
+            "fetched_at": "2026-08-27T00:00:00Z",
+            "fields": {
+                "elevation": {
+                    "value": 123.4,
+                    "confidence": "medium",
+                    "source_url": "https://www.usgs.gov/3d-elevation-program",
+                    "dataset_vintage": "3DEP 1/3 arc-second",
+                }
+            },
+        },
+    )
     mock_request = mocker.patch.object(client._client, "request", side_effect=[quote_resp, fetch_resp])
 
     result = client.fetch(34.0, -118.0, ["elevation"], site_id="site_001")
 
     assert result["elevation"] == 123.4
+    assert result["elevation_confidence"] == "medium"
+    assert result["elevation_source_url"] == "https://www.usgs.gov/3d-elevation-program"
+    assert result["elevation_vintage"] == "3DEP 1/3 arc-second"
     called_paths = [call.args[1] for call in mock_request.call_args_list]
     assert called_paths == ["/v1/fetch/quote", "/v1/fetch"]
+
+
+def test_fetch_chunks_at_50_explicit_fields(client, mocker):
+    fields = [f"field_{i}" for i in range(75)]  # 75 fields -> two chunks of 50 + 25
+    responses = []
+    for _ in range(2):  # quote chunk 1, quote chunk 2 (both inside quote()), then fetch x2
+        responses.append(make_response(200, {"credits_total": 50.0}))
+    for _ in range(2):
+        responses.append(make_response(200, {"fetched_at": "2026-08-27T00:00:00Z", "fields": {}}))
+    mock_request = mocker.patch.object(client._client, "request", side_effect=responses)
+
+    client.fetch(34.0, -118.0, fields, site_id="site_001")
+
+    called_bodies = [call.kwargs["json"] for call in mock_request.call_args_list]
+    quote_field_counts = [len(b["fields"]) for b in called_bodies if "fields" in b]
+    assert quote_field_counts == [50, 25, 50, 25]
 
 
 def test_fetch_batch_chunks_at_25_and_quotes_each_chunk(client, mocker):
     coords = [(float(i), float(-i)) for i in range(30)]
     responses = []
-    for _ in range(2):  # two chunks: 25 + 5
-        responses.append(make_response(200, {"credits": 10.0}))
-        responses.append(make_response(200, {"credits_used": 10.0, "results": [{"ok": True}]}))
+    for _ in range(2):  # two coordinate chunks: 25 + 5
+        responses.append(make_response(200, {"credits_total": 10.0}))
+        responses.append(
+            make_response(
+                200,
+                {
+                    "fetched_at": "2026-08-27T00:00:00Z",
+                    "results": [
+                        {"index": i, "fields": {"elevation": {"value": float(i)}}}
+                        for i in range(25 if _ == 0 else 5)
+                    ],
+                },
+            )
+        )
     mock_request = mocker.patch.object(client._client, "request", side_effect=responses)
 
     results = client.fetch_batch(coords, ["elevation"])
 
-    assert len(results) == 2  # one result dict appended per chunk in this mock
+    assert len(results) == 30
+    assert results[0]["elevation"] == 0.0
     called_paths = [call.args[1] for call in mock_request.call_args_list]
     assert called_paths == [
         "/v1/fetch/quote",
@@ -86,3 +130,35 @@ def test_fetch_batch_chunks_at_25_and_quotes_each_chunk(client, mocker):
         "/v1/fetch/quote",
         "/v1/fetch/batch",
     ]
+
+
+def test_geocode_maps_live_response_shape(client, mocker):
+    resp = make_response(
+        200,
+        {
+            "lat": 37.422398,
+            "lng": -122.084212,
+            "accuracy": 1.0,
+            "accuracy_type": "rooftop",
+            "match_type": "building_centroid",
+            "normalized_address": "1600 Amphitheatre Pkwy, Mountain View, CA 94043",
+            "provider": "geocodio",
+            "source": "Santa Clara (Santa Clara County)",
+        },
+    )
+    mocker.patch.object(client._client, "request", return_value=resp)
+
+    geo = client.geocode("1600 Amphitheatre Parkway, Mountain View, CA")
+
+    assert geo.lat == 37.422398
+    assert geo.confidence == "rooftop"
+    assert geo.range_interpolation is False
+
+
+def test_geocode_flags_range_interpolation_for_imprecise_match(client, mocker):
+    resp = make_response(200, {"lat": 1.0, "lng": 2.0, "accuracy_type": "range_interpolation"})
+    mocker.patch.object(client._client, "request", return_value=resp)
+
+    geo = client.geocode("some vague address")
+
+    assert geo.range_interpolation is True

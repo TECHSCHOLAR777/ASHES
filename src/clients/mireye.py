@@ -23,6 +23,13 @@ RATE_LIMIT_SAFETY_MARGIN = 1  # skip a key at 59/60 rather than waiting for the 
 RATE_WINDOW_SECONDS = 60.0
 MAX_BATCH_SIZE = 25
 MAX_RETRIES = 3
+# Verified against the live API 2026-08-27: an explicit field list over 50 is rejected with
+# {"error": "fields_too_many", "max": 50} (presets are exempt, but V1 never uses a preset).
+MAX_FIELDS_PER_REQUEST = 50
+
+# Geocode accuracy_type values observed from the live provider (geocodio) that mean the
+# match is a precise point, not an interpolated/approximate one.
+GEOCODE_PRECISE_ACCURACY_TYPES = {"rooftop", "point"}
 
 
 class MireyeAskBanned(ValueError):
@@ -31,6 +38,10 @@ class MireyeAskBanned(ValueError):
 
 class MireyeRequestFailed(RuntimeError):
     """Raised after retries are exhausted on a Mireye call."""
+
+
+def _chunked(items: list[Any], size: int) -> list[list[Any]]:
+    return [items[i : i + size] for i in range(0, len(items), size)] or [[]]
 
 
 @dataclass
@@ -69,6 +80,26 @@ class MireyeClient:
 
     def close(self) -> None:
         self._client.close()
+
+    # -- response shaping ---------------------------------------------------
+
+    @staticmethod
+    def _flatten_fields(fields_response: dict[str, Any], fetched_at: str | None) -> dict[str, Any]:
+        """Flattens the live API's nested `{"fields": {name: {value, confidence, ...}}}`
+        shape into the flat `field`/`field_confidence`/`field_source_url`/`field_vintage`
+        convention the rest of the codebase (w_encoder, response_agent) expects."""
+        flat: dict[str, Any] = {}
+        for name, meta in fields_response.items():
+            flat[name] = meta.get("value")
+            if meta.get("confidence") is not None:
+                flat[f"{name}_confidence"] = meta["confidence"]
+            if meta.get("source_url") is not None:
+                flat[f"{name}_source_url"] = meta["source_url"]
+            if meta.get("dataset_vintage") is not None:
+                flat[f"{name}_vintage"] = meta["dataset_vintage"]
+        if fetched_at is not None:
+            flat["fetched_at"] = fetched_at
+        return flat
 
     # -- key rotation -----------------------------------------------------
 
@@ -151,30 +182,46 @@ class MireyeClient:
 
     def geocode(self, address: str) -> GeoPoint:
         data = self._request("POST", "/v1/geocode", {"address": address})
+        # The live API returns {lat, lng, accuracy, accuracy_type, match_type,
+        # normalized_address, provider, source} - no confidence/range_interpolation fields,
+        # so those are derived here (documented in DECISIONS.md).
+        accuracy_type = data.get("accuracy_type")
+        confidence = accuracy_type or "unknown"
+        range_interpolation = accuracy_type is not None and accuracy_type not in GEOCODE_PRECISE_ACCURACY_TYPES
         return GeoPoint(
             lat=data["lat"],
             lng=data["lng"],
-            confidence=data.get("confidence", "unknown"),
-            range_interpolation=bool(data.get("range_interpolation", False)),
+            confidence=confidence,
+            range_interpolation=range_interpolation,
         )
 
     def quote(self, lat: float, lng: float, fields: list[str], site_id: str | None = None) -> QuoteResult:
-        data = self._request(
-            "POST", "/v1/fetch/quote", {"lat": lat, "lng": lng, "fields": fields}, site_id=site_id
-        )
-        credits = float(data.get("credits", 0.0))
-        tool_logger.log_credit_usage(site_id, quoted_credits=credits, actual_credits=None, key_index=None)
-        return QuoteResult(credits=credits, fields=fields, lat=lat, lng=lng)
+        """Quotes a single point. Chunks internally at MAX_FIELDS_PER_REQUEST and sums cost,
+        so a caller never has to know about the live API's 50-field cap."""
+        total_credits = 0.0
+        for chunk in _chunked(fields, MAX_FIELDS_PER_REQUEST):
+            data = self._request(
+                "POST", "/v1/fetch/quote", {"lat": lat, "lng": lng, "fields": chunk}, site_id=site_id
+            )
+            total_credits += float(data.get("credits_total", 0.0))
+        tool_logger.log_credit_usage(site_id, quoted_credits=total_credits, actual_credits=None, key_index=None)
+        return QuoteResult(credits=total_credits, fields=fields, lat=lat, lng=lng)
 
     def fetch(self, lat: float, lng: float, fields: list[str], site_id: str | None = None) -> dict[str, Any]:
-        """Quote first (SRS FR-15 / rule 5), then fetch. Always logs the quoted cost."""
+        """Quote first (SRS FR-15 / rule 5), then fetch. Always logs the quoted cost.
+
+        The live API charges by field-count deterministically (`credits_per_location *
+        field_count`), and does not echo an "actual" cost distinct from the quote in the
+        fetch response itself, so the logged actual equals the quote (SRS's "quote for
+        reproducibility, not rationing" - there is no drift to reconcile here).
+        """
         quote_result = self.quote(lat, lng, fields, site_id=site_id)
-        data = self._request(
-            "POST", "/v1/fetch", {"lat": lat, "lng": lng, "fields": fields}, site_id=site_id
-        )
-        actual = float(data.get("credits_used", quote_result.credits))
-        tool_logger.log_credit_usage(site_id, quote_result.credits, actual, key_index=None)
-        return data
+        merged: dict[str, Any] = {}
+        for chunk in _chunked(fields, MAX_FIELDS_PER_REQUEST):
+            data = self._request("POST", "/v1/fetch", {"lat": lat, "lng": lng, "fields": chunk}, site_id=site_id)
+            merged.update(self._flatten_fields(data.get("fields", {}), data.get("fetched_at")))
+        tool_logger.log_credit_usage(site_id, quote_result.credits, quote_result.credits, key_index=None)
+        return merged
 
     def fetch_batch(
         self,
@@ -182,28 +229,41 @@ class MireyeClient:
         fields: list[str],
         site_ids: list[str] | None = None,
     ) -> list[dict[str, Any]]:
-        """Batches coordinates in groups of <= MAX_BATCH_SIZE, quoting each batch before fetch."""
+        """Batches coordinates in groups of <= MAX_BATCH_SIZE, quoting each batch before fetch.
+
+        The live batch-quote endpoint takes a location *count*, not the coordinates
+        themselves (quoting is location-agnostic; cost only depends on how many points and
+        fields are requested).
+        """
         results: list[dict[str, Any]] = []
         for start in range(0, len(coords), MAX_BATCH_SIZE):
             chunk = coords[start : start + MAX_BATCH_SIZE]
-            chunk_ids = (site_ids or [None] * len(coords))[start : start + MAX_BATCH_SIZE]
             batch_label = f"batch_{start}"
-            quote_data = self._request(
-                "POST",
-                "/v1/fetch/quote",
-                {"coords": [{"lat": lat, "lng": lng} for lat, lng in chunk], "fields": fields},
-                site_id=batch_label,
-            )
-            quoted_credits = float(quote_data.get("credits", 0.0))
+
+            quoted_credits = 0.0
+            for field_chunk in _chunked(fields, MAX_FIELDS_PER_REQUEST):
+                quote_data = self._request(
+                    "POST",
+                    "/v1/fetch/quote",
+                    {"locations": len(chunk), "fields": field_chunk},
+                    site_id=batch_label,
+                )
+                quoted_credits += float(quote_data.get("credits_total", 0.0))
             tool_logger.log_credit_usage(batch_label, quoted_credits, None, key_index=None)
 
-            data = self._request(
-                "POST",
-                "/v1/fetch/batch",
-                {"coords": [{"lat": lat, "lng": lng} for lat, lng in chunk], "fields": fields},
-                site_id=batch_label,
-            )
-            actual = float(data.get("credits_used", quoted_credits))
-            tool_logger.log_credit_usage(batch_label, quoted_credits, actual, key_index=None)
-            results.extend(data.get("results", []))
+            merged_by_index: list[dict[str, Any]] = [dict() for _ in chunk]
+            for field_chunk in _chunked(fields, MAX_FIELDS_PER_REQUEST):
+                data = self._request(
+                    "POST",
+                    "/v1/fetch/batch",
+                    {"locations": [{"lat": lat, "lng": lng} for lat, lng in chunk], "fields": field_chunk},
+                    site_id=batch_label,
+                )
+                for result in data.get("results", []):
+                    idx = result["index"]
+                    merged_by_index[idx].update(
+                        self._flatten_fields(result.get("fields", {}), result.get("fetched_at"))
+                    )
+            tool_logger.log_credit_usage(batch_label, quoted_credits, quoted_credits, key_index=None)
+            results.extend(merged_by_index)
         return results
