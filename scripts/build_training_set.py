@@ -93,8 +93,14 @@ def main() -> None:
         if not keys:
             raise RuntimeError("No MIREYE_KEY_* found in environment")
 
-    mireye = MireyeClient(keys)
-    firms = FIRMSClient()
+    # Longer timeout than the live watch-loop's default (30s, matching NFR-1's interactive
+    # target): a real live run showed most "failures" here were actually our own client
+    # giving up on a 50-field fetch that was still legitimately in progress server-side
+    # under load (932 "read operation timed out" entries at 30s vs a request that can
+    # genuinely take 35-90s once - see DECISIONS.md). This offline bulk job can afford to
+    # wait rather than discard work Mireye already did.
+    mireye = MireyeClient(keys, timeout=120.0)
+    firms = FIRMSClient(timeout=60.0)
     hrrr = HRRRClient()
     mtbs = MTBSClient()
 
