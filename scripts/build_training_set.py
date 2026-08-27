@@ -132,11 +132,16 @@ def main() -> None:
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Build every (fire, point, label) task upfront so workers can pull from one flat queue
-    # instead of coordinating fire-by-fire. Samples for the same fire share one t0 (noon UTC
-    # on the ignition date), so they land in the same HRRR-hour cache bucket regardless of
-    # which worker processes them - the shared HRRRClient cache still pays the real fetch
-    # cost only once per fire, not once per sample.
+    # Build every (fire, point, label) task upfront, grouped by fire and in that order (the
+    # fires themselves were already shuffled above). This ordering is deliberate, not
+    # incidental: samples for the same fire share one t0 (noon UTC on ignition date), so
+    # they land in the same HRRR-hour cache bucket - keeping them adjacent means the thread
+    # pool naturally assigns several workers to the same fire at once, one pays the real
+    # HRRR fetch cost and the rest hit the cache almost immediately. A first version of this
+    # script shuffled individual tasks (not just fire order) and it collapsed throughput to
+    # roughly one HRRR cold-fetch PER SAMPLE instead of per fire, confirmed live: 8 samples
+    # in 6.5 minutes with 12 workers, an order of magnitude slower than the per-fire-grouped
+    # version (see DECISIONS.md). Do not reintroduce a per-task shuffle.
     tasks: list[tuple] = []
     for fire in fires:
         positives = sample_positive_points(fire, args.positives_per_fire, rng)
@@ -150,7 +155,6 @@ def main() -> None:
         )
         for i, (lat, lng, label) in enumerate(labeled_points):
             tasks.append((fire, lat, lng, label, f"{fire.event_id}_{i:03d}"))
-    rng.shuffle(tasks)  # interleave fires so early progress isn't all from one region/era
     logger.info("Built %d candidate sample tasks from %d fires", len(tasks), len(fires))
 
     n_written = 0

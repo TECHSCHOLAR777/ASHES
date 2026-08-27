@@ -42,6 +42,18 @@ One line per decision, in build order.
   automatically create PandasIndex for coord 'latitude' with 2 dimensions"). Nearest
   neighbor is instead found by brute-force squared-distance argmin over the full ~1.9M-cell
   CONUS grid (`_nearest_grid_index` in `hrrr.py`), which is fast (<10ms) with numpy.
+- [2026-08-27] `build_training_set.py`'s first concurrent version shuffled individual
+  sample tasks (not just fire order) before submitting them to the thread pool, on the
+  theory that interleaving fires kept early progress diverse. In practice this defeated the
+  one optimization that matters most at scale: samples from the same fire share a single t0
+  (noon UTC on ignition date, `T0_HOUR_UTC`), so grouped together they cost one real HRRR
+  fetch per fire; shuffled, every sample lands on a different worker's turn at the (globally
+  serialized, cfgrib-thread-safety-required) HRRR parse lock, so it collapsed to roughly one
+  HRRR cold-fetch per SAMPLE. Confirmed live on the 2015-2023 CONUS run: 8 samples in 6.5
+  minutes with 12 workers (~49s/sample, barely better than the unparallelized 34s/sample
+  baseline). Fixed by keeping tasks grouped by fire (only the fire order is shuffled) so the
+  thread pool naturally assigns several workers to the same fire's samples at once - one
+  pays the real HRRR cost, the rest hit the in-memory cache almost immediately.
 - [2026-08-27] MTBS's WFS returns geometry in its native projected CRS (meters), not
   lat/lng degrees, unless `srsName=EPSG:4326` is passed explicitly - the scalar
   `burnbndlat`/`burnbndlon` properties are correctly in degrees regardless, which masked
