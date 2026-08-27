@@ -301,6 +301,13 @@ class LANDFIREClient:
         key = _cache_key(west, south, east, north, layers, resample_m, output_crs)
         cached = self._read_cache(key)
         if cached is not None:
+            tool_logger.log_tool_call(
+                "landfire:cache_hit",
+                {"west": west, "south": south, "east": east, "north": north},
+                {"key": key},
+                site_id,
+                0.0,
+            )
             return cached
 
         job = self._submit_job(layers, west, south, east, north, resample_m, output_crs, site_id)

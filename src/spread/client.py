@@ -10,6 +10,7 @@ import os
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from dataclasses import dataclass
@@ -170,15 +171,23 @@ def spread_run(
             return existing
 
     ensure_service(host, port)
+    tmp = Path(tempfile.mkdtemp(prefix="spread_run_"))
+    inputs_path = tmp / "inputs.npz"
+    outputs_path = tmp / "outputs.npz"
+    np.savez_compressed(
+        inputs_path,
+        fbfm40=np.asarray(landfire.fbfm40),
+        slope_deg=np.nan_to_num(np.asarray(landfire.slope_deg), nan=0.0),
+        transform=np.asarray(_affine_list(landfire.transform), dtype=np.float64),
+        west=np.asarray(landfire.west),
+        south=np.asarray(landfire.south),
+        east=np.asarray(landfire.east),
+        north=np.asarray(landfire.north),
+    )
     payload = {
         "incident_id": incident_id,
-        "fbfm40": landfire.fbfm40.tolist(),
-        "slope_deg": np.nan_to_num(landfire.slope_deg, nan=0.0).tolist(),
-        "transform": _affine_list(landfire.transform),
-        "west": landfire.west,
-        "south": landfire.south,
-        "east": landfire.east,
-        "north": landfire.north,
+        "inputs_path": str(inputs_path),
+        "outputs_path": str(outputs_path),
         "weather": weather,
         "perimeter_rings": perimeter_rings,
         "ignition_points": ignition_points or [],
@@ -189,7 +198,7 @@ def spread_run(
     url = f"http://{host}:{port}/spread_run"
     start = time.monotonic()
     try:
-        with httpx.Client(timeout=300.0) as client:
+        with httpx.Client(timeout=900.0) as client:
             resp = client.post(url, json=payload)
             resp.raise_for_status()
             data = resp.json()
@@ -212,21 +221,50 @@ def spread_run(
         raw = data.get(key) or []
         return np.array([[np.nan if v is None else v for v in row] for row in raw], dtype=np.float64)
 
+    if data.get("outputs_path") and Path(str(data["outputs_path"])).exists():
+        loaded = np.load(str(data["outputs_path"]), allow_pickle=False)
+        try:
+            arrival = np.asarray(loaded["arrival_hours"], dtype=np.float64)
+            sigma = np.asarray(loaded["eta_sigma_hours"], dtype=np.float64)
+            p24 = np.asarray(loaded["p_burn_24"], dtype=np.float64)
+            p48 = np.asarray(loaded["p_burn_48"], dtype=np.float64)
+            p72 = np.asarray(loaded["p_burn_72"], dtype=np.float64)
+            transform = loaded["transform"].tolist() if "transform" in loaded.files else list(data.get("transform") or _affine_list(landfire.transform))
+            west = float(loaded["west"]) if "west" in loaded.files else float(data.get("west") or landfire.west)
+            south = float(loaded["south"]) if "south" in loaded.files else float(data.get("south") or landfire.south)
+            east = float(loaded["east"]) if "east" in loaded.files else float(data.get("east") or landfire.east)
+            north = float(loaded["north"]) if "north" in loaded.files else float(data.get("north") or landfire.north)
+        finally:
+            loaded.close()
+    else:
+        arrival, sigma, p24, p48, p72 = _arr("arrival_hours"), _arr("eta_sigma_hours"), _arr("p_burn_24"), _arr("p_burn_48"), _arr("p_burn_72")
+        transform = list(data.get("transform") or _affine_list(landfire.transform))
+        west = float(data.get("west") or landfire.west)
+        south = float(data.get("south") or landfire.south)
+        east = float(data.get("east") or landfire.east)
+        north = float(data.get("north") or landfire.north)
+
     field = SpreadField(
         incident_id=incident_id,
         spread_field_version=str(data.get("spread_field_version") or "unknown"),
         engine=str(data.get("engine") or "unknown"),
         n_members=int(data.get("n_members") or 0),
-        arrival_hours=_arr("arrival_hours"),
-        eta_sigma_hours=_arr("eta_sigma_hours"),
-        p_burn_24=_arr("p_burn_24"),
-        p_burn_48=_arr("p_burn_48"),
-        p_burn_72=_arr("p_burn_72"),
-        transform=list(data.get("transform") or _affine_list(landfire.transform)),
-        west=float(data.get("west") or landfire.west),
-        south=float(data.get("south") or landfire.south),
-        east=float(data.get("east") or landfire.east),
-        north=float(data.get("north") or landfire.north),
+        arrival_hours=arrival,
+        eta_sigma_hours=sigma,
+        p_burn_24=p24,
+        p_burn_48=p48,
+        p_burn_72=p72,
+        transform=list(transform)[:6] if transform is not None else _affine_list(landfire.transform),
+        west=west,
+        south=south,
+        east=east,
+        north=north,
     )
+    try:
+        import shutil
+
+        shutil.rmtree(tmp, ignore_errors=True)
+    except OSError:
+        pass
     _REGISTRY.put(field)
     return field

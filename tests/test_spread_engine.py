@@ -8,6 +8,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from spread_service.server import run_ensemble
 
 
+def _as_grid(out, key):
+    raw = out[key]
+    if isinstance(raw, np.ndarray):
+        return np.asarray(raw, dtype=float)
+    return np.array([[np.nan if v is None else v for v in row] for row in raw], dtype=float)
+
+
 def _grid(n=7, fuel=122):
     fbfm = np.full((n, n), fuel, dtype=np.float64)
     slope = np.zeros((n, n))
@@ -46,7 +53,7 @@ def test_engine_reaches_burnable_neighbors_and_skips_urban():
     assert out["engine"] == "rothermel_huygens_v1"
     assert out["n_members"] == 5
     assert out["spread_field_version"].startswith("rothermel_huygens_v1")
-    arrival = np.array([[np.nan if v is None else v for v in row] for row in out["arrival_hours"]], dtype=float)
+    arrival = _as_grid(out, "arrival_hours")
     # Some cell inside/near the ignition polygon should have a finite arrival.
     assert np.isfinite(arrival).any()
     # Urban row stays unreached.
@@ -54,7 +61,7 @@ def test_engine_reaches_burnable_neighbors_and_skips_urban():
     p72 = np.array(out["p_burn_72"])
     assert p72.max() > 0
     # Ensemble sigma is a real spread, not a constant placeholder, on reached cells.
-    sigma = np.array([[np.nan if v is None else v for v in row] for row in out["eta_sigma_hours"]], dtype=float)
+    sigma = _as_grid(out, "eta_sigma_hours")
     reached = np.isfinite(arrival) & np.isfinite(sigma)
     assert reached.any()
     assert float(np.nanmax(sigma[reached])) >= 0.0
@@ -99,7 +106,7 @@ def test_no_ignition_returns_empty_field():
     body["perimeter_rings"] = []
     body["ignition_points"] = []
     out = run_ensemble(body)
-    arrival = np.array([[np.nan if v is None else v for v in row] for row in out["arrival_hours"]], dtype=float)
+    arrival = _as_grid(out, "arrival_hours")
     assert not np.isfinite(arrival).any()
     p72 = np.array(out["p_burn_72"])
     assert float(p72.max()) == 0.0

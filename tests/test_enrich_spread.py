@@ -95,6 +95,40 @@ def test_enrich_script_attaches_spread_without_mireye(tmp_path, monkeypatch):
     assert written["site_lat"] is not None
 
 
+def test_historic_spread_ignites_centroid_not_final_perimeter(monkeypatch):
+    captured = {}
+
+    class FakeStack:
+        fbfm40 = __import__("numpy").ones((3, 3))
+        slope_deg = __import__("numpy").zeros((3, 3))
+        transform = [0.001, 0, -123.0, 0, -0.001, 39.6]
+        west, south, east, north = -123.0, 39.4, -122.8, 39.6
+
+    def fake_fetch(self, *bbox, **kwargs):
+        return FakeStack()
+
+    def fake_aoi(*args, **kwargs):
+        return SimpleNamespace(cells=[0])
+
+    def fake_spread_run(**kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(incident_id=kwargs["incident_id"])
+
+    monkeypatch.setattr("src.clients.landfire.LANDFIREClient.fetch_aoi", fake_fetch)
+    monkeypatch.setattr("src.spread.historic.build_incident_aoi", fake_aoi)
+    monkeypatch.setattr("src.spread.historic.spread_run", fake_spread_run)
+
+    from src.clients.landfire import LANDFIREClient
+    from src.spread.historic import HISTORIC_DEFAULT_WIND_U, spread_field_for_fire
+
+    fire = _square_fire()
+    spread_field_for_fire(fire, LANDFIREClient())
+    assert captured["perimeter_rings"] == []
+    assert captured["ignition_points"] == [{"lat": fire.centroid_lat, "lng": fire.centroid_lng}]
+    assert captured["weather"]["wind_u"] == HISTORIC_DEFAULT_WIND_U
+    assert captured["weather"]["wind_v"] == 0.0
+
+
 def test_historic_bbox_clamp_keeps_centroid_window():
     from src.spread.historic import _clamp_bbox_to_centroid
 

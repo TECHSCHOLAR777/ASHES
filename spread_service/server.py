@@ -114,6 +114,46 @@ def _in_polygon(lng: float, lat: float, rings: list[list[list[float]]]) -> bool:
     return False
 
 
+def _cells_inside_rings(
+    height: int, width: int, transform: list[float], rings: list[list[list[float]]]
+) -> np.ndarray:
+    """Vectorized occupancy mask. Falls back to per-cell ray-casting if shapely rejects a ring."""
+    mask = np.zeros((height, width), dtype=bool)
+    if not rings or height <= 0 or width <= 0:
+        return mask
+    a, _, c, _, e, f = (list(transform) + [0, 0, 0])[:6]
+    cols = np.arange(width)
+    rows = np.arange(height)
+    cc, rr = np.meshgrid(cols, rows)
+    lng = a * (cc + 0.5) + c
+    lat = e * (rr + 0.5) + f
+    try:
+        from shapely import contains, points
+        from shapely.geometry import Polygon
+        from shapely.validation import make_valid
+
+        geoms = []
+        for ring in rings:
+            coords = [(float(pt[0]), float(pt[1])) for pt in ring if len(pt) >= 2]
+            if len(coords) < 3:
+                continue
+            if coords[0] != coords[-1]:
+                coords = coords + [coords[0]]
+            geoms.append(make_valid(Polygon(coords)))
+        if not geoms:
+            return mask
+        from shapely.ops import unary_union
+
+        geom = unary_union(geoms)
+        inside = contains(geom, points(lng.ravel(), lat.ravel()))
+        return np.asarray(inside, dtype=bool).reshape(height, width)
+    except Exception:
+        for r in range(height):
+            for col in range(width):
+                mask[r, col] = _in_polygon(float(lng[r, col]), float(lat[r, col]), rings)
+        return mask
+
+
 def propagate(
     fbfm40: np.ndarray,
     slope_deg: np.ndarray,
@@ -153,19 +193,11 @@ def propagate(
     arrival = np.full((height, width), np.inf, dtype=np.float64)
     ignited: list[tuple[int, int]] = []
 
-    def xy(row: int, col: int) -> tuple[float, float]:
-        lng = a * (col + 0.5) + c
-        lat = e * (row + 0.5) + f
-        return float(lng), float(lat)
-
-    for r in range(height):
-        for col in range(width):
-            if ros[r, col] <= 0:
-                continue
-            lng, lat = xy(r, col)
-            if perimeter_rings and _in_polygon(lng, lat, perimeter_rings):
-                arrival[r, col] = 0.0
-                ignited.append((r, col))
+    if perimeter_rings:
+        inside = _cells_inside_rings(height, width, [a, 0.0, c, 0.0, e, f], perimeter_rings)
+        seed = inside & (ros > 0)
+        arrival[seed] = 0.0
+        ignited.extend((int(r), int(c)) for r, c in zip(*np.nonzero(seed)))
 
     for pt in ignition_points or []:
         lng, lat = float(pt["lng"]), float(pt["lat"])
@@ -219,7 +251,11 @@ def propagate(
 
 def run_ensemble(inputs: dict[str, Any]) -> dict[str, Any]:
     fbfm40 = np.array(inputs["fbfm40"], dtype=np.float64)
-    slope = np.array(inputs.get("slope_deg") or np.zeros_like(fbfm40), dtype=np.float64)
+    slope_raw = inputs.get("slope_deg")
+    if slope_raw is None:
+        slope = np.zeros_like(fbfm40, dtype=np.float64)
+    else:
+        slope = np.array(slope_raw, dtype=np.float64)
     transform = list(inputs["transform"])
     west, south, east, north = inputs["west"], inputs["south"], inputs["east"], inputs["north"]
     lat0 = (south + north) / 2.0
@@ -257,22 +293,19 @@ def run_ensemble(inputs: dict[str, Any]) -> dict[str, Any]:
 
     stacked = np.stack(members, axis=0)
     finite = np.isfinite(stacked)
-    arrival_mean = np.full(fbfm40.shape, np.nan, dtype=np.float64)
-    arrival_std = np.full(fbfm40.shape, np.nan, dtype=np.float64)
-    for r in range(fbfm40.shape[0]):
-        for c in range(fbfm40.shape[1]):
-            vals = stacked[:, r, c][finite[:, r, c]]
-            if vals.size == 0:
-                continue
-            arrival_mean[r, c] = float(np.mean(vals))
-            arrival_std[r, c] = float(np.std(vals)) if vals.size > 1 else 0.0
+    masked = np.where(finite, stacked, np.nan)
+    with np.errstate(all="ignore"):
+        n_finite = np.sum(finite, axis=0)
+        arrival_mean = np.divide(
+            np.nansum(masked, axis=0),
+            np.maximum(n_finite, 1),
+        )
+        arrival_mean = np.where(n_finite > 0, arrival_mean, np.nan)
+        arrival_std = np.nanstd(masked, axis=0)
+    arrival_std = np.where(np.isfinite(arrival_mean), np.nan_to_num(arrival_std, nan=0.0), np.nan)
 
-    def p_burn(hours: float) -> list[list[float]]:
-        pb = np.zeros(fbfm40.shape, dtype=np.float64)
-        for m in members:
-            pb += (m <= hours).astype(np.float64)
-        pb /= max(len(members), 1)
-        return pb.tolist()
+    def p_burn(hours: float) -> np.ndarray:
+        return np.mean(stacked <= hours, axis=0)
 
     version = f"{ENGINE_NAME}:n{len(members)}:h{int(horizon)}:grid{fbfm40.shape[0]}x{fbfm40.shape[1]}"
     return {
@@ -280,8 +313,8 @@ def run_ensemble(inputs: dict[str, Any]) -> dict[str, Any]:
         "engine": ENGINE_NAME,
         "n_members": len(members),
         "horizon_hours": horizon,
-        "arrival_hours": np.where(np.isfinite(arrival_mean), arrival_mean, None).tolist(),
-        "eta_sigma_hours": np.where(np.isfinite(arrival_std), arrival_std, None).tolist(),
+        "arrival_hours": arrival_mean,
+        "eta_sigma_hours": arrival_std,
         "p_burn_24": p_burn(24.0),
         "p_burn_48": p_burn(48.0),
         "p_burn_72": p_burn(72.0),
@@ -292,6 +325,48 @@ def run_ensemble(inputs: dict[str, Any]) -> dict[str, Any]:
         "transform": transform,
         "shape": [int(fbfm40.shape[0]), int(fbfm40.shape[1])],
     }
+
+
+def _grid_to_jsonable(arr: Any) -> list:
+    grid = np.asarray(arr, dtype=np.float64)
+    return np.where(np.isfinite(grid), grid, None).tolist()
+
+
+def result_to_jsonable(result: dict[str, Any]) -> dict[str, Any]:
+    out = dict(result)
+    for key in ("arrival_hours", "eta_sigma_hours", "p_burn_24", "p_burn_48", "p_burn_72"):
+        if key in out and not isinstance(out[key], list):
+            out[key] = _grid_to_jsonable(out[key])
+    return out
+
+
+def save_result_npz(path: str | Path, result: dict[str, Any]) -> None:
+    np.savez_compressed(
+        str(path),
+        arrival_hours=np.asarray(result["arrival_hours"], dtype=np.float64),
+        eta_sigma_hours=np.asarray(result["eta_sigma_hours"], dtype=np.float64),
+        p_burn_24=np.asarray(result["p_burn_24"], dtype=np.float64),
+        p_burn_48=np.asarray(result["p_burn_48"], dtype=np.float64),
+        p_burn_72=np.asarray(result["p_burn_72"], dtype=np.float64),
+        transform=np.asarray(result["transform"], dtype=np.float64),
+        west=np.asarray(result["west"]),
+        south=np.asarray(result["south"]),
+        east=np.asarray(result["east"]),
+        north=np.asarray(result["north"]),
+        n_members=np.asarray(result["n_members"]),
+        spread_field_version=np.asarray(result["spread_field_version"]),
+        engine=np.asarray(result["engine"]),
+    )
+
+
+def _json_safe_inputs(inputs: dict[str, Any]) -> dict[str, Any]:
+    out = dict(inputs)
+    for key, val in list(out.items()):
+        if isinstance(val, np.ndarray):
+            out[key] = val.tolist()
+        elif isinstance(val, (np.floating, np.integer)):
+            out[key] = val.item()
+    return out
 
 
 def _run_external_engine(inputs: dict[str, Any]) -> dict[str, Any] | None:
@@ -313,7 +388,7 @@ def _run_external_engine(inputs: dict[str, Any]) -> dict[str, Any] | None:
     with tempfile.TemporaryDirectory(prefix="spread_run_") as td:
         in_path = Path(td) / "inputs.json"
         out_path = Path(td) / "outputs.json"
-        in_path.write_text(json.dumps(inputs), encoding="utf-8")
+        in_path.write_text(json.dumps(_json_safe_inputs(inputs)), encoding="utf-8")
         try:
             proc = subprocess.run(
                 [str(path), str(in_path), str(out_path)],
@@ -347,7 +422,10 @@ def _load_inputs(body: dict[str, Any]) -> dict[str, Any]:
     path = body.get("inputs_path")
     if path:
         data = np.load(path, allow_pickle=True)
-        loaded = {k: data[k] for k in data.files}
+        try:
+            loaded = {k: data[k] for k in data.files}
+        finally:
+            data.close()
         # npz stores python objects via allow_pickle arrays of object
         out = dict(body)
         out["fbfm40"] = loaded["fbfm40"]
@@ -403,7 +481,25 @@ class Handler(BaseHTTPRequestHandler):
             external = _run_external_engine(inputs)
             result = external if external is not None else run_ensemble(inputs)
             result["ok"] = True
-            self._json(200, result)
+            outputs_path = body.get("outputs_path")
+            if outputs_path:
+                save_result_npz(outputs_path, result)
+                compact = {
+                    "ok": True,
+                    "outputs_path": str(outputs_path),
+                    "spread_field_version": result.get("spread_field_version"),
+                    "engine": result.get("engine"),
+                    "n_members": result.get("n_members"),
+                    "west": result.get("west"),
+                    "south": result.get("south"),
+                    "east": result.get("east"),
+                    "north": result.get("north"),
+                    "transform": result.get("transform"),
+                    "shape": result.get("shape"),
+                }
+                self._json(200, compact)
+                return
+            self._json(200, result_to_jsonable(result))
         except Exception as exc:  # never leak a traceback as a fake field
             self._json(500, {"ok": False, "error": str(exc)})
 

@@ -2,6 +2,10 @@
 
 LANDFIRE + `spread_run` only. Never calls Mireye. The V1 jsonl already paid for W/E;
 this attaches the delegated arrival-field sample those rows were missing.
+
+Leakage rule (SRS 6.1): the MTBS *final* perimeter is the gold label `y`, never the t0
+front. Historic `spread_run` is ignited at the ignition centroid only. Live V2 still
+seeds the operational WFIGS perimeter, which is the true t0 state.
 """
 from __future__ import annotations
 
@@ -21,6 +25,13 @@ logger = logging.getLogger("fire_copilot.spread.historic")
 # around the ignition centroid so Path B jobs stay inside a workable tile. Live
 # V2 ask/watch still uses the full wind-projected incident AOI.
 MAX_HISTORIC_AOI_DEG = 0.35
+
+# Scott & Burgan table ROS is quoted at ~2.2 m/s midflame. Path B does not re-fetch
+# HRRR (still free, but not in the LANDFIRE+spread_run contract). A zero wind would
+# collapse the ensemble (every member identical). This reference wind is documented,
+# not a live observation.
+HISTORIC_DEFAULT_WIND_U = 2.2
+HISTORIC_DEFAULT_WIND_V = 0.0
 
 
 def _clamp_bbox_to_centroid(
@@ -72,23 +83,28 @@ def spread_field_for_fire(
     t0 = ignition_datetime(fire)
     if weather is None:
         weather = {
-            "wind_u": 0.0,
-            "wind_v": 0.0,
+            "wind_u": HISTORIC_DEFAULT_WIND_U,
+            "wind_v": HISTORIC_DEFAULT_WIND_V,
             "rh_pct": None,
             "temp_c": None,
             "valid_time": t0.isoformat() if t0 else None,
         }
     try:
+        logger.info(
+            "historic spread_run %s bbox=%.4f,%.4f,%.4f,%.4f",
+            fire.event_id, bbox[0], bbox[1], bbox[2], bbox[3],
+        )
         stack = landfire.fetch_aoi(*bbox, site_id=fire.event_id)
         geom = build_incident_aoi(
             perim, stack, wind_u=weather.get("wind_u"), wind_v=weather.get("wind_v")
         )
+        # Ignition centroid only. Do not seed the gold MTBS final perimeter.
         return spread_run(
             incident_id=fire.event_id,
             landfire=stack,
             aoi=geom,
             weather=weather,
-            perimeter_rings=[list(ring) for ring in perim.geometry_rings],
+            perimeter_rings=[],
             ignition_points=(
                 [{"lat": fire.centroid_lat, "lng": fire.centroid_lng}]
                 if fire.centroid_lat is not None and fire.centroid_lng is not None
