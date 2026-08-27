@@ -58,15 +58,63 @@ def _wind_dir_cardinal(u: float, v: float) -> str:
     return _CARDINALS[idx]
 
 
+_DATASET_CACHE_MAX_ENTRIES = 48  # 2 days of hourly runs; bounds memory in a long-lived process
+
+
 class HRRRClient:
-    """Wraps `Herbie` to fetch the latest available HRRR f00 analysis at a point."""
+    """Wraps `Herbie` to fetch the latest available HRRR f00 analysis at a point.
+
+    A watch-loop cycle asks this same client for many sites in parallel, and they almost
+    always want the same handful of candidate hours. Fetching and parsing the CONUS grid
+    is the expensive part (network + cfgrib); extracting one point from an already-parsed
+    dataset is cheap. So the parsed dataset is cached per run-time and shared across sites -
+    confirmed necessary against a live 5-site poll cycle that took over an hour before this
+    cache existed, because every site independently re-downloaded and re-parsed the same
+    grid (see DECISIONS.md).
+    """
 
     def __init__(self, max_hours_back: int = 6):
         self._max_hours_back = max_hours_back
+        self._dataset_cache: dict[str, tuple] = {}
+        self._cache_lock = threading.Lock()
+
+    def _get_datasets(self, run_time: datetime, site_id: str | None) -> tuple:
+        key = run_time.isoformat()
+        with self._cache_lock:
+            cached = self._dataset_cache.get(key)
+        if cached is not None:
+            return cached
+
+        # Only one thread parses at a time (cfgrib/ecCodes is not thread-safe); a second
+        # thread that loses the race re-checks the cache before doing any real work.
+        with _HRRR_PARSE_LOCK:
+            with self._cache_lock:
+                cached = self._dataset_cache.get(key)
+            if cached is not None:
+                return cached
+
+            from herbie import Herbie  # imported lazily: heavy dependency, only needed here
+
+            start = time.monotonic()
+            h = Herbie(run_time.strftime("%Y-%m-%d %H:%M"), model="hrrr", product="sfc", fxx=0)
+            ds_wind = h.xarray(":UGRD:10 m|:VGRD:10 m").load()
+            ds_temp = h.xarray(":TMP:2 m").load()
+            ds_rh = h.xarray(":RH:2 m").load()
+            # `.load()` fully materializes the arrays into memory here, inside the parse
+            # lock, so every later `.isel()` from other threads only touches plain numpy
+            # data - no lazy re-entry into cfgrib's non-thread-safe reader.
+            latency_ms = (time.monotonic() - start) * 1000
+            tool_logger.log_tool_call(
+                "hrrr:fetch_grid", {"run_time": key}, {"ok": True}, site_id, latency_ms
+            )
+
+            with self._cache_lock:
+                self._dataset_cache[key] = (ds_wind, ds_temp, ds_rh)
+                if len(self._dataset_cache) > _DATASET_CACHE_MAX_ENTRIES:
+                    del self._dataset_cache[min(self._dataset_cache)]
+            return ds_wind, ds_temp, ds_rh
 
     def get_weather(self, lat: float, lng: float, site_id: str | None = None) -> HRRRWeather:
-        from herbie import Herbie  # imported lazily: heavy dependency, only needed here
-
         now = datetime.now(timezone.utc)
         last_error: Exception | None = None
 
@@ -74,11 +122,7 @@ class HRRRClient:
             run_time = (now - timedelta(hours=hours_back)).replace(minute=0, second=0, microsecond=0)
             start = time.monotonic()
             try:
-                with _HRRR_PARSE_LOCK:
-                    h = Herbie(run_time.strftime("%Y-%m-%d %H:%M"), model="hrrr", product="sfc", fxx=0)
-                    ds_wind = h.xarray(":UGRD:10 m|:VGRD:10 m")
-                    ds_temp = h.xarray(":TMP:2 m")
-                    ds_rh = h.xarray(":RH:2 m")
+                ds_wind, ds_temp, ds_rh = self._get_datasets(run_time, site_id)
 
                 lng_0_360 = lng % 360
                 y_idx, x_idx = _nearest_grid_index(

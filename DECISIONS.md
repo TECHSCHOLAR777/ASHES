@@ -56,11 +56,17 @@ One line per decision, in build order.
 - [2026-08-27] `cfgrib`/ecCodes is not thread-safe: a live 5-site watch-loop poll cycle
   (each site fetching HRRR in its own worker thread, per FR-30's parallel E-fetch) produced
   "fatal flex scanner internal error--end of buffer missed" and ecCodes parser errors from
-  concurrent GRIB2 parsing, stalling the entire poll cycle. Fixed by serializing all
-  Herbie/cfgrib access (both the file download and the parse) behind one process-wide
-  `threading.Lock` in `hrrr.py`. Sites requesting the same HRRR hour after the first still
-  benefit from Herbie's on-disk cache, so this costs one real download per poll cycle, not
-  one per site.
+  concurrent GRIB2 parsing. First fix (a single global parse lock) made the corruption stop
+  but exposed the underlying performance problem: every site independently re-downloaded
+  and re-parsed the same HRRR grid for the same hour, serialized behind the lock, so a
+  5-site poll cycle took **over an hour** end to end - far outside NFR-2's 5-10 min target.
+  Real fix: `HRRRClient` now caches the fully `.load()`-ed (materialized, not lazy) parsed
+  dataset per run-hour and shares it across sites requesting the same hour; only the first
+  site pays the real fetch/parse cost, everyone else gets an in-memory cache hit. `.load()`
+  inside the parse lock also closes a subtler thread-safety gap: lazy xarray/cfgrib
+  DataArrays re-enter the non-thread-safe reader on first access, so later concurrent
+  `.isel()` calls from other threads (safe on plain numpy) would otherwise still race on
+  cfgrib's C-level state. Verified this actually fixes the cycle time on a rerun.
 - [2026-08-27] SPC's Day-1 fire weather outlook has no stable plain-text product URL: the
   originally assumed `fwdy1.txt` 404s, and SPC's "FWD" (Fire Weather Outlook Discussion)
   text product is not exposed per-office (KWNS) on `api.weather.gov/products`. Pointed the

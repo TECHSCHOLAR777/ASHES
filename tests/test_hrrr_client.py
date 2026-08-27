@@ -46,6 +46,9 @@ class _FakeDataset(dict):
             return _FakeLatLon()
         return _FakeVar(super().__getitem__(key))
 
+    def load(self):
+        return self
+
 
 def test_get_weather_computes_speed_and_temp(mocker):
     fake_herbie_instance = mocker.MagicMock()
@@ -88,3 +91,23 @@ def test_get_weather_falls_back_to_previous_hour(mocker):
 
     assert weather.stale is True
     assert weather.wind_speed_ms == 1.0
+
+
+def test_dataset_shared_across_sites_for_same_hour(mocker):
+    """Two sites asking for the same hour should trigger exactly one Herbie fetch - this is
+    the fix for the live watch-loop run that took over an hour because every site
+    independently re-downloaded/re-parsed the same HRRR grid (see DECISIONS.md)."""
+    fake_instance = mocker.MagicMock()
+    fake_instance.xarray.side_effect = [
+        _FakeDataset({"u10": 2.0, "v10": 0.0}),
+        _FakeDataset({"t2m": 295.0}),
+        _FakeDataset({"r2": 60.0}),
+    ]
+    mock_herbie_cls = mocker.patch("herbie.Herbie", return_value=fake_instance)
+
+    client = HRRRClient()
+    w1 = client.get_weather(34.0, -118.0)
+    w2 = client.get_weather(40.0, -105.0)
+
+    assert mock_herbie_cls.call_count == 1  # one grid fetch shared by both sites
+    assert w1.wind_speed_ms == w2.wind_speed_ms == 2.0
