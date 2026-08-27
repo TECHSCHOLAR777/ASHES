@@ -162,7 +162,7 @@ def main() -> None:
         if not pending:
             return 0, 0, False
         fire = fires.get(event_id)
-        lf = LANDFIREClient()
+        lf = LANDFIREClient(timeout=300.0, poll_timeout_seconds=600.0)
         try:
             field = spread_field_for_fire(fire, lf) if fire is not None else None
         finally:
