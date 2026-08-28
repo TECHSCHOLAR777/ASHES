@@ -10,9 +10,9 @@ parcel, different hit probability.
 
 **Book:** WFIGS Daily 2023–2026, exact UniqueFireIdentifier. Inventory:
 `data/training/job_c_2023/tape_inventory.json` (407 usable CONUS fires; 404 tapes on
-disk, 3 empty IDs). Sample + R0 labels: `python scripts/build_job_c_book.py --resume`.
-Points are the 72 h growth annulus, not the final ring. LANDFIRE AOI is that same
-72 h envelope ∪ seed (not the months-later scar). ELMFIRE: compile
+disk, 3 empty IDs). After all tapes: **7987 rows / 283 events / 2099 positives /
+7947 evaluable_72** (`book_summary.json`). Points are the 72 h growth annulus, not
+the final ring. LANDFIRE AOI is that same 72 h envelope ∪ seed. ELMFIRE: compile
 https://github.com/lautenberger/elmfire branch `2025.0212` *outside* this repo, then
 
 ```

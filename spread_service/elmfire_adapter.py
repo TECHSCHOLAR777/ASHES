@@ -337,10 +337,14 @@ def _read_toa(outputs: Path, tstop_s: float) -> np.ndarray:
 
     tifs = sorted(outputs.glob("time_of_arrival*.tif")) + sorted(outputs.glob("toa_*.tif"))
     bils = sorted(outputs.glob("time_of_arrival*.bil")) + sorted(outputs.glob("toa_*.bil"))
+    extras = sorted(outputs.parent.rglob("time_of_arrival*")) + sorted(outputs.parent.rglob("toa_*"))
     path = tifs[0] if tifs else (bils[0] if bils else None)
+    if path is None and extras:
+        path = extras[0]
     if path is None:
         names = [p.name for p in outputs.iterdir()] if outputs.exists() else []
-        raise ElmfireAdapterError(f"ELMFIRE wrote no TOA raster in {outputs} (files={names})")
+        more = [str(p.relative_to(outputs.parent)) for p in extras]
+        raise ElmfireAdapterError(f"ELMFIRE wrote no TOA raster in {outputs} (files={names} extra={more[:20]})")
     with rasterio.open(path) as ds:
         arr = ds.read(1).astype(np.float64)
         nodata = ds.nodata

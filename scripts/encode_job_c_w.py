@@ -41,13 +41,14 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--max-rows", type=int, default=None)
+    parser.add_argument("--batch-size", type=int, default=10)
     args = parser.parse_args()
 
     catalog = load_field_catalog()
     fields = [name for _role, name, _meta in ordered_model_fields(catalog)]
     # Batch of 25 × 61 fields is one real Mireye call, not thinning. 30s/point
     # would take a calendar day; the live /v1/fetch/batch endpoint is the contract.
-    client = MireyeClient(_keys(), timeout=180.0)
+    client = MireyeClient(_keys(), timeout=300.0)
 
     done: set[str] = set()
     if args.resume and args.output.exists():
@@ -83,10 +84,11 @@ def main() -> None:
 
     n_write = 0
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    logger.info("pending=%d skip=%d fields=%d batch=%d", len(pending), n_skip, len(fields), MAX_BATCH_SIZE)
+    batch = max(1, min(MAX_BATCH_SIZE, args.batch_size))
+    logger.info("pending=%d skip=%d fields=%d batch=%d", len(pending), n_skip, len(fields), batch)
     with args.output.open("a" if args.resume else "w", encoding="utf-8") as out:
-        for start in range(0, len(pending), MAX_BATCH_SIZE):
-            chunk = pending[start : start + MAX_BATCH_SIZE]
+        for start in range(0, len(pending), batch):
+            chunk = pending[start : start + batch]
             coords = [(float(r["site_lat"]), float(r["site_lng"])) for r in chunk]
             raws = client.fetch_batch(coords, fields, site_ids=[r["site_id"] for r in chunk])
             if len(raws) != len(chunk):
