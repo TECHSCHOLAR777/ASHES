@@ -115,3 +115,52 @@ def spread_field_for_fire(
     except Exception as exc:
         logger.warning("spread_run/LANDFIRE failed for fire %s: %s", fire.event_id, exc)
         return None
+
+
+def spread_field_for_timed_seed(
+    fire: MTBSFire,
+    landfire: LANDFIREClient,
+    seed_rings: list[list[tuple[float, float]]],
+    weather: dict[str, Any],
+) -> SpreadField | None:
+    """R1 historic run: seed the first operational/IR polygon, drive with real weather.
+
+    Does not seed the MTBS final scar. Centroid ignition is kept only if the seed
+    polygon is empty so the engine still has a start.
+    """
+    if seed_rings:
+        perim = WFIGSPerimeter(
+            irwin_id=fire.event_id,
+            name=fire.incident_name or fire.event_id,
+            geometry_rings=seed_rings,
+        )
+    else:
+        perim = mtbs_as_perimeter(fire)
+    bbox = aoi_bbox_for_fetch(perim, weather.get("wind_u"), weather.get("wind_v"))
+    if bbox is None:
+        return None
+    bbox = _clamp_bbox_to_centroid(bbox, fire.centroid_lat, fire.centroid_lng)
+    try:
+        logger.info(
+            "historic timed spread_run %s bbox=%.4f,%.4f,%.4f,%.4f seed_rings=%d",
+            fire.event_id, bbox[0], bbox[1], bbox[2], bbox[3], len(seed_rings),
+        )
+        stack = landfire.fetch_aoi(*bbox, site_id=fire.event_id)
+        geom = build_incident_aoi(
+            perim, stack, wind_u=weather.get("wind_u"), wind_v=weather.get("wind_v")
+        )
+        ignitions = []
+        if not seed_rings and fire.centroid_lat is not None and fire.centroid_lng is not None:
+            ignitions = [{"lat": fire.centroid_lat, "lng": fire.centroid_lng}]
+        return spread_run(
+            incident_id=fire.event_id,
+            landfire=stack,
+            aoi=geom,
+            weather=weather,
+            perimeter_rings=seed_rings,
+            ignition_points=ignitions,
+            site_id=fire.event_id,
+        )
+    except Exception as exc:
+        logger.warning("timed spread_run/LANDFIRE failed for fire %s: %s", fire.event_id, exc)
+        return None

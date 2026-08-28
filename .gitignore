@@ -5,6 +5,7 @@ __pycache__/
 data/cache/*.db
 data/cache/landfire/*
 !data/cache/landfire/.gitkeep
+data/cache/timed_series/
 data/logs/*.jsonl
 data/logs/*.jsonl
 data/models/*.pkl
