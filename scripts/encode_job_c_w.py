@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from src.clients.mireye import MireyeClient
+from src.clients.mireye import MAX_BATCH_SIZE, MireyeClient
 from src.features.w_encoder import encode_w, load_field_catalog, ordered_model_fields
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -45,7 +45,9 @@ def main() -> None:
 
     catalog = load_field_catalog()
     fields = [name for _role, name, _meta in ordered_model_fields(catalog)]
-    client = MireyeClient(_keys())
+    # Batch of 25 × 61 fields is one real Mireye call, not thinning. 30s/point
+    # would take a calendar day; the live /v1/fetch/batch endpoint is the contract.
+    client = MireyeClient(_keys(), timeout=180.0)
 
     done: set[str] = set()
     if args.resume and args.output.exists():
@@ -55,17 +57,15 @@ def main() -> None:
                 if rec.get("w_vector"):
                     done.add(rec["site_id"])
 
-    n_in = n_write = n_skip = 0
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.input.open() as handle, args.output.open("a" if args.resume else "w", encoding="utf-8") as out:
+    pending: list[dict] = []
+    n_in = n_skip = 0
+    with args.input.open() as handle:
         for line in handle:
             line = line.strip()
             if not line:
                 continue
             rec = json.loads(line)
             n_in += 1
-            if args.max_rows is not None and n_write >= args.max_rows:
-                break
             if rec["site_id"] in done:
                 n_skip += 1
                 continue
@@ -77,17 +77,30 @@ def main() -> None:
             if not (rec.get("arrival") or {}).get("evaluable_72"):
                 n_skip += 1
                 continue
-            raw = client.fetch(rec["site_lat"], rec["site_lng"], fields, site_id=rec["site_id"])
-            w = encode_w(raw, catalog)
-            rec["w_vector"] = w.vector.tolist()
-            rec["w_mask"] = w.mask.tolist()
-            rec["w_feature_names"] = w.feature_names
-            rec["w_vintages"] = w.vintages
-            out.write(json.dumps(rec) + "\n")
-            n_write += 1
-            if n_write % 25 == 0:
-                logger.info("encoded %d rows", n_write)
-                out.flush()
+            pending.append(rec)
+            if args.max_rows is not None and len(pending) >= args.max_rows:
+                break
+
+    n_write = 0
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    logger.info("pending=%d skip=%d fields=%d batch=%d", len(pending), n_skip, len(fields), MAX_BATCH_SIZE)
+    with args.output.open("a" if args.resume else "w", encoding="utf-8") as out:
+        for start in range(0, len(pending), MAX_BATCH_SIZE):
+            chunk = pending[start : start + MAX_BATCH_SIZE]
+            coords = [(float(r["site_lat"]), float(r["site_lng"])) for r in chunk]
+            raws = client.fetch_batch(coords, fields, site_ids=[r["site_id"] for r in chunk])
+            if len(raws) != len(chunk):
+                raise RuntimeError(f"fetch_batch returned {len(raws)} for {len(chunk)} sites")
+            for rec, raw in zip(chunk, raws):
+                w = encode_w(raw, catalog)
+                rec["w_vector"] = w.vector.tolist()
+                rec["w_mask"] = w.mask.tolist()
+                rec["w_feature_names"] = w.feature_names
+                rec["w_vintages"] = w.vintages
+                out.write(json.dumps(rec) + "\n")
+                n_write += 1
+            out.flush()
+            logger.info("encoded %d / %d", n_write, len(pending))
     logger.info("read=%d wrote=%d skipped=%d -> %s", n_in, n_write, n_skip, args.output)
 
 

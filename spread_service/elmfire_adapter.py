@@ -262,10 +262,15 @@ def _reproject_to_utm(
         scale = max(dst_w / max_dim, dst_h / max_dim)
         dst_w = max(32, int(dst_w / scale))
         dst_h = max(32, int(dst_h / scale))
-        # Recalculate with a coarser resolution by using the same bounds.
         from rasterio.transform import from_bounds
+        from rasterio.warp import transform_bounds
 
-        transform = from_bounds(left, bottom, right, top, dst_w, dst_h)
+        # from_bounds must see projected metres. Passing lon/lat here made PHI
+        # miss the seed on any tile that needed coarsening (the 500 we were seeing).
+        utm_left, utm_bottom, utm_right, utm_top = transform_bounds(
+            src_crs_obj, dst_crs, left, bottom, right, top
+        )
+        transform = from_bounds(utm_left, utm_bottom, utm_right, utm_top, dst_w, dst_h)
     out = {}
     for name, src in arrays.items():
         dst = np.zeros((dst_h, dst_w), dtype=np.float32)
@@ -511,11 +516,15 @@ def run_from_inputs(inputs: dict[str, Any], work: Path | None = None) -> dict[st
             to_utm = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg}", always_xy=True)
             inv = ~dst_transform
             for pt in ignitions:
-                x, y = to_utm.transform(float(pt["lng"]), float(pt["lat"]))
+                if isinstance(pt, dict):
+                    lng_i, lat_i = float(pt["lng"]), float(pt["lat"])
+                else:
+                    lng_i, lat_i = float(pt[0]), float(pt[1])
+                x, y = to_utm.transform(lng_i, lat_i)
                 col, row = inv * (x, y)
-                r, c = int(row), int(col)
-                if 0 <= r < dst_h and 0 <= c < dst_w:
-                    phi[r, c] = -1.0
+                r = int(np.clip(row, 0, dst_h - 1))
+                c = int(np.clip(col, 0, dst_w - 1))
+                phi[max(0, r - 1) : min(dst_h, r + 2), max(0, c - 1) : min(dst_w, c + 2)] = -1.0
     if not np.any(phi < 0):
         raise ElmfireAdapterError("no seed cells in phi (empty perimeter and ignition)")
 

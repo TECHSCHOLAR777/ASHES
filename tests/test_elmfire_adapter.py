@@ -91,3 +91,29 @@ def test_adapter_writes_npz_sidecar_not_nested_grid_json(tmp_path):
     assert merged["arrival_hours"].shape == (2, 2)
     assert merged["p_burn_72"][0, 0] == 1.0
     assert out.stat().st_size < 2000
+
+
+def test_coarsen_keeps_utm_metres_not_lonlat():
+    from rasterio.transform import Affine
+
+    from spread_service.elmfire_adapter import _reproject_to_utm, rasterize_phi
+
+    height = width = 2000
+    transform = Affine(0.0005, 0, -106.0, 0, -0.0005, 34.0)
+    fbfm = np.full((height, width), 122.0, dtype=np.float32)
+    projected, dst_t, dst_crs, cellsize, xll, yll, dh, dw = _reproject_to_utm(
+        {"fbfm40": fbfm}, transform, "EPSG:4326", 32613, max_dim=400
+    )
+    assert dw <= 400 and dh <= 400
+    assert cellsize > 50.0
+    assert abs(xll) > 10_000
+    ring = [[
+        [-105.5, 33.5],
+        [-105.4, 33.5],
+        [-105.4, 33.6],
+        [-105.5, 33.6],
+        [-105.5, 33.5],
+    ]]
+    phi = rasterize_phi(dh, dw, dst_t, ring, dst_crs)
+    assert (phi < 0).any()
+    assert (phi > 0).any()
