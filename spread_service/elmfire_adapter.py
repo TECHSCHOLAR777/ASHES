@@ -404,9 +404,28 @@ def build_result(eta: np.ndarray, inputs: dict[str, Any], horizon: float) -> dic
     }
 
 
+ARRAY_KEYS = ("arrival_hours", "eta_sigma_hours", "p_burn_24", "p_burn_48", "p_burn_72")
+
+
+def write_adapter_outputs(result: dict[str, Any], out_path: Path) -> Path:
+    """Write grids as npz. Nested-list JSON of a LANDFIRE tile OOMs the service."""
+    arrays_path = out_path.with_suffix(".npz")
+    np.savez_compressed(
+        arrays_path,
+        **{key: np.asarray(result[key], dtype=np.float64) for key in ARRAY_KEYS},
+    )
+    meta = {key: result[key] for key in result if key not in ARRAY_KEYS}
+    meta["arrays_path"] = str(arrays_path)
+    for key in ARRAY_KEYS:
+        # Presence satisfies the JSON contract; values live in the sidecar.
+        meta[key] = None
+    out_path.write_text(json.dumps(meta, default=str), encoding="utf-8")
+    return arrays_path
+
+
 def _jsonable(result: dict[str, Any]) -> dict[str, Any]:
     out = dict(result)
-    for key in ("arrival_hours", "eta_sigma_hours", "p_burn_24", "p_burn_48", "p_burn_72"):
+    for key in ARRAY_KEYS:
         grid = np.asarray(out[key], dtype=np.float64)
         out[key] = np.where(np.isfinite(grid), grid, None).tolist()
     return out
@@ -474,11 +493,15 @@ def run_from_inputs(inputs: dict[str, Any], work: Path | None = None) -> dict[st
         arrays, src_transform, src_crs, epsg
     )
     rings = inputs.get("perimeter_rings") or []
-    # flatten one extra list wrapping if present
-    if rings and rings[0] and isinstance(rings[0][0], (list, tuple)) and len(rings[0][0]) == 2:
-        ring_list = rings
-    else:
-        ring_list = rings
+    ring_list = rings
+    if rings and isinstance(rings[0], (list, tuple)):
+        first = rings[0]
+        # Already a list of rings (each ring is a list of [lng, lat]).
+        if first and isinstance(first[0], (list, tuple)) and len(first[0]) >= 2:
+            ring_list = rings
+        # Single ring passed as [[lng, lat], ...].
+        elif first and isinstance(first[0], (int, float)):
+            ring_list = [rings]
     phi = rasterize_phi(dst_h, dst_w, dst_transform, ring_list, dst_crs)
     if not np.any(phi < 0):
         ignitions = inputs.get("ignition_points") or []
@@ -575,7 +598,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         inputs = load_inputs(in_path)
         result = run_from_inputs(inputs)
-        out_path.write_text(json.dumps(_jsonable(result)), encoding="utf-8")
+        write_adapter_outputs(result, out_path)
     except Exception as exc:
         sys.stderr.write(f"elmfire_adapter: {exc}\n")
         return 1

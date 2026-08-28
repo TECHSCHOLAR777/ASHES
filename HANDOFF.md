@@ -9,9 +9,10 @@ event-held-out, Brier / log-loss / reliability, shuffle-W kill. Same ETA, differ
 parcel, different hit probability.
 
 **Book:** WFIGS Daily 2023–2026, exact UniqueFireIdentifier. Inventory:
-`data/training/job_c_2023/tape_inventory.json` (407 usable CONUS fires). Download
-geometries with `python scripts/download_job_c_tapes.py --resume`. Sample + R0 labels:
-`python scripts/build_job_c_book.py`. ELMFIRE: compile
+`data/training/job_c_2023/tape_inventory.json` (407 usable CONUS fires; 404 tapes on
+disk, 3 empty IDs). Sample + R0 labels: `python scripts/build_job_c_book.py --resume`.
+Points are the 72 h growth annulus, not the final ring. LANDFIRE AOI is that same
+72 h envelope ∪ seed (not the months-later scar). ELMFIRE: compile
 https://github.com/lautenberger/elmfire branch `2025.0212` *outside* this repo, then
 
 ```

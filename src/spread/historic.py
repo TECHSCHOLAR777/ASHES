@@ -183,6 +183,65 @@ def _cap_bbox(
     return west, south, east, north
 
 
+def job_c_aoi_rings(
+    seed_rings: list[list[tuple[float, float]]],
+    horizon_rings: list[list[tuple[float, float]]] | None,
+) -> list[list[tuple[float, float]]]:
+    """LANDFIRE envelope for Job C: seed ∪ 72 h Daily ring, never the months-later final.
+
+    Sample sites live in the 72 h growth annulus plus hard/far negatives around that
+    envelope. Boxing on the last tape ring (often a 100 km scar) and then capping at
+    0.90° around *that* centroid drops the seed off the grid — ELMFIRE then has an
+    empty PHI and the adapter 500s. The 72 h ring is the label geometry; the final
+    ring is not.
+    """
+    out: list[list[tuple[float, float]]] = []
+    seen: set[int] = set()
+    for ring in list(seed_rings or []) + list(horizon_rings or []):
+        key = id(ring)
+        if key in seen:
+            continue
+        seen.add(key)
+        if ring:
+            out.append(ring)
+    return out
+
+
+def _ensure_points_in_bbox(
+    bbox: tuple[float, float, float, float],
+    points: list[tuple[float, float]],
+    pad_deg: float = 0.03,
+) -> tuple[float, float, float, float]:
+    """If a seed vertex is outside the 0.90° cap, recenter the box on the seed.
+
+    Expanding then re-capping around the union centroid can still drop the seed.
+    Empty PHI is a hard ELMFIRE fail; clipping the far side of the 72 h envelope
+    is the lesser damage.
+    """
+    west, south, east, north = bbox
+    for lng, lat in points:
+        inside = (west - pad_deg) <= lng <= (east + pad_deg) and (south - pad_deg) <= lat <= (north + pad_deg)
+        if inside:
+            continue
+        width = min(max(east - west, pad_deg * 4), MAX_JOB_C_AOI_DEG)
+        height = min(max(north - south, pad_deg * 4), MAX_JOB_C_AOI_DEG)
+        west, east = lng - width / 2.0, lng + width / 2.0
+        south, north = lat - height / 2.0, lat + height / 2.0
+    return west, south, east, north
+
+
+def _seed_vertices(seed_rings: list[list[tuple[float, float]]], n: int = 8) -> list[tuple[float, float]]:
+    pts: list[tuple[float, float]] = []
+    for ring in seed_rings or []:
+        for pt in ring:
+            if len(pt) < 2:
+                continue
+            pts.append((float(pt[0]), float(pt[1])))
+            if len(pts) >= n:
+                return pts
+    return pts
+
+
 def spread_field_for_job_c(
     fire_id: str,
     lat0: float,
@@ -192,13 +251,13 @@ def spread_field_for_job_c(
     landfire: LANDFIREClient,
     weather: dict[str, Any],
 ) -> SpreadField | None:
-    """Job C / Job A: seed the first Daily ring, LANDFIRE over the last-ring envelope.
+    """Job C / Job A: seed the first Daily ring, LANDFIRE over the 72 h envelope.
 
-    Does not clamp to 0.35°. Does not seed the last ring (that would leak y).
+    Does not clamp to 0.35°. Does not seed the last/final ring (that would leak y).
     The caller must set SPREAD_ENGINE_REQUIRED and SPREAD_ENGINE_BIN so Huygens
     cannot silently serve the claim.
     """
-    rings_for_bbox = bbox_rings or seed_rings
+    rings_for_bbox = job_c_aoi_rings(seed_rings, bbox_rings)
     if rings_for_bbox:
         perim = WFIGSPerimeter(irwin_id=fire_id, name=fire_id, geometry_rings=rings_for_bbox)
     else:
@@ -214,6 +273,7 @@ def spread_field_for_job_c(
     if bbox is None:
         return None
     bbox = _cap_bbox(bbox, MAX_JOB_C_AOI_DEG)
+    bbox = _ensure_points_in_bbox(bbox, _seed_vertices(seed_rings))
     try:
         logger.info(
             "job_c elmfire spread_run %s bbox=%.4f,%.4f,%.4f,%.4f seed_rings=%d",
@@ -223,13 +283,17 @@ def spread_field_for_job_c(
         geom = build_incident_aoi(
             perim, stack, wind_u=weather.get("wind_u"), wind_v=weather.get("wind_v")
         )
+        ignitions: list[dict[str, float]] = []
+        verts = _seed_vertices(seed_rings, n=1)
+        if verts:
+            ignitions = [{"lng": verts[0][0], "lat": verts[0][1]}]
         field = spread_run(
             incident_id=f"job_c:{fire_id}",
             landfire=stack,
             aoi=geom,
             weather=weather,
             perimeter_rings=seed_rings,
-            ignition_points=[],
+            ignition_points=ignitions,
             ensemble={"n_members": 1, "wind_speed_frac": 0.0, "wind_dir_deg": 0.0, "moisture_frac": 0.0, "seed": 42},
             site_id=fire_id,
             reuse=True,

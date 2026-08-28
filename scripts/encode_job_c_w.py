@@ -69,6 +69,14 @@ def main() -> None:
             if rec["site_id"] in done:
                 n_skip += 1
                 continue
+            vec = rec.get("spread_vector_elmfire")
+            engine = rec.get("engine") or ""
+            if not vec or "huygens" in str(engine).lower():
+                n_skip += 1
+                continue
+            if not (rec.get("arrival") or {}).get("evaluable_72"):
+                n_skip += 1
+                continue
             raw = client.fetch(rec["site_lat"], rec["site_lng"], fields, site_id=rec["site_id"])
             w = encode_w(raw, catalog)
             rec["w_vector"] = w.vector.tolist()

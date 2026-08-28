@@ -252,4 +252,10 @@ One line per decision, in build order.
   logistic calibrator on `(eta, σ, p_T, W_allowed)`, not a 218-D GBM. W_allowed drops
   NDVI, current LCMS/canopy, burn year, drought, and `nearest_fire_perimeter_distance_m`.
   y is R0 on Daily rings (already-in-seed out; censored if tape < 72 h).
+- [2026-08-28] Job C LANDFIRE AOI is the **72 h Daily envelope ∪ seed**, not the
+  months-later final ring. Boxing on the last tape ring then capping 0.90° around that
+  centroid dropped the seed off-grid (empty PHI → adapter 500). Adapter now writes TOA
+  grids as an npz sidecar; nested-list JSON of a 90 m LANDFIRE tile was OOM-adjacent.
+  Failed ELMFIRE fires are not written into the book so `--resume` retries them. W
+  encoding skips rows without an `elmfire_*` field. Huygens still refused.
 

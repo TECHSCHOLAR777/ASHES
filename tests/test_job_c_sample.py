@@ -49,3 +49,20 @@ def test_sparse_early_tape_is_rejected():
     ]
     series = TimedFireSeries("F", "t", "wfigs_daily", snaps)
     assert early_tape_ok(series, 96.0) is False
+
+
+def test_job_c_aoi_is_72h_envelope_not_the_final_scar():
+    from src.spread.historic import _ensure_points_in_bbox, job_c_aoi_rings
+
+    seed = _square(-120.0, 40.0, 0.02)
+    horizon = _square(-120.0, 40.0, 0.08)
+    final = _square(-118.0, 40.0, 0.4)  # months later, 2° east
+    aoi = job_c_aoi_rings(seed, horizon)
+    assert aoi == seed + horizon
+    assert final[0] not in aoi
+    # Cap around the final scar would drop the seed; recenter must keep it.
+    final_bbox = (-118.45, 39.55, -117.55, 40.45)  # 0.90° around the late centroid
+    seed_pt = seed[0][0]
+    fixed = _ensure_points_in_bbox(final_bbox, [seed_pt])
+    assert fixed[0] <= seed_pt[0] <= fixed[2]
+    assert fixed[1] <= seed_pt[1] <= fixed[3]

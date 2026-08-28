@@ -55,3 +55,39 @@ def test_phi_burns_seed_interior():
     assert phi.shape == (10, 10)
     assert (phi < 0).any()
     assert (phi > 0).any()
+
+
+def test_adapter_writes_npz_sidecar_not_nested_grid_json(tmp_path):
+    import json
+    from pathlib import Path
+
+    from spread_service.elmfire_adapter import write_adapter_outputs
+    from spread_service.server import merge_engine_arrays
+
+    eta = np.array([[0.0, 12.0], [np.nan, 80.0]])
+    result = {
+        "arrival_hours": eta,
+        "eta_sigma_hours": np.zeros_like(eta),
+        "p_burn_24": p_from_eta(eta, 24.0),
+        "p_burn_48": p_from_eta(eta, 48.0),
+        "p_burn_72": p_from_eta(eta, 72.0),
+        "spread_field_version": "elmfire_2025.0212:n1:h72:grid2x2",
+        "engine": "elmfire_2025.0212",
+        "n_members": 1,
+        "west": -120.0,
+        "south": 40.0,
+        "east": -119.0,
+        "north": 41.0,
+        "transform": [0.01, 0.0, -120.0, 0.0, -0.01, 41.0],
+        "shape": [2, 2],
+    }
+    out = tmp_path / "outputs.json"
+    write_adapter_outputs(result, out)
+    meta = json.loads(out.read_text())
+    assert meta["engine"] == "elmfire_2025.0212"
+    assert meta["arrival_hours"] is None
+    assert Path(meta["arrays_path"]).exists()
+    merged = merge_engine_arrays(meta)
+    assert merged["arrival_hours"].shape == (2, 2)
+    assert merged["p_burn_72"][0, 0] == 1.0
+    assert out.stat().st_size < 2000

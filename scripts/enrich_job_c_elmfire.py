@@ -25,7 +25,8 @@ load_dotenv()
 from src.clients.hrrr import HRRRClient
 from src.clients.landfire import LANDFIREClient
 from src.clients.timed_perimeters import load_job_c_tape
-from src.model.arrival_labels import last_rings, seed_rings, seed_time
+from src.model.arrival_labels import seed_rings, seed_time
+from src.model.job_c_sample import snapshot_for_horizon
 from src.spread.historic import spread_field_for_job_c
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -88,8 +89,11 @@ def main() -> None:
     landfire = LANDFIREClient()
     hrrr = HRRRClient(max_hours_back=12)
     n_write = n_field = n_hrrr_fail = n_engine_fail = 0
+    fail_log = args.output.with_name("elmfire_failures.jsonl")
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("a" if args.resume else "w", encoding="utf-8") as out:
+    with args.output.open("a" if args.resume else "w", encoding="utf-8") as out, fail_log.open(
+        "a", encoding="utf-8"
+    ) as fails:
         for i, event_id in enumerate(order, start=1):
             group = by_event[event_id]
             if args.resume and event_id in done_events:
@@ -102,7 +106,8 @@ def main() -> None:
                 logger.info("[%d/%d] %s no tape", i, len(order), event_id)
             else:
                 rings = seed_rings(series)
-                last = last_rings(series)
+                horizon = snapshot_for_horizon(series, 72.0)
+                aoi_rings = horizon.geometry_rings if horizon is not None else rings
                 t_seed = seed_time(series)
                 lat0 = group[0]["site_lat"]
                 lng0 = group[0]["site_lng"]
@@ -134,7 +139,7 @@ def main() -> None:
                 if weather_src != "hrrr_at_seed":
                     logger.info("[%d/%d] %s skip ELMFIRE (need HRRR-at-seed, got %s)", i, len(order), event_id, weather_src)
                 else:
-                    field = spread_field_for_job_c(event_id, lat0, lng0, rings, last, landfire, weather)
+                    field = spread_field_for_job_c(event_id, lat0, lng0, rings, aoi_rings, landfire, weather)
                     if field is None:
                         n_engine_fail += 1
                     else:
@@ -142,28 +147,43 @@ def main() -> None:
                         engine = field.engine
                         if "huygens" in str(engine).lower():
                             raise RuntimeError(f"Huygens leaked into Job C for {event_id}")
+            if field is None:
+                fails.write(
+                    json.dumps(
+                        {
+                            "event_id": event_id,
+                            "weather_source": weather_src,
+                            "engine": engine,
+                            "n_sites": len(group),
+                        }
+                    )
+                    + "\n"
+                )
+                fails.flush()
+                logger.info(
+                    "[%d/%d] %s weather=%s field=False (not written; resume will retry)",
+                    i, len(order), event_id, weather_src,
+                )
+                continue
             for rec in group:
                 out_rec = dict(rec)
                 out_rec["weather_source"] = weather_src
                 out_rec["engine"] = engine
-                if field is not None:
-                    sample = field.sample(rec["site_lat"], rec["site_lng"])
-                    out_rec["spread_vector_elmfire"] = [
-                        sample.eta_hours,
-                        sample.eta_sigma_hours,
-                        sample.p_burn_24,
-                        sample.p_burn_48,
-                        sample.p_burn_72,
-                    ]
-                    out_rec["spread_field_version"] = field.spread_field_version
-                    out_rec["inside_aoi"] = sample.inside_aoi
-                else:
-                    out_rec["spread_vector_elmfire"] = None
+                sample = field.sample(rec["site_lat"], rec["site_lng"])
+                out_rec["spread_vector_elmfire"] = [
+                    sample.eta_hours,
+                    sample.eta_sigma_hours,
+                    sample.p_burn_24,
+                    sample.p_burn_48,
+                    sample.p_burn_72,
+                ]
+                out_rec["spread_field_version"] = field.spread_field_version
+                out_rec["inside_aoi"] = sample.inside_aoi
                 out.write(json.dumps(out_rec) + "\n")
                 n_write += 1
             logger.info(
-                "[%d/%d] %s weather=%s field=%s engine=%s",
-                i, len(order), event_id, weather_src, field is not None, engine,
+                "[%d/%d] %s weather=%s field=%s engine=%s rows=%d",
+                i, len(order), event_id, weather_src, True, engine, len(group),
             )
             out.flush()
     logger.info(

@@ -369,6 +369,24 @@ def _json_safe_inputs(inputs: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def merge_engine_arrays(data: dict[str, Any]) -> dict[str, Any]:
+    """Load adapter npz sidecar into the result dict. Copies so the temp dir can die."""
+    path = data.get("arrays_path")
+    if not path:
+        return data
+    p = Path(str(path))
+    if not p.exists():
+        raise RuntimeError(f"engine arrays_path missing: {path}")
+    loaded = np.load(p, allow_pickle=False)
+    try:
+        for key in ("arrival_hours", "eta_sigma_hours", "p_burn_24", "p_burn_48", "p_burn_72"):
+            if key in loaded.files:
+                data[key] = np.array(loaded[key], dtype=np.float64, copy=True)
+    finally:
+        loaded.close()
+    return data
+
+
 def _run_external_engine(inputs: dict[str, Any]) -> dict[str, Any] | None:
     """Optional JSON-file adapter for a real elmfire (or wrapper) binary.
 
@@ -448,7 +466,7 @@ def _run_external_engine(inputs: dict[str, Any]) -> dict[str, Any] | None:
             sys.stderr.write(f"spread_service: SPREAD_ENGINE_BIN failed: {exc}\n")
             return None
         if proc.returncode != 0 or not out_path.exists():
-            msg = f"spread_service: SPREAD_ENGINE_BIN rc={proc.returncode} stderr={(proc.stderr or '')[:800]}"
+            msg = f"spread_service: SPREAD_ENGINE_BIN rc={proc.returncode} stderr={(proc.stderr or '')[:2000]}"
             if required:
                 raise RuntimeError(msg)
             sys.stderr.write(msg + "\n")
@@ -463,8 +481,9 @@ def _run_external_engine(inputs: dict[str, Any]) -> dict[str, Any] | None:
             if required:
                 raise RuntimeError("SPREAD_ENGINE_BIN output is not an object")
             return None
+        data = merge_engine_arrays(data)
         required_keys = ("arrival_hours", "p_burn_72", "spread_field_version")
-        if any(k not in data for k in required_keys):
+        if any(data.get(k) is None for k in required_keys):
             if required:
                 raise RuntimeError("SPREAD_ENGINE_BIN output missing required keys")
             sys.stderr.write("spread_service: SPREAD_ENGINE_BIN output missing required keys; falling back\n")

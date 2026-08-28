@@ -49,6 +49,16 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     n_write = n_eval = n_pos = n_skip_tape = n_skip_early = 0
     used_events = 0
+    if args.resume and args.output.exists():
+        with args.output.open() as handle:
+            for line in handle:
+                rec = json.loads(line)
+                n_write += 1
+                if rec.get("arrival", {}).get("evaluable_72"):
+                    n_eval += 1
+                    if rec.get("arrival", {}).get("y_72") == 1:
+                        n_pos += 1
+        used_events = len(done)
     with args.output.open("a" if args.resume else "w", encoding="utf-8") as out:
         for i, fire_id in enumerate(fire_ids, start=1):
             if fire_id in done:

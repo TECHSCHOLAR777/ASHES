@@ -204,12 +204,16 @@ def spread_run(
     }
     url = f"http://{host}:{port}/spread_run"
     start = time.monotonic()
+    # Engine timeout is 1800s; the HTTP client must outlive that plus GeoTIFF I/O.
+    timeout_s = float(os.environ.get("SPREAD_ENGINE_TIMEOUT_S", "1800")) + 120.0
     try:
-        with httpx.Client(timeout=900.0) as client:
+        with httpx.Client(timeout=timeout_s) as client:
             resp = client.post(url, json=payload)
-            resp.raise_for_status()
+            if resp.status_code >= 400:
+                body = (resp.text or "")[:1200]
+                raise RuntimeError(f"spread_run HTTP {resp.status_code}: {body}")
             data = resp.json()
-    except httpx.HTTPError as exc:
+    except (httpx.HTTPError, RuntimeError) as exc:
         latency_ms = (time.monotonic() - start) * 1000
         tool_logger.log_tool_call("spread_run", {"incident_id": incident_id}, None, site_id, latency_ms, error=str(exc))
         raise

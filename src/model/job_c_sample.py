@@ -1,8 +1,8 @@
 """Sample Job C sites from a Daily progression tape.
 
 Points come from the *72 h growth annulus* (inside the Daily ring nearest 72 h,
-outside the seed) plus genuine outsides of that envelope. The last ring of the
-whole tape bounds LANDFIRE AOI, not `y`.
+outside the seed) plus genuine outsides of that envelope. LANDFIRE AOI is that
+same 72 h envelope ∪ the seed, not the months-later final tape ring.
 """
 from __future__ import annotations
 
