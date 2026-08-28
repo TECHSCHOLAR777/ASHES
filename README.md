@@ -158,10 +158,13 @@ model without touching the agent.
   transactions/10 minutes). `FIRMSClient` self-throttles against it and exposes
   `get_quota_status()` for a live check; the `firms_unavailable` degraded-flag path is kept
   as defense in depth, not because the limit is unknown.
-- **No compiled ELMFIRE binary in this tree.** V2 still runs a delegated spread engine
-  *out of process* (`spread_service/`, `POST /spread_run`). The process currently uses an
-  original Rothermel+Huygens solver fed by LANDFIRE FBFM40 + HRRR; set `SPREAD_ENGINE_BIN`
-  to exec a real elmfire wrapper that speaks the JSON file contract. See `DECISIONS.md`.
+- **ELMFIRE is compiled outside this tree, never imported.** Fortran lives at
+  e.g. `/home/ubuntu/elmfire` (EPL-2.0, branch `2025.0212`). `src/` still talks only to
+  `POST /spread_run`. The default in-process solver is Rothermel+Huygens. Job C **must**
+  set `SPREAD_ENGINE_BIN=spread_service/elmfire_bin.py` and `SPREAD_ENGINE_REQUIRED=1` so
+  a missing binary is a hard fail, not a silent Huygens claim. The wrapper writes GeoTIFF
+  + `elmfire.data` and reads the TOA raster. Inventory of 2023–2026 Daily tapes:
+  `data/training/job_c_2023/tape_inventory.json`. Pipeline: `scripts/run_job_c.py --stage …`.
   V1's wind-projected ROS ellipse remains as an E-side feature.
 - **H2 on Path B labels: `validated`.** `scripts/enrich_spread_vectors.py` attached a
   5-float `spread_vector` (`eta_hours`, `eta_sigma_hours`, `p_burn_24/48/72`) to all 4,300

@@ -241,3 +241,15 @@ One line per decision, in build order.
   noisy (eta ±0.14) to override LOGO. The V1 0.96 `-dist_perim_m` scar-ranker does **not**
   transfer to timed arrival (0.331). H2-on-MTBS-y remains a scar classifier, not this
   result.
+- [2026-08-28] **Job C / 2023+ Daily tapes / compiled ELMFIRE.** WFIGS Daily 2023–2026
+  attribute inventory: 52,393 rows / 24,192 UniqueFireIdentifier fires; **407 usable**
+  after CONUS + Daily≥3 + n_times≥4 + span≥72 h + acres 500–2e6 (one 282-million-acre
+  GIS explode dropped). Join is exact `attr_UniqueFireIdentifier`, not the 25 km bbox
+  nearest-vertex picker that glued MTBS events to 0.1 ac neighbors. ELMFIRE 2025.0212
+  was compiled outside the tree (`/home/ubuntu/elmfire`, EPL-2.0, never imported).
+  `spread_service/elmfire_bin.py` maps `spread_run` JSON/npz → GeoTIFF + `elmfire.data`
+  → TOA. `SPREAD_ENGINE_REQUIRED=1` refuses Huygens fallback. Job C head is a small
+  logistic calibrator on `(eta, σ, p_T, W_allowed)`, not a 218-D GBM. W_allowed drops
+  NDVI, current LCMS/canopy, burn year, drought, and `nearest_fire_perimeter_distance_m`.
+  y is R0 on Daily rings (already-in-seed out; censored if tape < 72 h).
+

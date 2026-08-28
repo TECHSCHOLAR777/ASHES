@@ -32,12 +32,18 @@ SANE_START = datetime(2014, 1, 1, tzinfo=timezone.utc)
 SANE_END = datetime(2028, 1, 1, tzinfo=timezone.utc)
 PAGE_SIZE = 2000
 SERIES_CACHE = Path(__file__).resolve().parent.parent.parent / "data" / "cache" / "timed_series"
+JOB_C_TAPES = Path(__file__).resolve().parent.parent.parent / "data" / "cache" / "job_c_tapes"
 # Prefer IR when several polygons share a timestamp.
 _MAP_METHOD_RANK = {
     "infrared image": 0,
     "infrared": 1,
+    "ir image interpretation": 0,
+    "ir": 1,
     "mixed methods": 2,
     "gps": 3,
+    "gps-flight": 3,
+    "image interpretation": 2,
+    "remote sensing derived": 2,
     "hand sketch": 4,
 }
 
@@ -266,6 +272,66 @@ class TimedPerimeterClient:
             )
         return snaps
 
+    def fetch_series_by_fire_id(
+        self,
+        fire_id: str,
+        site_id: str | None = None,
+        daily_only: bool = True,
+    ) -> TimedFireSeries | None:
+        """Exact UniqueFireIdentifier join. Do not use the 25 km bbox picker."""
+        safe = fire_id.replace("'", "")
+        category = "poly_FeatureCategory='Wildfire Daily Fire Perimeter'"
+        if not daily_only:
+            category = (
+                "(" + category + " OR poly_FeatureCategory='Wildfire Final Fire Perimeter')"
+            )
+        params = {
+            "where": f"attr_UniqueFireIdentifier='{safe}' AND {category}",
+            "outFields": (
+                "poly_IncidentName,poly_PolygonDateTime,poly_GISAcres,poly_MapMethod,"
+                "poly_IRWINID,attr_UniqueFireIdentifier,poly_FeatureCategory"
+            ),
+            "outSR": "4326",
+            "returnGeometry": "true",
+        }
+        rows = self._paged_query(WFIGS_DAILY_URL, params, "wfigs:daily_by_fire_id", site_id or fire_id)
+        snaps = _snapshots_from_wfigs_features(rows)
+        if not snaps:
+            return None
+        collapsed = _collapse_same_timestamp(snaps)
+        return TimedFireSeries(
+            fire_id=collapsed[0].fire_id,
+            name=collapsed[0].name,
+            source="wfigs_daily",
+            snapshots=collapsed,
+        )
+
+
+def _snapshots_from_wfigs_features(rows: list[dict[str, Any]]) -> list[TimedSnapshot]:
+    snaps: list[TimedSnapshot] = []
+    for feat in rows:
+        attrs = feat.get("attributes") or {}
+        t = parse_arcgis_datetime(attrs.get("poly_PolygonDateTime"))
+        rings = _rings_from_geometry(feat.get("geometry"))
+        if t is None or not rings:
+            continue
+        fire_id = str(attrs.get("attr_UniqueFireIdentifier") or attrs.get("poly_IRWINID") or "")
+        if not fire_id:
+            continue
+        acres = attrs.get("poly_GISAcres")
+        snaps.append(
+            TimedSnapshot(
+                t=t,
+                fire_id=fire_id,
+                name=str(attrs.get("poly_IncidentName") or fire_id),
+                acres=float(acres) if acres is not None else None,
+                map_method=attrs.get("poly_MapMethod"),
+                geometry_rings=rings,
+                source="wfigs_daily",
+            )
+        )
+    return snaps
+
 
 def _select_fire_group(snaps: list[TimedSnapshot], lat: float, lng: float) -> list[TimedSnapshot]:
     from src.clients.mtbs import point_in_multipolygon
@@ -360,3 +426,62 @@ def load_series_cache(event_id: str) -> TimedFireSeries | None:
 
 def series_cache_exists(event_id: str) -> bool:
     return (SERIES_CACHE / f"{event_id}.json").exists()
+
+
+def _safe_fire_id(fire_id: str) -> str:
+    return fire_id.replace("/", "_").replace("\\", "_")
+
+
+def job_c_tape_path(fire_id: str) -> Path:
+    return JOB_C_TAPES / f"{_safe_fire_id(fire_id)}.json"
+
+
+def save_job_c_tape(fire_id: str, series: TimedFireSeries | None) -> Path:
+    JOB_C_TAPES.mkdir(parents=True, exist_ok=True)
+    path = job_c_tape_path(fire_id)
+    if series is None:
+        path.write_text(json.dumps({"empty": True, "fire_id": fire_id}), encoding="utf-8")
+        return path
+    payload = {
+        "fire_id": series.fire_id,
+        "name": series.name,
+        "source": series.source,
+        "snapshots": [
+            {
+                "t": snap.t.isoformat(),
+                "fire_id": snap.fire_id,
+                "name": snap.name,
+                "acres": snap.acres,
+                "map_method": snap.map_method,
+                "geometry_rings": snap.geometry_rings,
+                "source": snap.source,
+            }
+            for snap in series.snapshots
+        ],
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def load_job_c_tape(fire_id: str) -> TimedFireSeries | None:
+    path = job_c_tape_path(fire_id)
+    if not path.exists():
+        return None
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if payload.get("empty"):
+        return None
+    snaps = [
+        TimedSnapshot(
+            t=datetime.fromisoformat(row["t"]),
+            fire_id=row["fire_id"],
+            name=row["name"],
+            acres=row.get("acres"),
+            map_method=row.get("map_method"),
+            geometry_rings=[[(float(a), float(b)) for a, b in ring] for ring in row["geometry_rings"]],
+            source=row.get("source") or payload.get("source") or "",
+        )
+        for row in payload.get("snapshots") or []
+    ]
+    return TimedFireSeries(
+        fire_id=payload["fire_id"], name=payload["name"], source=payload["source"], snapshots=snaps
+    )

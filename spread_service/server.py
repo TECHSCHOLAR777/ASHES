@@ -374,45 +374,99 @@ def _run_external_engine(inputs: dict[str, Any]) -> dict[str, Any] | None:
 
     Contract: `SPREAD_ENGINE_BIN in.json out.json` must write a JSON object
     with at least `arrival_hours`, `p_burn_72`, and `spread_field_version`.
-    Missing binary, non-zero exit, or malformed output falls back to the
-    in-process Rothermel-Huygens solver. This is the licensing seam: the
-    binary is exec'd, never imported.
+    Arrays travel as a sidecar npz (``rasters_path``) so the JSON stays small.
+    When ``SPREAD_ENGINE_REQUIRED`` is set, a miss is an error — no Huygens
+    fallback. Job C uses that flag.
     """
     bin_path = os.environ.get("SPREAD_ENGINE_BIN")
+    required = os.environ.get("SPREAD_ENGINE_REQUIRED", "").lower() in {"1", "true", "yes"}
     if not bin_path:
+        if required:
+            raise RuntimeError("SPREAD_ENGINE_REQUIRED is set but SPREAD_ENGINE_BIN is empty")
         return None
     path = Path(bin_path)
     if not path.exists():
-        sys.stderr.write(f"spread_service: SPREAD_ENGINE_BIN={bin_path} does not exist; using internal solver\n")
+        msg = f"spread_service: SPREAD_ENGINE_BIN={bin_path} does not exist"
+        if required:
+            raise RuntimeError(msg)
+        sys.stderr.write(msg + "; using internal solver\n")
         return None
+    timeout_s = float(os.environ.get("SPREAD_ENGINE_TIMEOUT_S", "1800"))
+    raster_keys = (
+        "fbfm40",
+        "slope_deg",
+        "aspect_deg",
+        "elev_m",
+        "cc_pct",
+        "ch_m",
+        "cbh_m",
+        "cbd_kg_m3",
+        "transform",
+        "west",
+        "south",
+        "east",
+        "north",
+        "crs",
+    )
     with tempfile.TemporaryDirectory(prefix="spread_run_") as td:
         in_path = Path(td) / "inputs.json"
         out_path = Path(td) / "outputs.json"
-        in_path.write_text(json.dumps(_json_safe_inputs(inputs)), encoding="utf-8")
+        rasters_path = Path(td) / "rasters.npz"
+        payload = {}
+        npz_kw: dict[str, Any] = {}
+        for key, val in inputs.items():
+            if key in raster_keys or isinstance(val, np.ndarray):
+                if isinstance(val, np.ndarray):
+                    npz_kw[key] = val
+                elif key == "crs":
+                    npz_kw[key] = np.array(str(val))
+                elif key in {"west", "south", "east", "north"}:
+                    npz_kw[key] = np.asarray(val)
+                elif key == "transform":
+                    npz_kw[key] = np.asarray(val, dtype=np.float64)
+                elif val is not None:
+                    npz_kw[key] = np.asarray(val)
+            else:
+                payload[key] = val
+        if npz_kw:
+            np.savez_compressed(rasters_path, **npz_kw)
+            payload["rasters_path"] = str(rasters_path)
+        else:
+            payload = _json_safe_inputs(inputs)
+        in_path.write_text(json.dumps(_json_safe_inputs(payload)), encoding="utf-8")
         try:
             proc = subprocess.run(
                 [str(path), str(in_path), str(out_path)],
                 capture_output=True,
                 text=True,
-                timeout=180,
+                timeout=timeout_s,
                 check=False,
             )
         except (OSError, subprocess.TimeoutExpired) as exc:
+            if required:
+                raise RuntimeError(f"SPREAD_ENGINE_BIN failed: {exc}") from exc
             sys.stderr.write(f"spread_service: SPREAD_ENGINE_BIN failed: {exc}\n")
             return None
         if proc.returncode != 0 or not out_path.exists():
-            sys.stderr.write(
-                f"spread_service: SPREAD_ENGINE_BIN rc={proc.returncode} stderr={proc.stderr[:400]}\n"
-            )
+            msg = f"spread_service: SPREAD_ENGINE_BIN rc={proc.returncode} stderr={(proc.stderr or '')[:800]}"
+            if required:
+                raise RuntimeError(msg)
+            sys.stderr.write(msg + "\n")
             return None
         try:
             data = json.loads(out_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
+            if required:
+                raise RuntimeError("SPREAD_ENGINE_BIN wrote invalid JSON")
             return None
         if not isinstance(data, dict):
+            if required:
+                raise RuntimeError("SPREAD_ENGINE_BIN output is not an object")
             return None
-        required = ("arrival_hours", "p_burn_72", "spread_field_version")
-        if any(k not in data for k in required):
+        required_keys = ("arrival_hours", "p_burn_72", "spread_field_version")
+        if any(k not in data for k in required_keys):
+            if required:
+                raise RuntimeError("SPREAD_ENGINE_BIN output missing required keys")
             sys.stderr.write("spread_service: SPREAD_ENGINE_BIN output missing required keys; falling back\n")
             return None
         return data
@@ -430,6 +484,12 @@ def _load_inputs(body: dict[str, Any]) -> dict[str, Any]:
         out = dict(body)
         out["fbfm40"] = loaded["fbfm40"]
         out["slope_deg"] = loaded.get("slope_deg")
+        for extra in ("aspect_deg", "elev_m", "cc_pct", "ch_m", "cbh_m", "cbd_kg_m3"):
+            if extra in loaded:
+                out[extra] = loaded[extra]
+        if "crs" in loaded:
+            raw = loaded["crs"]
+            out["crs"] = str(raw.item()) if getattr(raw, "shape", ()) == () else str(raw)
         out["transform"] = loaded["transform"].tolist()
         out["west"] = float(loaded["west"])
         out["south"] = float(loaded["south"])
@@ -460,7 +520,16 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
         if path in ("/health", "/"):
-            self._json(200, {"ok": True, "engine": ENGINE_NAME})
+            required = os.environ.get("SPREAD_ENGINE_REQUIRED", "").lower() in {"1", "true", "yes"}
+            self._json(
+                200,
+                {
+                    "ok": True,
+                    "engine": ENGINE_NAME,
+                    "spread_engine_bin": os.environ.get("SPREAD_ENGINE_BIN") or None,
+                    "spread_engine_required": required,
+                },
+            )
             return
         self._json(404, {"ok": False, "error": "not found"})
 
@@ -479,6 +548,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             inputs = _load_inputs(body)
             external = _run_external_engine(inputs)
+            if external is None and os.environ.get("SPREAD_ENGINE_REQUIRED", "").lower() in {"1", "true", "yes"}:
+                raise RuntimeError("SPREAD_ENGINE_REQUIRED is set; refusing Huygens fallback")
             result = external if external is not None else run_ensemble(inputs)
             result["ok"] = True
             outputs_path = body.get("outputs_path")

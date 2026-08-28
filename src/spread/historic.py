@@ -25,6 +25,9 @@ logger = logging.getLogger("fire_copilot.spread.historic")
 # around the ignition centroid so Path B jobs stay inside a workable tile. Live
 # V2 ask/watch still uses the full wind-projected incident AOI.
 MAX_HISTORIC_AOI_DEG = 0.35
+# Job C uses the last Daily ring + wind buffer, not the 0.35° Path B clamp.
+# 0.90° ≈ 100 km; larger than that and LFPS jobs fail or ELMFIRE grids explode.
+MAX_JOB_C_AOI_DEG = 0.90
 
 # Scott & Burgan table ROS is quoted at ~2.2 m/s midflame. Path B does not re-fetch
 # HRRR (still free, but not in the LANDFIRE+spread_run contract). A zero wind would
@@ -163,4 +166,78 @@ def spread_field_for_timed_seed(
         )
     except Exception as exc:
         logger.warning("timed spread_run/LANDFIRE failed for fire %s: %s", fire.event_id, exc)
+        return None
+
+
+def _cap_bbox(
+    bbox: tuple[float, float, float, float],
+    max_deg: float,
+) -> tuple[float, float, float, float]:
+    west, south, east, north = bbox
+    lat0 = (south + north) / 2.0
+    lng0 = (west + east) / 2.0
+    if (east - west) > max_deg:
+        west, east = lng0 - max_deg / 2.0, lng0 + max_deg / 2.0
+    if (north - south) > max_deg:
+        south, north = lat0 - max_deg / 2.0, lat0 + max_deg / 2.0
+    return west, south, east, north
+
+
+def spread_field_for_job_c(
+    fire_id: str,
+    lat0: float,
+    lng0: float,
+    seed_rings: list[list[tuple[float, float]]],
+    bbox_rings: list[list[tuple[float, float]]],
+    landfire: LANDFIREClient,
+    weather: dict[str, Any],
+) -> SpreadField | None:
+    """Job C / Job A: seed the first Daily ring, LANDFIRE over the last-ring envelope.
+
+    Does not clamp to 0.35°. Does not seed the last ring (that would leak y).
+    The caller must set SPREAD_ENGINE_REQUIRED and SPREAD_ENGINE_BIN so Huygens
+    cannot silently serve the claim.
+    """
+    rings_for_bbox = bbox_rings or seed_rings
+    if rings_for_bbox:
+        perim = WFIGSPerimeter(irwin_id=fire_id, name=fire_id, geometry_rings=rings_for_bbox)
+    else:
+        return None
+    bbox = aoi_bbox_for_fetch(
+        perim,
+        weather.get("wind_u"),
+        weather.get("wind_v"),
+        downwind_buffer_km=40.0,
+        upwind_buffer_km=8.0,
+        base_buffer_km=8.0,
+    )
+    if bbox is None:
+        return None
+    bbox = _cap_bbox(bbox, MAX_JOB_C_AOI_DEG)
+    try:
+        logger.info(
+            "job_c elmfire spread_run %s bbox=%.4f,%.4f,%.4f,%.4f seed_rings=%d",
+            fire_id, bbox[0], bbox[1], bbox[2], bbox[3], len(seed_rings),
+        )
+        stack = landfire.fetch_aoi(*bbox, site_id=fire_id)
+        geom = build_incident_aoi(
+            perim, stack, wind_u=weather.get("wind_u"), wind_v=weather.get("wind_v")
+        )
+        field = spread_run(
+            incident_id=f"job_c:{fire_id}",
+            landfire=stack,
+            aoi=geom,
+            weather=weather,
+            perimeter_rings=seed_rings,
+            ignition_points=[],
+            ensemble={"n_members": 1, "wind_speed_frac": 0.0, "wind_dir_deg": 0.0, "moisture_frac": 0.0, "seed": 42},
+            site_id=fire_id,
+            reuse=True,
+        )
+        if "huygens" in str(field.engine).lower():
+            logger.error("job_c refused Huygens engine=%s for %s", field.engine, fire_id)
+            return None
+        return field
+    except Exception as exc:
+        logger.warning("job_c spread_run/LANDFIRE failed for %s: %s", fire_id, exc)
         return None

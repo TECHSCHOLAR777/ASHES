@@ -166,3 +166,24 @@ confidence_suffix: "_confidence"
 join_key_fields:
   - tract_geoid
   - huc_12_name
+
+# Job C head (H2 residual): P(y_72 | engine, W_allowed). Fetch still pays for full A–I.
+# These fields are withheld from the *calibrator* because they are t0-fuel, post-fire,
+# leaky, or vintage-dynamic. See src/model/w_allowed.py.
+job_c:
+  head_exclude_fields:
+    - ndvi_current
+    - ndvi_change_5y
+    - drought_category
+    - nearest_fire_perimeter_distance_m
+    - most_recent_burn_year
+    - lcms_class
+    - tree_canopy_pct
+  exclude_reason:
+    ndvi_current: "vintage_role dynamic; current Mireye is not 2023 t0 fuel"
+    ndvi_change_5y: "vintage_role dynamic"
+    drought_category: "vintage_role dynamic"
+    nearest_fire_perimeter_distance_m: "distance-to-scar leak / chance on arrival labels"
+    most_recent_burn_year: "post-fire burn year is not t0 fuel"
+    lcms_class: "current LCMS is not a 2023 t0 fuel map"
+    tree_canopy_pct: "current canopy is not a 2023 t0 fuel map"

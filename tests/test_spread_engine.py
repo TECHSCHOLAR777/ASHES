@@ -74,7 +74,17 @@ def test_external_engine_bin_used_when_contract_is_honored(tmp_path, monkeypatch
         "import json, sys\n"
         "inp, outp = sys.argv[1], sys.argv[2]\n"
         "body = json.load(open(inp))\n"
-        "fbfm = body['fbfm40']\n"
+        "if body.get('rasters_path'):\n"
+        "    import numpy as np\n"
+        "    loaded = np.load(body['rasters_path'])\n"
+        "    fbfm = loaded['fbfm40'].tolist()\n"
+        "    body['west'] = float(loaded['west']) if 'west' in loaded.files else body['west']\n"
+        "    body['south'] = float(loaded['south']) if 'south' in loaded.files else body['south']\n"
+        "    body['east'] = float(loaded['east']) if 'east' in loaded.files else body['east']\n"
+        "    body['north'] = float(loaded['north']) if 'north' in loaded.files else body['north']\n"
+        "    body['transform'] = loaded['transform'].tolist() if 'transform' in loaded.files else body['transform']\n"
+        "else:\n"
+        "    fbfm = body['fbfm40']\n"
         "h, w = len(fbfm), len(fbfm[0])\n"
         "grid = [[0.0 for _ in range(w)] for _ in range(h)]\n"
         "ones = [[1.0 for _ in range(w)] for _ in range(h)]\n"
@@ -99,6 +109,16 @@ def test_external_engine_bin_used_when_contract_is_honored(tmp_path, monkeypatch
     assert out is not None
     assert out["spread_field_version"] == "external_bin_v1"
     assert out["p_burn_72"][0][0] == 1.0
+
+
+def test_required_engine_raises_without_bin(monkeypatch):
+    monkeypatch.setenv("SPREAD_ENGINE_REQUIRED", "1")
+    monkeypatch.delenv("SPREAD_ENGINE_BIN", raising=False)
+    from spread_service.server import _run_external_engine
+    import pytest
+
+    with pytest.raises(RuntimeError, match="SPREAD_ENGINE_REQUIRED"):
+        _run_external_engine(_grid())
 
 
 def test_no_ignition_returns_empty_field():

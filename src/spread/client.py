@@ -178,11 +178,18 @@ def spread_run(
         inputs_path,
         fbfm40=np.asarray(landfire.fbfm40),
         slope_deg=np.nan_to_num(np.asarray(landfire.slope_deg), nan=0.0),
+        aspect_deg=np.nan_to_num(np.asarray(landfire.aspect_deg), nan=0.0),
+        elev_m=np.nan_to_num(np.asarray(landfire.elev_m), nan=0.0),
+        cc_pct=np.nan_to_num(np.asarray(landfire.cc_pct), nan=0.0),
+        ch_m=np.nan_to_num(np.asarray(landfire.ch_m), nan=0.0),
+        cbh_m=np.nan_to_num(np.asarray(landfire.cbh_m), nan=0.0),
+        cbd_kg_m3=np.nan_to_num(np.asarray(landfire.cbd_kg_m3), nan=0.0),
         transform=np.asarray(_affine_list(landfire.transform), dtype=np.float64),
         west=np.asarray(landfire.west),
         south=np.asarray(landfire.south),
         east=np.asarray(landfire.east),
         north=np.asarray(landfire.north),
+        crs=np.array(str(landfire.crs)),
     )
     payload = {
         "incident_id": incident_id,

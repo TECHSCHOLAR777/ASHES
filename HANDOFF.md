@@ -1,5 +1,38 @@
 # V1 → V2 Handoff
 
+## Job C (2026-08-28, in progress)
+
+Showcase is **not** “a GBM ranks 72 h arrival.” It is:
+
+`P(y_72 | ELMFIRE eta, σ, p_T, W_allowed)` vs `P(y_72 | eta, σ, p_T)` vs raw `p_T`,
+event-held-out, Brier / log-loss / reliability, shuffle-W kill. Same ETA, different
+parcel, different hit probability.
+
+**Book:** WFIGS Daily 2023–2026, exact UniqueFireIdentifier. Inventory:
+`data/training/job_c_2023/tape_inventory.json` (407 usable CONUS fires). Download
+geometries with `python scripts/download_job_c_tapes.py --resume`. Sample + R0 labels:
+`python scripts/build_job_c_book.py`. ELMFIRE: compile
+https://github.com/lautenberger/elmfire branch `2025.0212` *outside* this repo, then
+
+```
+export SPREAD_ENGINE_BIN=$PWD/spread_service/elmfire_bin.py
+export SPREAD_ENGINE_REQUIRED=1
+export ELMFIRE_BIN=/home/ubuntu/elmfire/build/linux/bin/elmfire
+export SPREAD_SERVICE_PORT=8766
+python scripts/enrich_job_c_elmfire.py --resume
+```
+
+Huygens is not the claim. If the binary is missing the Job C script fails closed.
+
+**W:** new Mireye spend on new coordinates (`scripts/encode_job_c_w.py`). Fetch A–I;
+the head subsets W_allowed (`src/model/w_allowed.py`).
+
+**Eval:** `python scripts/evaluate_job_c.py` → `data/models/job_c_report.json`.
+
+Do not re-run Path A / Path B / R0–R4 on the 2015–2022 MTBS book for this claim.
+
+---
+
 ## V2 status (2026-08-28)
 
 V2 Path B is closed. `scripts/enrich_spread_vectors.py` labeled all **4,300** V1 samples

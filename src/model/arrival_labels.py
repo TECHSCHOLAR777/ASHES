@@ -139,6 +139,11 @@ def seed_rings(series: TimedFireSeries) -> list[list[tuple[float, float]]]:
     return snaps[0].geometry_rings if snaps else []
 
 
+def last_rings(series: TimedFireSeries) -> list[list[tuple[float, float]]]:
+    snaps = sorted(series.snapshots, key=lambda s: s.t)
+    return snaps[-1].geometry_rings if snaps else []
+
+
 def seed_time(series: TimedFireSeries) -> datetime | None:
     snaps = sorted(series.snapshots, key=lambda s: s.t)
     return snaps[0].t if snaps else None

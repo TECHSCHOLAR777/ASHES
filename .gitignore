@@ -11,6 +11,9 @@ data/logs/*.jsonl
 data/models/*.pkl
 data/models/metrics_*.json
 data/training/*.jsonl
+data/training/job_c_2023/*.jsonl
+data/cache/job_c_tapes/
+data/cache/timed_series/
 !data/cache/.gitkeep
 !data/logs/.gitkeep
 !data/models/.gitkeep
