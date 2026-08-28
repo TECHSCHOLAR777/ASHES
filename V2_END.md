@@ -66,6 +66,32 @@ gold `y` is still in-final-perimeter, not a perimeter-time-series arrival time.
 - HANDOFF / DECISIONS updated.
 - Full `pytest tests/ -q` re-run after the V2 `model_infer` pad-missing-spread fix.
 
+## Step 4 — R0 / R1 / R2 / R4 (timed arrival, 2026-08-28)
+
+```bash
+python scripts/label_arrival_times.py
+python scripts/enrich_spread_hrrr.py
+python scripts/evaluate_arrival_head.py
+```
+
+| | |
+|---|---|
+| R0 evaluable_72 | 246 rows / 32 events / 27 pos / 219 neg |
+| R0 coverage | 35 / 458 events have ≥2 timed snapshots (mostly GeoMAC 2019) |
+| R1 fields | 35 fires, HRRR-at-seed, hrrr_fail=0, engine `rothermel_huygens_v1` |
+| R4 LOGO GBM full | PR-AUC 0.282 / Brier 0.101 |
+| Rank `-eta_hours` | **0.422** (beats the GBM) |
+| Rank engine p72 | 0.221 |
+| GBM engine-only / W-only / shuffled-W | 0.262 / 0.151 / 0.165 |
+| Kill vs p72 + shuffled W | pass |
+| Kill vs `-eta_hours` | **fail** |
+| Fields that help (>0.01 ΔAP) | lightning flash days, near-surface wind climatology |
+| W perimeter-distance leak | unused (delta 0); ranks at chance |
+
+X kept all 200 W columns (roles A–I). Geometric E (`dist_perim_m`, `wind_ros_ellipse_dist_m`)
+was withheld so the head cannot replay the V1 scar ranker. That leak ranks 0.331 on arrival
+labels, not 0.96.
+
 ## Do not
 
 - Re-collect via Path A (`build_training_set.py --with-spread`) unless you mean to spend

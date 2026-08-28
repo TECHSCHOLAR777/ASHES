@@ -192,3 +192,52 @@ One line per decision, in build order.
 - [2026-08-28] A V2 pickle is 5 dims wider than V1. `model_infer` always concatenates the
   spread block when `v2_calibration` is set, using the outside-AOI placeholders
   `[72, 24, 0, 0, 0]` when no incident field exists, so a far-away ask site does not crash.
+- [2026-08-28] **R0 timed-perimeter labels.** GeoMAC 2015–2019 + NIFC WFIGS Daily 2020+
+  (`WFIGS_Daily_Perimeters_Public`). t0 = first snapshot. Already-inside-seed excluded.
+  Never-hit points are negatives only if the series lasts ≥ T hours. On the 4300-row /
+  458-event book: 35 events have ≥2 timestamps; **246 rows / 32 events** are evaluable at
+  72 h (**27 pos / 219 neg**, 11 events carry every positive). 325 rows were already
+  burned at seed. y_24 has 9 pos, y_48 24, y_72 27. Most of the book is n_times=0 (149
+  events) or 1 (274). WFIGS Daily contributed 2305 rows but almost all are single-snapshot;
+  the multi-time series that actually label arrival are GeoMAC 2019 (34 fires) and one
+  GeoMAC 2017 fire. Map methods include Infrared Image and IR Image Interpretation, not
+  only sketches. We do **not** fall back to MTBS in/out to inflate N.
+- [2026-08-28] **R1 HRRR-seeded operational spread.** `spread_field_for_timed_seed` ignites
+  the first operational/IR ring (not the MTBS final scar, not the ignition centroid) and
+  drives `spread_run` with HRRR-at-seed. 35 fires got a field, **hrrr_fail=0**, weather
+  source `hrrr_at_seed` on every field fire, 20/35 series contain an IR method. All 246
+  evaluable_72 rows received `spread_vector_hrrr`. Engine identity remains
+  `rothermel_huygens_v1` (7 members, 72 h); `SPREAD_ENGINE_BIN` unset — not compiled
+  ELMFIRE. LANDFIRE tiles still clamped to 0.35° around the MTBS centroid.
+- [2026-08-28] **R2/R4 full-W GBM on those labels** (`src/model/arrival_eval.py`,
+  `data/models/arrival_head_report.json`). X = 200-D W roles A–I (including
+  `nearest_fire_perimeter_distance_m`) + E without `dist_perim_m` /
+  `wind_ros_ellipse_dist_m` + 5 engine floats. Primary protocol: leave-one-event-out
+  pooled PR-AUC (32 folds). Secondary: 20× GroupShuffleSplit (noisy; 3 positives in the
+  seed-42 test fold).
+
+  | Estimator | LOGO PR-AUC |
+  |---|---|
+  | Rank by `-eta_hours` (no model) | **0.422** |
+  | Rank by engine p72 | 0.221 |
+  | Rank by `-dist_perim_m` (withheld from X) | 0.331 |
+  | Rank by `-nearest_fire_perimeter_distance_m` (in W) | 0.110 (chance) |
+  | GBM engine-only | 0.262 |
+  | GBM W-only | 0.151 |
+  | GBM E-nogeom | 0.098 |
+  | GBM full W+E+engine | 0.282 |
+  | GBM shuffled-W | 0.165 |
+  | Prevalence | 0.110 |
+
+  Letter-of-protocol kill test vs p72 **passes** (0.282 > 0.221+0.01 and 0.282−0.165 >
+  0.01). Kill test vs the actual engine ranker (`-eta_hours`) **fails** (0.282 < 0.422).
+  A GBM on this N is worse than sorting by the engine's ETA. Retrain-ablating all 79
+  field groups: **2 help** by >0.01 (`lightning_annual_flash_days` +0.077,
+  `near_surface_wind_speed_annual_mean_ms` +0.027), **30 unused** (delta 0, including
+  `nearest_fire_perimeter_distance_m`), **36 hurt** (joint GBM overfit; largest:
+  `E:wind_speed_ms` −0.107, snow-cover days −0.089, `ENG:eta_hours` −0.083, elevation
+  −0.082). Role D is the only role with a clearly positive retrain delta (+0.063); roles
+  B/H/G *improve* when dropped. Grouped permutation on the 3-positive GSS test is too
+  noisy (eta ±0.14) to override LOGO. The V1 0.96 `-dist_perim_m` scar-ranker does **not**
+  transfer to timed arrival (0.331). H2-on-MTBS-y remains a scar classifier, not this
+  result.

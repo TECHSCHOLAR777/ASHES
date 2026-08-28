@@ -21,6 +21,15 @@ final perimeter), 0.35° historic AOI clamp, 2.2 m/s reference wind, Rothermel-H
 compiled ELMFIRE, reconstructed sample coordinates. Live `ask` still uses the full
 wind-projected WFIGS AOI + HRRR.
 
+**R0–R4 (timed arrival, 2026-08-28):** those H2 numbers are on V1 `y` = inside the final
+MTBS scar. Ranking by `-dist_perim_m` already scores ~0.96 there. Timed GeoMAC/WFIGS Daily
+labels give **246 evaluable rows / 32 events / 27 positives**. R1 re-seeded `spread_run`
+from the first operational ring with HRRR-at-seed (35 fires, hrrr_fail=0). Full-W leave-one-
+event-out GBM PR-AUC **0.282** beats p72 rank (0.221) and shuffled W (0.165) but **loses to
+ranking by `-eta_hours` (0.422)**. Only lightning-flash-days and near-surface wind
+climatology help by >0.01 when every role and field is retrain-ablated.
+`data/models/arrival_head_report.json`.
+
 Do not re-run Path A (`build_training_set.py --with-spread`) unless you intend to spend
 Mireye credits. Resume Path B with `--resume` if a sidecar already exists.
 
@@ -122,10 +131,9 @@ SRS itself, not a shortcut. A real MTBS-labeled dataset was being collected at h
 across thousands of real fire samples). Read `src/model/training_data.py`'s module docstring
 for the one honest limitation in that pipeline: `dist_perim_m` is proxied off the fire's
 ignition centroid, not a true t0 perimeter, because MTBS publishes only ignition date +
-final perimeter, not a time series. **V2's incident-first AOI and ELMFIRE work makes this
-proxy unnecessary** - once ELMFIRE runs are available, real perimeter time series (or
-ELMFIRE's own arrival field) become the ground truth for `dist_perim_m`/E features, which is
-a strictly better foundation than continuing to refine the MTBS proxy.
+final perimeter, not a time series. Timed GeoMAC/WFIGS Daily series now exist for 35 of 458
+events (`scripts/label_arrival_times.py`); 246 sites are evaluable at 72 h. That is the
+arrival label. It is not a substitute for a compiled ELMFIRE field.
 
 ## Getting started
 

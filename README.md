@@ -172,6 +172,15 @@ model without touching the agent.
   clamped to 0.35°, weather is a documented 2.2 m/s reference wind (not HRRR-at-t0), and
   the engine is `rothermel_huygens_v1` not compiled ELMFIRE. `python scripts/evaluate_h2.py`
   is the gate; both `validated` and `falsified` are legitimate SRS 6.6 outcomes.
+  **That H2 number is a scar classifier.** Ranking by `-dist_perim_m` alone already scores
+  ~0.96 on V1 `y` = inside the final MTBS polygon. Timed-perimeter arrival (R0–R4) is the
+  actual V2 target: 246 evaluable rows / 32 events / 27 positives. Leave-one-event-out GBM
+  on full W+E+HRRR-seeded engine scores PR-AUC **0.282**, which beats raw p72 rank (0.221)
+  and shuffled W (0.165) but **loses to ranking by `-eta_hours` (0.422)**. W-only is 0.151.
+  Ablating every role and every field: only `lightning_annual_flash_days` and
+  `near_surface_wind_speed_annual_mean_ms` help by >0.01; `nearest_fire_perimeter_distance_m`
+  is unused. Report: `data/models/arrival_head_report.json`. Engine is still
+  `rothermel_huygens_v1` seeded from GeoMAC first rings + HRRR-at-seed, not ELMFIRE.
 - **HRRR's grid is Lambert Conformal** (2D curvilinear lat/lon), so nearest-point lookup is
   done by brute-force distance argmin, not `xarray.sel(method="nearest")` - see
   `src/clients/hrrr.py` and `DECISIONS.md`.
