@@ -76,45 +76,47 @@ def main() -> None:
             if args.resume and all(rec["site_id"] in done for rec in group):
                 continue
             series = load_series_cache(event_id)
-            fires = mtbs.get_fires_by_event_ids([event_id])
-            fire = fires[0] if fires else None
             field = None
             weather_src = "none"
-            if fire is None:
-                logger.warning("[%d/%d] %s no MTBS fire", i, len(order), event_id)
+            if series is None or series.n_times < 2:
+                logger.info("[%d/%d] %s skip spread (no usable time series)", i, len(order), event_id)
             else:
-                rings = seed_rings(series) if series else []
-                t_seed = seed_time(series)
-                weather = {
-                    "wind_u": HISTORIC_DEFAULT_WIND_U,
-                    "wind_v": HISTORIC_DEFAULT_WIND_V,
-                    "rh_pct": None,
-                    "temp_c": None,
-                    "valid_time": t_seed.isoformat() if t_seed else None,
-                }
-                weather_src = "reference_2.2ms"
-                if t_seed is not None and fire.centroid_lat is not None and fire.centroid_lng is not None:
-                    try:
-                        wx = hrrr.get_weather(fire.centroid_lat, fire.centroid_lng, site_id=event_id, at=t_seed)
-                        weather = {
-                            "wind_u": wx.wind_u_10m,
-                            "wind_v": wx.wind_v_10m,
-                            "rh_pct": wx.rh_pct,
-                            "temp_c": wx.temp_c,
-                            "valid_time": wx.hrrr_valid_time,
-                        }
-                        weather_src = "hrrr_at_seed"
-                    except Exception as exc:
-                        n_hrrr_fail += 1
-                        logger.warning("HRRR failed for %s at %s: %s; using reference wind", event_id, t_seed, exc)
-                if series is not None and series.n_times >= 2:
+                fires = mtbs.get_fires_by_event_ids([event_id])
+                fire = fires[0] if fires else None
+                if fire is None:
+                    logger.warning("[%d/%d] %s no MTBS fire", i, len(order), event_id)
+                else:
+                    rings = seed_rings(series)
+                    t_seed = seed_time(series)
+                    weather = {
+                        "wind_u": HISTORIC_DEFAULT_WIND_U,
+                        "wind_v": HISTORIC_DEFAULT_WIND_V,
+                        "rh_pct": None,
+                        "temp_c": None,
+                        "valid_time": t_seed.isoformat() if t_seed else None,
+                    }
+                    weather_src = "reference_2.2ms"
+                    if t_seed is not None and fire.centroid_lat is not None and fire.centroid_lng is not None:
+                        try:
+                            wx = hrrr.get_weather(fire.centroid_lat, fire.centroid_lng, site_id=event_id, at=t_seed)
+                            weather = {
+                                "wind_u": wx.wind_u_10m,
+                                "wind_v": wx.wind_v_10m,
+                                "rh_pct": wx.rh_pct,
+                                "temp_c": wx.temp_c,
+                                "valid_time": wx.hrrr_valid_time,
+                            }
+                            weather_src = "hrrr_at_seed"
+                        except Exception as exc:
+                            n_hrrr_fail += 1
+                            logger.warning("HRRR failed for %s at %s: %s; using reference wind", event_id, t_seed, exc)
                     field = spread_field_for_timed_seed(fire, landfire, rings, weather)
                     if field is not None:
                         n_field += 1
-                logger.info(
-                    "[%d/%d] %s weather=%s seed_rings=%d field=%s",
-                    i, len(order), event_id, weather_src, len(rings), field is not None,
-                )
+                    logger.info(
+                        "[%d/%d] %s weather=%s seed_rings=%d field=%s",
+                        i, len(order), event_id, weather_src, len(rings), field is not None,
+                    )
             for rec in group:
                 if rec["site_id"] in done:
                     continue
