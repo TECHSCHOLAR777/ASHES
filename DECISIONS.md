@@ -258,4 +258,9 @@ One line per decision, in build order.
   grids as an npz sidecar; nested-list JSON of a 90 m LANDFIRE tile was OOM-adjacent.
   Failed ELMFIRE fires are not written into the book so `--resume` retries them. W
   encoding skips rows without an `elmfire_*` field. Huygens still refused.
+- [2026-08-28] ELMFIRE adapter coarsen used `from_bounds(lon, lat)` on a UTM
+  grid, so any LANDFIRE tile wider than 800 cells wrote PHI in degree-space and
+  the seed never burned (`no seed cells in phi`). Coarsen now `transform_bounds`
+  to UTM metres. Confirmed: `2024-WASES-000173` (previous 500) runs
+  `elmfire_2025.0212` after the 72 h AOI + this fix.
 
