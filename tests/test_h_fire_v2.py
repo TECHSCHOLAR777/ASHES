@@ -59,3 +59,6 @@ def test_model_infer_without_spread_keeps_v1_baseline():
     assert out.eta_hours is None
     assert out.spread_field_version is None
     assert out.p_burn_by_T is None
+    assert 0.0 <= out.y_hat <= 1.0
+    # A V2 pickle is 5 dims wider; missing spread must not crash infer.
+    assert out.y_hat == out.y_hat  # finite

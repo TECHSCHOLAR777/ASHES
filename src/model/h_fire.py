@@ -84,8 +84,14 @@ class _ModelRegistry:
 _REGISTRY = _ModelRegistry()
 
 
-def _spread_features(spread: Any) -> np.ndarray:
-    """Fixed-order raw-field features the V2 calibration head concatenates onto [g(W); E]."""
+def _spread_features(spread: Any | None) -> np.ndarray:
+    """Fixed-order raw-field features the V2 calibration head concatenates onto [g(W); E].
+
+    Missing field uses the same outside-AOI placeholders as `attach_spread_vector`
+    so a V2 pickle (220-D) still scores a site that is not in any incident raster.
+    """
+    if spread is None:
+        return np.array([72.0, 24.0, 0.0, 0.0, 0.0], dtype=np.float64)
     eta = spread.eta_hours if spread.eta_hours is not None else 72.0
     sig = spread.eta_sigma_hours if spread.eta_sigma_hours is not None else 24.0
     p24 = spread.p_burn_24 if spread.p_burn_24 is not None else 0.0
@@ -156,7 +162,7 @@ def model_infer(
     e_vec = e_features_to_vector(e_features)
     masked_w = w_features.vector * w_features.mask
 
-    if artefact.get("v2_calibration") and spread is not None:
+    if artefact.get("v2_calibration"):
         feature_vec = np.concatenate([masked_w, e_vec, _spread_features(spread)]).reshape(1, -1)
     else:
         feature_vec = np.concatenate([masked_w, e_vec]).reshape(1, -1)

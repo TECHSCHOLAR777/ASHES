@@ -1,6 +1,33 @@
 # V1 → V2 Handoff
 
+## V2 status (2026-08-28)
+
+V2 Path B is closed. `scripts/enrich_spread_vectors.py` labeled all **4,300** V1 samples
+across **458** MTBS events with a delegated `spread_vector` and **no extra Mireye credits**.
+`python scripts/evaluate_h2.py` reports **`h2_status: validated`**:
+
+| Metric | Value |
+|---|---|
+| Samples / events | 4300 / 458 |
+| Calibrated PR-AUC | 0.865 |
+| Raw engine p72 PR-AUC | 0.637 |
+| Calibrated − raw ΔAP | +0.228 |
+| Random-W collapse ΔAP | +0.079 |
+| Brier (calibrated) | 0.119 |
+| Model | `h_fire_v20260828T012333Z` (`v2_calibration: true`) |
+
+Honest limits (also in `DECISIONS.md` / `V2_END.md`): ignition-centroid seed (not gold
+final perimeter), 0.35° historic AOI clamp, 2.2 m/s reference wind, Rothermel-Huygens not
+compiled ELMFIRE, reconstructed sample coordinates. Live `ask` still uses the full
+wind-projected WFIGS AOI + HRRR.
+
+Do not re-run Path A (`build_training_set.py --with-spread`) unless you intend to spend
+Mireye credits. Resume Path B with `--resume` if a sidecar already exists.
+
+---
+
 ## Where things stand
+
 
 V1 (the wildfire site-event copilot) is complete and pushed to
 `https://github.com/TECHSCHOLAR777/ASHES` as of commit `aca8b16` (37 commits on

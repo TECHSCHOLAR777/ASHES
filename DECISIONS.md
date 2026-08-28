@@ -173,8 +173,22 @@ One line per decision, in build order.
   Slack, or SMTP. Existing degraded paths apply: FIRMS sets `firms_unavailable`; delivery
   is log-only. Two keys round-robin at 300 rpm each on the Growth plan.
 - [2026-08-27] H2 (W-conditioned calibration beats raw delegated field on event/HUC/state
-  held-out fires) is implemented as `scripts/evaluate_h2.py`. There is no real
-  `data/training/*.jsonl` with spread labels in this checkout, so the gate reports
-  `unevaluable_no_real_spread_labels` rather than inventing a pass. A synthetic probe
-  checks that the comparison machinery runs; it is not an AC-12 research result. Collect
-  with `scripts/build_training_set.py --with-spread` and rerun the gate.
+  held-out fires) is implemented as `scripts/evaluate_h2.py`.
+- [2026-08-28] Path B (`scripts/enrich_spread_vectors.py`) attached `spread_vector` to the
+  existing V1 jsonl (4300 samples, 458 events) using LANDFIRE + `spread_run` only — no extra
+  Mireye credits. Historic jobs **ignite at the MTBS centroid**; they do **not** seed the
+  gold final perimeter (SRS 6.1 leakage). A first 20-row sidecar that did seed the final
+  polygon was discarded. LANDFIRE historic tiles are clamped to 0.35° around the centroid
+  (live ask/watch still uses the full wind-projected incident AOI). Rasters move over npz,
+  not giant JSON, with a 900s HTTP timeout.
+- [2026-08-28] Historic Path B weather is a documented Scott & Burgan reference wind
+  (2.2 m/s, u-component) so the 7-member ensemble is not degenerate. It is **not**
+  HRRR-at-t0. Live V2 still uses HRRR.
+- [2026-08-28] H2 on those labels: **validated**. Calibrated PR-AUC 0.865 vs raw engine
+  p72 0.637 (ΔAP +0.228); random-W collapse ΔAP +0.079. The comparison is against
+  `rothermel_huygens_v1` behind the `spread_run` seam, not a compiled ELMFIRE binary.
+  Target remains V1 `y` (in final MTBS perimeter), not a perimeter-time-series arrival
+  label (SRS 6.1 V2 gold). Arrival MAE vs a true t0 front is still unevaluable.
+- [2026-08-28] A V2 pickle is 5 dims wider than V1. `model_infer` always concatenates the
+  spread block when `v2_calibration` is set, using the outside-AOI placeholders
+  `[72, 24, 0, 0, 0]` when no incident field exists, so a far-away ask site does not crash.

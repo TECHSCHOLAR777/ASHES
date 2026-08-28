@@ -163,10 +163,15 @@ model without touching the agent.
   original Rothermel+Huygens solver fed by LANDFIRE FBFM40 + HRRR; set `SPREAD_ENGINE_BIN`
   to exec a real elmfire wrapper that speaks the JSON file contract. See `DECISIONS.md`.
   V1's wind-projected ROS ellipse remains as an E-side feature.
-- **H2 is not yet evaluable on real fires.** `data/training/` has no MTBS/LANDFIRE/spread
-  JSONL in this checkout. `python scripts/evaluate_h2.py` reports
-  `unevaluable_no_real_spread_labels` and runs a synthetic probe only. That is the honest
-  AC-13-adjacent outcome until `--with-spread` collection exists.
+- **H2 on Path B labels: `validated`.** `scripts/enrich_spread_vectors.py` attached a
+  5-float `spread_vector` (`eta_hours`, `eta_sigma_hours`, `p_burn_24/48/72`) to all 4,300
+  V1 MTBS samples across 458 events with **zero extra Mireye credits**. Event-held-out
+  W-conditioned MLP PR-AUC **0.865** vs raw engine p72 **0.637** (ΔAP +0.228); random-W
+  collapse ΔAP **+0.079**. Honest limits of that claim: historic jobs ignite at the MTBS
+  centroid (final perimeter is the gold *label*, never the t0 front), LANDFIRE tiles are
+  clamped to 0.35°, weather is a documented 2.2 m/s reference wind (not HRRR-at-t0), and
+  the engine is `rothermel_huygens_v1` not compiled ELMFIRE. `python scripts/evaluate_h2.py`
+  is the gate; both `validated` and `falsified` are legitimate SRS 6.6 outcomes.
 - **HRRR's grid is Lambert Conformal** (2D curvilinear lat/lon), so nearest-point lookup is
   done by brute-force distance argmin, not `xarray.sel(method="nearest")` - see
   `src/clients/hrrr.py` and `DECISIONS.md`.
@@ -200,9 +205,10 @@ outside it (hard negative), and far from any known fire (easy negative, per SRS 
 builds one real sample per point: a real Mireye `fetch` for W, a real FIRMS-archive query
 for historical hotspots at that date, and a real HRRR-archive fetch for wind at that hour.
 `--credit-target` stops the run once cumulative Mireye spend hits a target (credits are
-priced at 1/field/location, confirmed live, so cost is exact, not estimated). Add
-`--with-spread` to fetch LANDFIRE once per fire and attach a delegated `spread_vector`
-for the H2 calibration head. Then:
+priced at 1/field/location, confirmed live, so cost is exact, not estimated). Prefer Path B
+when V1 jsonl already exists: `python scripts/enrich_spread_vectors.py --resume` attaches
+`spread_vector` via LANDFIRE + `spread_run` only (no extra Mireye). Path A
+`--with-spread` on `build_training_set.py` re-fetches W and should not be the default. Then:
 
 ```bash
 python scripts/train_model.py
