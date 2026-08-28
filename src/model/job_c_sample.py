@@ -1,8 +1,8 @@
 """Sample Job C sites from a Daily progression tape.
 
-Points come from the *growth annulus* (inside the last Daily ring, outside the
-seed) plus genuine outsides of the last ring. The last ring bounds geometry; it
-is never the label. ``label_point`` assigns y_72 from the tape.
+Points come from the *72 h growth annulus* (inside the Daily ring nearest 72 h,
+outside the seed) plus genuine outsides of that envelope. The last ring of the
+whole tape bounds LANDFIRE AOI, not `y`.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from shapely.geometry import Point, Polygon
 from shapely.ops import unary_union
 from shapely.validation import make_valid
 
-from src.clients.timed_perimeters import TimedFireSeries
+from src.clients.timed_perimeters import TimedFireSeries, TimedSnapshot
 from src.model.arrival_labels import label_point, point_in_snapshot
 
 SampleRole = Literal["annulus", "hard_neg", "far_neg"]
@@ -117,21 +117,26 @@ def sample_series(
     snaps = sorted(series.snapshots, key=lambda s: s.t)
     if len(snaps) < 2:
         return []
-    seed, last = snaps[0], snaps[-1]
-    seed_geom = _polygon_from_rings(seed.geometry_rings)
-    last_geom = _polygon_from_rings(last.geometry_rings)
-    if last_geom is None or last_geom.is_empty:
+    seed = snaps[0]
+    horizon_snap = snapshot_for_horizon(series, 72.0)
+    if horizon_snap is None:
         return []
-    lat0 = (last_geom.bounds[1] + last_geom.bounds[3]) / 2.0
+    seed_geom = _polygon_from_rings(seed.geometry_rings)
+    front_geom = _polygon_from_rings(horizon_snap.geometry_rings)
+    if front_geom is None or front_geom.is_empty:
+        return []
+    lat0 = (front_geom.bounds[1] + front_geom.bounds[3]) / 2.0
     max_acres = max((s.acres or 0.0) for s in snaps)
     if n_annulus is None or n_hard is None or n_far is None:
         n_annulus, n_hard, n_far = points_per_fire(len({s.t for s in snaps}), max_acres)
 
-    annulus_pts = _rejection_sample(last_geom, n_annulus, rng, exclude=seed_geom)
-    hard_box = _box_polygon(_expand_bounds(last_geom, 12.0, lat0))
-    hard_pts = _rejection_sample(hard_box, n_hard, rng, require_outside=last_geom)
-    far_box = _box_polygon(_expand_bounds(last_geom, 30.0, lat0))
-    hard_outer = _box_polygon(_expand_bounds(last_geom, 12.0, lat0))
+    # 72 h growth annulus: inside the ~72 h ring, outside seed → y_72=1.
+    annulus_pts = _rejection_sample(front_geom, n_annulus, rng, exclude=seed_geom)
+    # Hard/far negatives are outside the 72 h envelope (last ring is not the label).
+    hard_box = _box_polygon(_expand_bounds(front_geom, 12.0, lat0))
+    hard_pts = _rejection_sample(hard_box, n_hard, rng, require_outside=front_geom)
+    far_box = _box_polygon(_expand_bounds(front_geom, 30.0, lat0))
+    hard_outer = _box_polygon(_expand_bounds(front_geom, 12.0, lat0))
     far_pts = _rejection_sample(far_box, n_far, rng, require_outside=hard_outer)
 
     sites: list[SampledSite] = []
@@ -150,14 +155,21 @@ def sample_series(
     return kept
 
 
-def early_tape_ok(series: TimedFireSeries, hours: float = 96.0) -> bool:
-    """Need a second Daily ring inside `hours` of seed or 72 h labels are interval-censored junk."""
+def snapshot_for_horizon(series: TimedFireSeries, hours: float = 72.0) -> TimedSnapshot | None:
+    """Last Daily ring at or before T (the 72 h envelope, not the months-later final)."""
     snaps = sorted(series.snapshots, key=lambda s: s.t)
     if len(snaps) < 2:
-        return False
+        return None
     t0 = snaps[0].t
-    n = sum(1 for s in snaps if (s.t - t0).total_seconds() / 3600.0 <= hours + 1e-6)
-    return n >= 2
+    before = [s for s in snaps[1:] if (s.t - t0).total_seconds() / 3600.0 <= hours + 6.0]
+    if before:
+        return before[-1]
+    return None
+
+
+def early_tape_ok(series: TimedFireSeries, hours: float = 96.0) -> bool:
+    """Need a mapped ring at or before 72 h or arrival labels are interval-censored junk."""
+    return snapshot_for_horizon(series, min(72.0, hours)) is not None
 
 
 def labeled_rows(series: TimedFireSeries, sites: list[SampledSite]) -> list[dict]:

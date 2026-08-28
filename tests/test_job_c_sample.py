@@ -33,7 +33,9 @@ def test_annulus_points_are_outside_seed_and_labelable():
     assert all(not r["arrival"]["already_burned_at_seed"] for r in rows)
     eval_rows = [r for r in rows if r["arrival"]["evaluable_72"]]
     assert len(eval_rows) >= 15
-    # Annulus can be pos or late-growth neg; hard/far should be y_72=0.
+    annulus = [r for r in rows if r["sample_role"] == "annulus" and r["arrival"]["evaluable_72"]]
+    assert annulus
+    assert all(r["arrival"]["y_72"] == 1 for r in annulus)
     hard = [r for r in rows if r["sample_role"] in {"hard_neg", "far_neg"} and r["arrival"]["evaluable_72"]]
     assert hard
     assert all(r["arrival"]["y_72"] == 0 for r in hard)
