@@ -284,6 +284,10 @@ One line per decision, in build order.
   logistic engine 0.161, isotonic(eta) 0.161, shuffled-W 0.166,
   engine+W_allowed 0.177, raw p72 0.231. Kill still **failed**. ΔBrier
   engine−W is −0.016 (still shrinking, still the wrong sign).
+- [2026-08-29] Fifth Job C LOGO cut at **152 events / 4834 rows**. Brier:
+  logistic engine 0.160, isotonic(eta) 0.160, shuffled-W 0.164,
+  engine+W_allowed 0.175, raw p72 0.231. Kill still **failed**. ΔBrier
+  −0.015.
 - [2026-08-29] ELMFIRE Fortran `Error opening ./scratch/ws.hdr because XDIM is
   not equal to YDIM` on wide tiles (`2024-CABTU-013761` 539×800, `2024-ORVAD-240141`
   578×800). Coarsen fitted `max_dim` per axis then `from_bounds`, so pixels
