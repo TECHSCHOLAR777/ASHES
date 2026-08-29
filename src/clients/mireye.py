@@ -260,6 +260,7 @@ class MireyeClient:
         raise MireyeRequestFailed(
             f"Mireye {path} failed after {MAX_RETRIES} attempts"
             + (f" ({retries_429} HTTP 429)" if retries_429 else "")
+            + (f" ({retries_402} HTTP 402)" if retries_402 else "")
         ) from last_error
 
     # -- public API -----------------------------------------------------

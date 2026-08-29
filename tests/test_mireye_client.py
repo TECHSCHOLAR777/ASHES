@@ -73,6 +73,18 @@ def test_retries_on_402_then_next_key_succeeds(client, mocker):
     assert data == {"lat": 1.0, "lng": 2.0}
     assert mock_request.call_count == 2
 
+
+def test_402_exhausted_message_includes_402(client, mocker):
+    mocker.patch("time.sleep")
+    mocker.patch.object(
+        client._client, "request", return_value=make_response(402, {"detail": {"error": "credits_exhausted"}})
+    )
+    with pytest.raises(MireyeRequestFailed) as ei:
+        client._request("POST", "/v1/fetch", {"fields": ["elevation"]})
+    assert "402" in str(ei.value)
+
+
+def test_retries_on_429_then_succeeds(client, mocker):
     mocker.patch("time.sleep")
     responses = [make_response(429), make_response(429), make_response(200, {"lat": 1.0, "lng": 2.0})]
     mock_request = mocker.patch.object(client._client, "request", side_effect=responses)
