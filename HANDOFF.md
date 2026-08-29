@@ -34,19 +34,19 @@ book. Huygens rows are skipped. Failed ELMFIRE fires are not written so
 `--resume` retries them (empty PHI before the coarsen fix; a few Fortran runs
 with no TOA).
 
-**Eval (LOGO, 173 events / 5336 rows, `elmfire_2025.0212` only, 0 Huygens):**
+**Eval (LOGO, 190 events / 5744 rows, `elmfire_2025.0212` only, 0 Huygens):**
 
 | Head | Brier | log-loss | PR-AUC (side) |
 |---|---|---|---|
-| Raw engine p72 | 0.237 | 3.275 | 0.427 |
-| Isotonic(eta) | 0.160 | 0.496 | 0.488 |
-| Logistic P(y\|engine) | **0.160** | **0.496** | 0.461 |
-| Logistic P(y\|engine, W_allowed) | 0.173 | 0.616 | 0.413 |
-| Logistic shuffled-W | 0.164 | 0.516 | 0.449 |
+| Raw engine p72 | 0.238 | 3.288 | 0.428 |
+| Isotonic(eta) | 0.160 | 0.496 | 0.494 |
+| Logistic P(y\|engine) | **0.160** | **0.496** | 0.471 |
+| Logistic P(y\|engine, W_allowed) | 0.173 | 0.609 | 0.422 |
+| Logistic shuffled-W | 0.163 | 0.516 | 0.463 |
 
-Kill still **failed**. W_allowed ΔBrier vs engine: −0.064 → −0.027 → −0.019 → −0.016 → −0.015 → **−0.013 (N=173)**. Shuffled W still beats the real W head. 3823/5336 rows never received a 72 h TOA. Constant-prevalence Brier 0.193. ECE: engine 0.006 vs engine+W 0.031 vs raw p72 0.237.
+Kill still **failed**. W_allowed ΔBrier vs engine: −0.064 → … → −0.013 → **−0.013 (N=190)**. Shuffled W still beats the real W head. 4109/5744 rows never received a 72 h TOA. Constant-prevalence Brier 0.194. ECE: engine 0.008 vs engine+W 0.031 vs raw p72 0.238.
 
-Jobs still running (ELMFIRE ~206/283; W `--resume` after each pending list). Report: `data/models/job_c_report.json`.
+Jobs still running (ELMFIRE ~236/283; W `--resume` after each pending list). Report: `data/models/job_c_report.json`.
 
 Do not re-run Path A / Path B / R0–R4 on the 2015–2022 MTBS book for this claim.
 
