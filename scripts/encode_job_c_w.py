@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -17,7 +18,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from src.clients.mireye import MAX_BATCH_SIZE, MireyeClient
+from src.clients.mireye import MAX_BATCH_SIZE, MireyeClient, MireyeRequestFailed
 from src.features.w_encoder import encode_w, load_field_catalog, ordered_model_fields
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -25,6 +26,34 @@ logger = logging.getLogger("fire_copilot.job_c_w")
 
 DEFAULT_IN = Path("data/training/job_c_2023/book_elmfire.jsonl")
 DEFAULT_OUT = Path("data/training/job_c_2023/book_elmfire_w.jsonl")
+
+
+def fetch_batch_with_retry(
+    client: MireyeClient,
+    coords: list[tuple[float, float]],
+    fields: list[str],
+    site_ids: list[str],
+    max_attempts: int = 8,
+) -> list[dict]:
+    last: Exception | None = None
+    for attempt in range(max_attempts):
+        try:
+            return client.fetch_batch(coords, fields, site_ids=site_ids)
+        except MireyeRequestFailed as exc:
+            last = exc
+            msg = str(exc)
+            if "429" not in msg and "failed after" not in msg:
+                raise
+            wait = min(120.0, 20.0 * (2**attempt))
+            logger.warning(
+                "Mireye rate-limited; sleeping %.0fs then retrying batch (%d/%d)",
+                wait,
+                attempt + 1,
+                max_attempts,
+            )
+            time.sleep(wait)
+    assert last is not None
+    raise last
 
 
 def _keys() -> list[str]:
@@ -42,6 +71,18 @@ def main() -> None:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--max-rows", type=int, default=None)
     parser.add_argument("--batch-size", type=int, default=10)
+    parser.add_argument(
+        "--batch-pause",
+        type=float,
+        default=2.0,
+        help="Seconds to wait after each successful batch so a resume does not burst into 429.",
+    )
+    parser.add_argument(
+        "--startup-pause",
+        type=float,
+        default=45.0,
+        help="Seconds to wait before the first batch (in-process limiter is empty after a restart).",
+    )
     args = parser.parse_args()
 
     catalog = load_field_catalog()
@@ -86,11 +127,16 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     batch = max(1, min(MAX_BATCH_SIZE, args.batch_size))
     logger.info("pending=%d skip=%d fields=%d batch=%d", len(pending), n_skip, len(fields), batch)
+    if pending and args.startup_pause > 0:
+        logger.info("startup pause %.0fs before first Mireye batch", args.startup_pause)
+        time.sleep(args.startup_pause)
     with args.output.open("a" if args.resume else "w", encoding="utf-8") as out:
         for start in range(0, len(pending), batch):
             chunk = pending[start : start + batch]
             coords = [(float(r["site_lat"]), float(r["site_lng"])) for r in chunk]
-            raws = client.fetch_batch(coords, fields, site_ids=[r["site_id"] for r in chunk])
+            raws = fetch_batch_with_retry(
+                client, coords, fields, site_ids=[r["site_id"] for r in chunk]
+            )
             if len(raws) != len(chunk):
                 raise RuntimeError(f"fetch_batch returned {len(raws)} for {len(chunk)} sites")
             for rec, raw in zip(chunk, raws):
@@ -103,6 +149,8 @@ def main() -> None:
                 n_write += 1
             out.flush()
             logger.info("encoded %d / %d", n_write, len(pending))
+            if args.batch_pause > 0 and start + batch < len(pending):
+                time.sleep(args.batch_pause)
     logger.info("read=%d wrote=%d skipped=%d -> %s", n_in, n_write, n_skip, args.output)
 
 

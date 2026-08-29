@@ -27,6 +27,9 @@ RATE_LIMIT_SAFETY_MARGIN = 1  # skip a key at cap-1 rather than waiting for a 42
 RATE_WINDOW_SECONDS = 60.0
 MAX_BATCH_SIZE = 25
 MAX_RETRIES = 3
+# 429 is the provider's sliding window, not a transient 5xx. Three 1/2/4s
+# retries die on a 60s rpm cap; wait the window instead.
+MAX_429_RETRIES = 8
 # Verified against the live API 2026-08-27: an explicit field list over 50 is rejected with
 # {"error": "fields_too_many", "max": 50} (presets are exempt, but V1 never uses a preset).
 MAX_FIELDS_PER_REQUEST = 50
@@ -112,23 +115,33 @@ class MireyeClient:
             window.timestamps.popleft()
 
     def _pick_key_index(self) -> int:
-        """Round-robin starting point, skipping any key at its 60 rpm sliding-window cap."""
+        """Round-robin starting point, skipping any key at its sliding-window cap.
+
+        If every key is at cap, wait until the oldest stamp ages out rather than
+        firing a request we know will 429. The limiter is in-process only; a
+        fresh encoder still needs HTTP 429 backoff after another process just
+        spent the same keys.
+        """
         n = len(self._keys)
-        with self._lock:
-            start = next(self._counter) % n
-            now = time.monotonic()
-            for offset in range(n):
-                idx = (start + offset) % n
-                window = self._windows[idx]
-                self._prune(window, now)
-                if len(window.timestamps) < RATE_LIMIT_PER_KEY - RATE_LIMIT_SAFETY_MARGIN:
-                    window.timestamps.append(now)
-                    return idx
-            # All keys saturated: fall back to the round-robin start and accept the request
-            # (Mireye's own 429 handling + our retry/backoff covers the rare overrun).
-            window = self._windows[start]
-            window.timestamps.append(now)
-            return start
+        while True:
+            with self._lock:
+                start = next(self._counter) % n
+                now = time.monotonic()
+                for offset in range(n):
+                    idx = (start + offset) % n
+                    window = self._windows[idx]
+                    self._prune(window, now)
+                    if len(window.timestamps) < RATE_LIMIT_PER_KEY - RATE_LIMIT_SAFETY_MARGIN:
+                        window.timestamps.append(now)
+                        return idx
+                wait_s = RATE_WINDOW_SECONDS
+                for window in self._windows.values():
+                    if window.timestamps:
+                        wait_s = min(
+                            wait_s,
+                            RATE_WINDOW_SECONDS - (now - window.timestamps[0]) + 0.05,
+                        )
+            time.sleep(max(0.05, wait_s))
 
     # -- HTTP with retry ----------------------------------------------------
 
@@ -145,7 +158,9 @@ class MireyeClient:
             )
 
         last_error: Exception | None = None
-        for attempt in range(MAX_RETRIES):
+        generic_attempts = 0
+        retries_429 = 0
+        while generic_attempts < MAX_RETRIES:
             key_index = self._pick_key_index()
             headers = {"Authorization": f"Bearer {self._keys[key_index]}"}
             start = time.monotonic()
@@ -157,11 +172,36 @@ class MireyeClient:
                     f"mireye:{path}", json_body or {}, None, site_id, latency_ms, key_index, error=str(exc)
                 )
                 last_error = exc
-                time.sleep(2**attempt)
+                generic_attempts += 1
+                time.sleep(2 ** (generic_attempts - 1))
                 continue
 
             latency_ms = (time.monotonic() - start) * 1000
-            if resp.status_code == 429 or resp.status_code >= 500:
+            if resp.status_code == 429:
+                tool_logger.log_tool_call(
+                    f"mireye:{path}",
+                    json_body or {},
+                    {"status_code": 429},
+                    site_id,
+                    latency_ms,
+                    key_index,
+                    error="HTTP 429",
+                )
+                last_error = MireyeRequestFailed(f"{path} returned HTTP 429")
+                retries_429 += 1
+                if retries_429 >= MAX_429_RETRIES:
+                    break
+                retry_after = resp.headers.get("Retry-After")
+                try:
+                    sleep_s = min(120.0, float(retry_after)) if retry_after else None
+                except ValueError:
+                    sleep_s = None
+                if sleep_s is None:
+                    sleep_s = min(90.0, 20.0 * (2 ** (retries_429 - 1)))
+                time.sleep(sleep_s)
+                continue
+
+            if resp.status_code >= 500:
                 tool_logger.log_tool_call(
                     f"mireye:{path}",
                     json_body or {},
@@ -172,7 +212,8 @@ class MireyeClient:
                     error=f"HTTP {resp.status_code}",
                 )
                 last_error = MireyeRequestFailed(f"{path} returned HTTP {resp.status_code}")
-                time.sleep(2**attempt)
+                generic_attempts += 1
+                time.sleep(2 ** (generic_attempts - 1))
                 continue
 
             if resp.status_code >= 400:
@@ -199,7 +240,10 @@ class MireyeClient:
             tool_logger.log_tool_call(f"mireye:{path}", json_body or {}, data, site_id, latency_ms, key_index)
             return data
 
-        raise MireyeRequestFailed(f"Mireye {path} failed after {MAX_RETRIES} attempts") from last_error
+        raise MireyeRequestFailed(
+            f"Mireye {path} failed after {MAX_RETRIES} attempts"
+            + (f" ({retries_429} HTTP 429)" if retries_429 else "")
+        ) from last_error
 
     # -- public API -----------------------------------------------------
 

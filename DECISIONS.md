@@ -258,6 +258,12 @@ One line per decision, in build order.
   grids as an npz sidecar; nested-list JSON of a 90 m LANDFIRE tile was OOM-adjacent.
   Failed ELMFIRE fires are not written into the book so `--resume` retries them. W
   encoding skips rows without an `elmfire_*` field. Huygens still refused.
+- [2026-08-29] Job C W encoder died on HTTP 429 after a `--resume` bursted ~100
+  cached-nearby rows in seconds. The in-process limiter is empty after a restart,
+  so it cannot see the previous process's rpm. `_pick_key_index` now waits when
+  every key is at cap instead of firing a request that will 429. `_request` retries
+  429 up to 8 times with 20s–90s backoff (Retry-After honored). `encode_job_c_w.py`
+  adds `--startup-pause` / `--batch-pause` and retries rate-limited batches.
 - [2026-08-28] ELMFIRE adapter coarsen used `from_bounds(lon, lat)` on a UTM
   grid, so any LANDFIRE tile wider than 800 cells wrote PHI in degree-space and
   the seed never burned (`no seed cells in phi`). Coarsen now `transform_bounds`

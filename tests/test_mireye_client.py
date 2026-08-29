@@ -21,6 +21,27 @@ def test_round_robin_cycles_through_all_three_keys(client):
     assert indices == [0, 1, 2, 0, 1, 2]
 
 
+def test_rate_limiter_waits_when_all_keys_saturated(client, mocker):
+    from src.clients.mireye import RATE_LIMIT_PER_KEY, RATE_LIMIT_SAFETY_MARGIN
+
+    now = __import__("time").monotonic()
+    cap = RATE_LIMIT_PER_KEY - RATE_LIMIT_SAFETY_MARGIN
+    for i in range(3):
+        client._windows[i].timestamps.extend([now] * cap)
+
+    slept: list[float] = []
+
+    def fake_sleep(_seconds: float) -> None:
+        slept.append(_seconds)
+        for window in client._windows.values():
+            window.timestamps.clear()
+
+    mocker.patch("time.sleep", side_effect=fake_sleep)
+    idx = client._pick_key_index()
+    assert slept
+    assert idx in (0, 1, 2)
+
+
 def test_rate_limiter_skips_a_saturated_key(client):
     # Saturate key 0 to the cap (RATE_LIMIT_PER_KEY - safety margin requests in the window).
     from src.clients.mireye import RATE_LIMIT_PER_KEY, RATE_LIMIT_SAFETY_MARGIN
@@ -48,6 +69,17 @@ def test_retries_on_429_then_succeeds(client, mocker):
 
     assert data == {"lat": 1.0, "lng": 2.0}
     assert mock_request.call_count == 3
+
+
+def test_429_retries_are_not_capped_at_generic_max(client, mocker):
+    mocker.patch("time.sleep")
+    responses = [make_response(429)] * 4 + [make_response(200, {"ok": True})]
+    mock_request = mocker.patch.object(client._client, "request", side_effect=responses)
+
+    data = client._request("POST", "/v1/geocode", {"address": "x"})
+
+    assert data == {"ok": True}
+    assert mock_request.call_count == 5
 
 
 def test_400_is_logged_before_raising(client, mocker, tmp_path, monkeypatch):
