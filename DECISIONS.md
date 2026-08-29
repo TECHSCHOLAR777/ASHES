@@ -306,6 +306,15 @@ One line per decision, in build order.
   −0.009. First pass of the 283-event book finished at 265 successes;
   `--resume` retries the 18 remaining misses (square-cell adapter should
   fix the XDIM≠YDIM ids). Not a validated claim.
+- [2026-08-29] Job C is **not** a GBM, so 171-D logistic has no native top-k.
+  Added within-fire residual Spearman (p-values shuffle residual inside each
+  fire) plus an in-sample GBM ranking diagnostic. FDR selected **zero**
+  fields. Exploratory top-8 (gage discharge, gas pipeline, UST, water
+  service, fire station, surface management, OSM transmission, soil AWC)
+  re-ran the same LOGO logistic on the finished **283 events / 7947 rows**.
+  Kill still **failed** (ΔBrier −0.005; shuffled W still better). Within-fire
+  perm p≈1: those |ρ|≤0.06 are not parcel effects. Huygens 0. Not a 218-D
+  GBM. Not MTBS.
 - [2026-08-29] ELMFIRE Fortran `Error opening ./scratch/ws.hdr because XDIM is
   not equal to YDIM` on wide tiles (`2024-CABTU-013761` 539×800, `2024-ORVAD-240141`
   578×800). Coarsen fitted `max_dim` per axis then `from_bounds`, so pixels

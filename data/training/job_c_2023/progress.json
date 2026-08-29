@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-29T07:36:00Z",
+  "as_of": "2026-08-29T08:00:00Z",
   "book": {
     "rows": 7987,
     "events": 283,
@@ -9,33 +9,44 @@
     "skipped_sparse_early_tape": 90
   },
   "elmfire": {
-    "rows": 7409,
-    "ok_events": 265,
+    "rows": 7987,
+    "ok_events": 283,
     "engine": "elmfire_2025.0212",
     "huygens_rows": 0,
-    "loop": "283/283 first pass done; --resume retrying 18 misses",
-    "n_failures_unique": 18
+    "loop": "283/283",
+    "n_failures_unique": 0
   },
   "w": {
-    "rows": 7369,
-    "events": 265,
-    "y_72_pos": 2003,
+    "rows": 7947,
+    "events": 283,
+    "y_72_pos": 2099,
     "batch_size": 10,
-    "note": "exits after each pending list; --resume to catch new ELMFIRE rows"
+    "note": "caught up on evaluable_72 rows"
   },
   "eval": {
-    "status": "ninth_cut",
-    "snapshot_events": 247,
-    "snapshot_rows": 6978,
-    "have_events_now": 265,
+    "status": "subset_top8_after_residual_correlation",
+    "snapshot_events": 283,
+    "snapshot_rows": 7947,
     "w_kill_test_passed": false,
+    "fdr_selected_fields": [],
+    "head_fields": [
+      "nearest_usgs_gage_daily_discharge_cfs",
+      "nearest_gas_pipeline_distance_m",
+      "nearest_ust_facility_distance_m",
+      "within_water_service_area",
+      "nearest_fire_station_distance_m",
+      "surface_management_agency",
+      "nearest_osm_transmission_line_distance_m",
+      "soil_available_water_capacity"
+    ],
     "brier": {
-      "raw_p72": 0.246,
-      "isotonic_eta": 0.165,
-      "logistic_engine": 0.165,
-      "logistic_engine_w_allowed": 0.174,
-      "logistic_shuffled_w": 0.168
+      "raw_p72": 0.247,
+      "isotonic_eta": 0.163,
+      "logistic_engine": 0.163,
+      "logistic_engine_w_subset": 0.168,
+      "logistic_shuffled_w": 0.164
     },
-    "report": "data/models/job_c_report.json"
+    "report": "data/models/job_c_report.json",
+    "correlation": "data/models/job_c_w_correlation.json"
   }
 }

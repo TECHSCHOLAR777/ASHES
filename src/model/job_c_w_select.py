@@ -203,10 +203,15 @@ def correlation_map(
             "FDR survivors of within-fire residual Spearman (q<=0.10 and |rho|>=0.05) "
             "if any; else exploratory top-8 by |rho_residual|"
         ),
+        "_resid": resid,
     }
 
 
-def gbm_field_ranks(rows: list[dict], max_fields: int = 8) -> list[dict[str, Any]]:
+def gbm_field_ranks(
+    rows: list[dict],
+    max_fields: int = 8,
+    resid: np.ndarray | None = None,
+) -> list[dict[str, Any]]:
     """In-sample GBM on the engine residual — ranking diagnostic only, not the claim head."""
     from sklearn.ensemble import HistGradientBoostingRegressor
     from sklearn.inspection import permutation_importance
@@ -216,8 +221,9 @@ def gbm_field_ranks(rows: list[dict], max_fields: int = 8) -> list[dict[str, Any
     groups = np.array([rec["event_id"] for rec in rows])
     X_eng = _engine_matrix(rows)
     X_w = _w_matrix(rows, indices)
-    p_eng = logo_predict(X_eng, y.astype(int), groups, kind="logistic")
-    resid = y - p_eng
+    if resid is None:
+        p_eng = logo_predict(X_eng, y.astype(int), groups, kind="logistic")
+        resid = y - p_eng
     keep_i = [i for i, n in enumerate(w_names) if not _is_conf(n)]
     X = X_w[:, keep_i]
     gbm = HistGradientBoostingRegressor(max_depth=3, max_iter=80, learning_rate=0.08, random_state=42)

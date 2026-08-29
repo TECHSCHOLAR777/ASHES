@@ -81,8 +81,9 @@ def main() -> None:
     rows = load_evaluable_job_c(args.input)
     logger.info("evaluable rows %d events %d", len(rows), len({r["event_id"] for r in rows}))
     cmap = correlation_map(rows)
+    resid = cmap.pop("_resid", None)
     if not args.skip_gbm_rank:
-        cmap["gbm_residual_ranks"] = gbm_field_ranks(rows)
+        cmap["gbm_residual_ranks"] = gbm_field_ranks(rows, resid=resid)
         cmap["gbm_note"] = (
             "HistGradientBoosting on LOGO engine residual is a ranking diagnostic only; "
             "the Job C head remains logistic. not_a_218d_gbm still true."

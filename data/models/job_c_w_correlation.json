@@ -1,0 +1,2257 @@
+{
+  "n_rows": 7947,
+  "n_events": 283,
+  "unit": "site Spearman vs LOGO engine residual; p-values shuffle residual within fire",
+  "n_perm": 2000,
+  "fdr_q": 0.1,
+  "min_abs_rho": 0.05,
+  "not_a_218d_gbm": true,
+  "columns": [
+    {
+      "column": "cdl_class__Corn",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Soybeans",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Winter Wheat",
+      "rho_residual": 0.005653847748979881,
+      "rho_between_event": 0.017494179825383784,
+      "rho_y": -0.009505404094957023,
+      "rho_eta": 0.009792849599998436,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Alfalfa",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Fallow/Idle Cropland",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Grassland/Pasture",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Forest",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Shrubland",
+      "rho_residual": -0.027586465216700877,
+      "rho_between_event": -0.010114026462831362,
+      "rho_y": -0.009332930955063445,
+      "rho_eta": -0.0015001944768960464,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Developed/Open Space",
+      "rho_residual": 7.623805710688595e-05,
+      "rho_between_event": 0.01595936176473109,
+      "rho_y": -0.01164242762782307,
+      "rho_eta": 0.011994497193299319,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Developed/Low Intensity",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Developed/Med Intensity",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__Developed/High Intensity",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class__other",
+      "rho_residual": 0.02795158781848955,
+      "rho_between_event": -0.014543455388314598,
+      "rho_y": 0.001064954252197825,
+      "rho_eta": 0.044535958481712205,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "cdl_class_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "dominant_crop_5y__Corn",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "dominant_crop_5y__Soybeans",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "dominant_crop_5y__Winter Wheat",
+      "rho_residual": 0.005653847748979881,
+      "rho_between_event": 0.017494179825383784,
+      "rho_y": -0.009505404094957023,
+      "rho_eta": 0.009792849599998436,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "dominant_crop_5y__Alfalfa",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "dominant_crop_5y__other",
+      "rho_residual": 0.003997622509989373,
+      "rho_between_event": 0.017494179825383784,
+      "rho_y": -0.006720912741840544,
+      "rho_eta": 0.0069241546175270886,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "dominant_crop_5y__none",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "dominant_crop_5y_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "is_cultivated",
+      "rho_residual": 0.005653847748979881,
+      "rho_between_event": 0.017494179825383784,
+      "rho_y": -0.009505404094957023,
+      "rho_eta": 0.009792849599998436,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "is_cultivated_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "land_use_class__Agriculture",
+      "rho_residual": 0.005653847748979881,
+      "rho_between_event": 0.017494179825383784,
+      "rho_y": -0.009505404094957023,
+      "rho_eta": 0.009792849599998436,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "land_use_class__Developed",
+      "rho_residual": 0.003997622509989373,
+      "rho_between_event": 0.017494179825383784,
+      "rho_y": -0.006720912741840544,
+      "rho_eta": 0.0069241546175270886,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "land_use_class__Forest",
+      "rho_residual": 0.022228938385995968,
+      "rho_between_event": 0.01250000517368994,
+      "rho_y": -0.0010896260538653408,
+      "rho_eta": 0.034811192931604194,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "land_use_class__Non-Forest Wetland",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "land_use_class__Other",
+      "rho_residual": -0.017435753577477866,
+      "rho_between_event": -0.059100102038464476,
+      "rho_y": -0.017788581017799055,
+      "rho_eta": 0.018326511610075938,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "land_use_class__Rangeland or Pasture",
+      "rho_residual": -0.006687922984807205,
+      "rho_between_event": -0.031292242453914494,
+      "rho_y": 0.0025206797907221627,
+      "rho_eta": 0.015861050835838567,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "land_use_class__Water",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "land_use_class__other",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "land_use_class_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "aspect_cardinal__N",
+      "rho_residual": 0.000513329590793813,
+      "rho_between_event": -0.04462242371352378,
+      "rho_y": -0.001439038670985874,
+      "rho_eta": -0.0011017719286534277,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_cardinal__NE",
+      "rho_residual": 0.007610761757787434,
+      "rho_between_event": -0.04827403405141278,
+      "rho_y": -0.006325193192059366,
+      "rho_eta": 0.01617598662279208,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_cardinal__E",
+      "rho_residual": 0.01805423258918689,
+      "rho_between_event": 0.004746456900556463,
+      "rho_y": -0.00160930002171828,
+      "rho_eta": 0.019672767026864605,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_cardinal__SE",
+      "rho_residual": -0.0013153692676729015,
+      "rho_between_event": -0.04646795800308108,
+      "rho_y": -0.022540870266303574,
+      "rho_eta": 0.02246965687185147,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_cardinal__S",
+      "rho_residual": 0.004617697181044192,
+      "rho_between_event": -0.016764578070268325,
+      "rho_y": -0.00160930002171828,
+      "rho_eta": 0.025248323811945198,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_cardinal__SW",
+      "rho_residual": 0.02814911365652134,
+      "rho_between_event": 0.013259072918926619,
+      "rho_y": 0.03069766057978472,
+      "rho_eta": 0.01236138393676829,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_cardinal__W",
+      "rho_residual": 0.0034169577184568222,
+      "rho_between_event": -0.013153888343562271,
+      "rho_y": -0.0030740441763878186,
+      "rho_eta": 0.016444816038077653,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_cardinal__NW",
+      "rho_residual": -0.015462294896950229,
+      "rho_between_event": 0.02724827369080792,
+      "rho_y": -0.020541555906494906,
+      "rho_eta": 0.003386871529282395,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_cardinal__flat",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_cardinal__other",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_cardinal_conf",
+      "rho_residual": 0.01943006579275129,
+      "rho_between_event": 0.01441276047276064,
+      "rho_y": -0.0046507699447647126,
+      "rho_eta": 0.04115725821047204,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "aspect_degrees",
+      "rho_residual": 0.019193112225696866,
+      "rho_between_event": 0.013656015058969009,
+      "rho_y": -0.004732028339697167,
+      "rho_eta": 0.04102598629018408,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "aspect_degrees_conf",
+      "rho_residual": 0.01943006579275129,
+      "rho_between_event": 0.01441276047276064,
+      "rho_y": -0.0046507699447647126,
+      "rho_eta": 0.04115725821047204,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "elevation",
+      "rho_residual": 0.0148978743254524,
+      "rho_between_event": 0.013712125281865384,
+      "rho_y": -0.005197117111671187,
+      "rho_eta": 0.04241641381397868,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "elevation_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "slope_degrees",
+      "rho_residual": 0.021183946014071243,
+      "rho_between_event": 0.014946550185585624,
+      "rho_y": -0.0029095612887969206,
+      "rho_eta": 0.0398497299227781,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "slope_degrees_conf",
+      "rho_residual": 0.01943006579275129,
+      "rho_between_event": 0.01441276047276064,
+      "rho_y": -0.0046507699447647126,
+      "rho_eta": 0.04115725821047204,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "soil_available_water_capacity",
+      "rho_residual": 0.03181271188941986,
+      "rho_between_event": -0.015452792468812551,
+      "rho_y": 0.00381709889131488,
+      "rho_eta": 0.03239122748341186,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "soil_available_water_capacity_conf",
+      "rho_residual": 0.03188000266995476,
+      "rho_between_event": -0.014661508363889958,
+      "rho_y": 0.003801780229247214,
+      "rho_eta": 0.032765933340595306,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "soil_drainage_class",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "soil_drainage_class_conf",
+      "rho_residual": 0.026545237313092256,
+      "rho_between_event": -0.014667815436225671,
+      "rho_y": 0.0009304498295001998,
+      "rho_eta": 0.035102044261712796,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "surface_water_permanence_pct",
+      "rho_residual": -0.006910956851875949,
+      "rho_between_event": -0.04169653001780339,
+      "rho_y": -0.01344436367262274,
+      "rho_eta": 0.013850924179386229,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "surface_water_permanence_pct_conf",
+      "rho_residual": 0.01553016431344513,
+      "rho_between_event": 0.014180798463124391,
+      "rho_y": -0.005723261005064856,
+      "rho_eta": 0.041258088295739674,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "aerosol_optical_depth_annual_mean",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "aerosol_optical_depth_annual_mean_conf",
+      "rho_residual": 0.0205430505721902,
+      "rho_between_event": 0.015079259654976371,
+      "rho_y": -0.0002861399326558794,
+      "rho_eta": 0.03257924949786258,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "days_above_32c_annual_count",
+      "rho_residual": 0.01653009443315068,
+      "rho_between_event": 0.002710780445877026,
+      "rho_y": -0.023037079651540313,
+      "rho_eta": 0.04758958347552713,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "days_above_32c_annual_count_conf",
+      "rho_residual": 0.01783795685248645,
+      "rho_between_event": 0.014374105480748741,
+      "rho_y": -0.0037505530241813373,
+      "rho_eta": 0.041258088295739674,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "mean_annual_dry_bulb_temperature_degc",
+      "rho_residual": 0.01825891409639918,
+      "rho_between_event": 0.01479945041204648,
+      "rho_y": -0.00399450338945174,
+      "rho_eta": 0.04158178624794633,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "mean_annual_dry_bulb_temperature_degc_conf",
+      "rho_residual": 0.01783795685248645,
+      "rho_between_event": 0.014374105480748741,
+      "rho_y": -0.0037505530241813373,
+      "rho_eta": 0.041258088295739674,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "mean_annual_relative_humidity_pct",
+      "rho_residual": 0.016724023632813438,
+      "rho_between_event": 0.015143694211978292,
+      "rho_y": -0.003880185578429418,
+      "rho_eta": 0.03799761991654894,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "mean_annual_relative_humidity_pct_conf",
+      "rho_residual": 0.01660819522523051,
+      "rho_between_event": 0.015079259654976371,
+      "rho_y": -0.004132842395621878,
+      "rho_eta": 0.03828004286760316,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "mean_annual_snow_cover_days",
+      "rho_residual": 0.017843145678377494,
+      "rho_between_event": 0.01435360161389691,
+      "rho_y": -0.002134036961540234,
+      "rho_eta": 0.03981082636869348,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "mean_annual_snow_cover_days_conf",
+      "rho_residual": 0.01783795685248645,
+      "rho_between_event": 0.014374105480748741,
+      "rho_y": -0.0037505530241813373,
+      "rho_eta": 0.041258088295739674,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "mean_wind_speed_100m_ms",
+      "rho_residual": 0.01602647518346782,
+      "rho_between_event": 0.01492683578294636,
+      "rho_y": -0.0052752859471213,
+      "rho_eta": 0.0410532055990443,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "mean_wind_speed_100m_ms_conf",
+      "rho_residual": 0.01553016431344513,
+      "rho_between_event": 0.014180798463124391,
+      "rho_y": -0.005723261005064856,
+      "rho_eta": 0.041258088295739674,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "near_surface_wind_speed_annual_mean_ms",
+      "rho_residual": 0.020570762126278497,
+      "rho_between_event": 0.0148965059327321,
+      "rho_y": -0.0003726362085792681,
+      "rho_eta": 0.03272205299124658,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "near_surface_wind_speed_annual_mean_ms_conf",
+      "rho_residual": 0.0205430505721902,
+      "rho_between_event": 0.015079259654976371,
+      "rho_y": -0.0002861399326558794,
+      "rho_eta": 0.03257924949786258,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "prevailing_wind_direction_100m_cardinal__N",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "prevailing_wind_direction_100m_cardinal__NE",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "prevailing_wind_direction_100m_cardinal__E",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "prevailing_wind_direction_100m_cardinal__SE",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "prevailing_wind_direction_100m_cardinal__S",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "prevailing_wind_direction_100m_cardinal__SW",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "prevailing_wind_direction_100m_cardinal__W",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "prevailing_wind_direction_100m_cardinal__NW",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "prevailing_wind_direction_100m_cardinal__other",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "prevailing_wind_direction_100m_cardinal_conf",
+      "rho_residual": 0.01553016431344513,
+      "rho_between_event": 0.014180798463124391,
+      "rho_y": -0.005723261005064856,
+      "rho_eta": 0.041258088295739674,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "weibull_k_100m",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "weibull_k_100m_conf",
+      "rho_residual": 0.01553016431344513,
+      "rho_between_event": 0.014180798463124391,
+      "rho_y": -0.005723261005064856,
+      "rho_eta": 0.041258088295739674,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "fire_hazard_responsibility_area__SRA",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "fire_hazard_responsibility_area__FRA",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "fire_hazard_responsibility_area__LRA",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "fire_hazard_responsibility_area__other",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "fire_hazard_responsibility_area_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "fire_hazard_severity_zone_class",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "fire_hazard_severity_zone_class_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "landslide_susceptibility_index",
+      "rho_residual": 0.015677526200091538,
+      "rho_between_event": 0.014926868201404217,
+      "rho_y": -0.0021346448002715793,
+      "rho_eta": 0.039898293311120235,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "landslide_susceptibility_index_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "lightning_annual_flash_days",
+      "rho_residual": 0.02549080437512515,
+      "rho_between_event": 0.014220150272954177,
+      "rho_y": -0.0015958293285523117,
+      "rho_eta": 0.031871019100898124,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "lightning_annual_flash_days_conf",
+      "rho_residual": 0.025409307283857496,
+      "rho_between_event": 0.014406710140540489,
+      "rho_y": -0.0015531709293291813,
+      "rho_eta": 0.031451758286115884,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "wildfire_annual_frequency",
+      "rho_residual": 0.024729107340388412,
+      "rho_between_event": 0.013044868577151739,
+      "rho_y": -0.0017492481137865255,
+      "rho_eta": 0.031160088759941758,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "wildfire_annual_frequency_conf",
+      "rho_residual": 0.025409307283857496,
+      "rho_between_event": 0.014406710140540489,
+      "rho_y": -0.0015531709293291813,
+      "rho_eta": 0.031451758286115884,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_major_road_distance_m",
+      "rho_residual": 0.0037922569549667987,
+      "rho_between_event": 0.017825167481501446,
+      "rho_y": -0.014619971246688897,
+      "rho_eta": 0.022979279778848703,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_major_road_distance_m_conf",
+      "rho_residual": 0.003798254184103817,
+      "rho_between_event": 0.01824319911979637,
+      "rho_y": -0.014627704164148596,
+      "rho_eta": 0.022979287066061765,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_osm_transmission_line_distance_m",
+      "rho_residual": 0.03298256638300374,
+      "rho_between_event": 0.014728175264042978,
+      "rho_y": 0.007306060460114268,
+      "rho_eta": 0.032158021647845786,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_osm_transmission_line_distance_m_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_transmission_line_distance_m",
+      "rho_residual": 0.0011643587459096135,
+      "rho_between_event": -0.05676659252770189,
+      "rho_y": -0.020172891513151395,
+      "rho_eta": 0.020782924177856286,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_transmission_line_distance_m_conf",
+      "rho_residual": 0.014764047769229406,
+      "rho_between_event": 0.014180798463124391,
+      "rho_y": -0.0062264175167428305,
+      "rho_eta": 0.04167517886289748,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "housing_units_density_per_km2",
+      "rho_residual": -0.015364235916092442,
+      "rho_between_event": 0.003406460466982825,
+      "rho_y": -0.017417937715474133,
+      "rho_eta": 0.024998115931167568,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "housing_units_density_per_km2_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "housing_units_within_1km",
+      "rho_residual": -0.015524493748614723,
+      "rho_between_event": 0.003392230648369297,
+      "rho_y": -0.01732295234697726,
+      "rho_eta": 0.024934988794952727,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "housing_units_within_1km_conf",
+      "rho_residual": 0.015203751774588476,
+      "rho_between_event": 0.01401786596707407,
+      "rho_y": -0.005268418912555264,
+      "rho_eta": 0.042503362104206,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "poi_count_1km",
+      "rho_residual": -0.005743349890370876,
+      "rho_between_event": -0.011945052579034887,
+      "rho_y": -0.020172892756747166,
+      "rho_eta": 0.020782925459058667,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "poi_count_1km_conf",
+      "rho_residual": 0.021386418143827732,
+      "rho_between_event": 0.01441276047276064,
+      "rho_y": -0.0022125410456671226,
+      "rho_eta": 0.03146669858343614,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "primary_building_footprint_sqm",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_footprint_sqm_conf",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "primary_building_height_m",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_height_m_conf",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "primary_building_num_floors",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_num_floors_conf",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "primary_building_overture_class__residential",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__commercial",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__retail",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__industrial",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__agricultural",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__civic",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__education",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__hospital",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__religious",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__entertainment",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__outbuilding",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class__other",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "primary_building_overture_class_conf",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_fire_station_distance_m",
+      "rho_residual": 0.036649389132727306,
+      "rho_between_event": 0.0028989302697670035,
+      "rho_y": 0.007382800493819517,
+      "rho_eta": 0.023469009241802934,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_fire_station_distance_m_conf",
+      "rho_residual": 0.021386418143827732,
+      "rho_between_event": 0.01441276047276064,
+      "rho_y": -0.0022125410456671226,
+      "rho_eta": 0.03146669858343614,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_hospital_distance_m",
+      "rho_residual": 0.016965023088088935,
+      "rho_between_event": 0.03015377618754372,
+      "rho_y": -0.00412038609787801,
+      "rho_eta": 0.017080982717025524,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_hospital_distance_m_conf",
+      "rho_residual": 0.021386418143827732,
+      "rho_between_event": 0.01441276047276064,
+      "rho_y": -0.0022125410456671226,
+      "rho_eta": 0.03146669858343614,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_major_road_class",
+      "rho_residual": 0.003796017638106877,
+      "rho_between_event": 0.01802249405878744,
+      "rho_y": -0.014633496578171855,
+      "rho_eta": 0.022979281103796014,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_major_road_class_conf",
+      "rho_residual": 0.003798254184103817,
+      "rho_between_event": 0.01824319911979637,
+      "rho_y": -0.014627704164148596,
+      "rho_eta": 0.022979287066061765,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_road_class",
+      "rho_residual": 0.007813240480717956,
+      "rho_between_event": 0.01876956161963808,
+      "rho_y": -0.020172892365902757,
+      "rho_eta": 0.02078292505639504,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_road_class_conf",
+      "rho_residual": 0.007809279928502567,
+      "rho_between_event": 0.01876956161963808,
+      "rho_y": -0.020172895776909283,
+      "rho_eta": 0.02078292857055115,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_road_distance_m",
+      "rho_residual": 0.007805588519940612,
+      "rho_between_event": 0.018726776555729525,
+      "rho_y": -0.020172891513151395,
+      "rho_eta": 0.020782924177856286,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_road_distance_m_conf",
+      "rho_residual": 0.007809279928502567,
+      "rho_between_event": 0.01876956161963808,
+      "rho_y": -0.020172895776909283,
+      "rho_eta": 0.02078292857055115,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_road_surface",
+      "rho_residual": 0.006694709016529082,
+      "rho_between_event": 0.051118009653173334,
+      "rho_y": -0.009505404094957023,
+      "rho_eta": 0.009792849599998436,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_road_surface_conf",
+      "rho_residual": 0.007809279928502567,
+      "rho_between_event": 0.01876956161963808,
+      "rho_y": -0.020172895776909283,
+      "rho_eta": 0.02078292857055115,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_school_distance_m",
+      "rho_residual": 0.02139407468836902,
+      "rho_between_event": 0.014993561453417723,
+      "rho_y": -0.0020505991961061944,
+      "rho_eta": 0.031380476861485915,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_school_distance_m_conf",
+      "rho_residual": 0.021386418143827732,
+      "rho_between_event": 0.01441276047276064,
+      "rho_y": -0.0022125410456671226,
+      "rho_eta": 0.03146669858343614,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "roads_within_500m_count",
+      "rho_residual": 0.007813396880535698,
+      "rho_between_event": 0.018637500138972904,
+      "rho_y": -0.020172891903995755,
+      "rho_eta": 0.020782924580519866,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "roads_within_500m_count_conf",
+      "rho_residual": 0.027532876328473534,
+      "rho_between_event": 0.04802033055566037,
+      "rho_y": -0.0019051110349855931,
+      "rho_eta": 0.02134368359455765,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "total_road_length_within_500m_m",
+      "rho_residual": 0.011547512947213094,
+      "rho_between_event": 0.06365141868065399,
+      "rho_y": -0.03921742510092113,
+      "rho_eta": 0.05961922331140017,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "total_road_length_within_500m_m_conf",
+      "rho_residual": 0.03210263975967801,
+      "rho_between_event": 0.06955381852689617,
+      "rho_y": 0.01315162127104541,
+      "rho_eta": 0.026493948302379545,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_gas_pipeline_distance_m",
+      "rho_residual": 0.04692332386077808,
+      "rho_between_event": 0.062071288829838554,
+      "rho_y": 0.0237556804848816,
+      "rho_eta": 0.013199693765544222,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_gas_pipeline_distance_m_conf",
+      "rho_residual": 0.03362939704064232,
+      "rho_between_event": 0.06883592220489805,
+      "rho_y": 0.012649705108512304,
+      "rho_eta": 0.0345193123335785,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_hazardous_facility_distance_m",
+      "rho_residual": 0.011826435078374137,
+      "rho_between_event": 0.04285012406589795,
+      "rho_y": -0.020172891513151395,
+      "rho_eta": 0.020782924177856286,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_hazardous_facility_distance_m_conf",
+      "rho_residual": 0.03362939704064232,
+      "rho_between_event": 0.06883592220489805,
+      "rho_y": 0.012649705108512304,
+      "rho_eta": 0.0345193123335785,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_petroleum_pipeline_distance_m",
+      "rho_residual": 0.006955502515632401,
+      "rho_between_event": -0.008747089912691892,
+      "rho_y": -0.016467987336129437,
+      "rho_eta": 0.016965982885772682,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_petroleum_pipeline_distance_m_conf",
+      "rho_residual": 0.03362939704064232,
+      "rho_between_event": 0.06883592220489805,
+      "rho_y": 0.012649705108512304,
+      "rho_eta": 0.0345193123335785,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_rcra_tsd_distance_m",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_rcra_tsd_distance_m_conf",
+      "rho_residual": 0.03362939704064232,
+      "rho_between_event": 0.06883592220489805,
+      "rho_y": 0.012649705108512304,
+      "rho_eta": 0.0345193123335785,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_ust_facility_distance_m",
+      "rho_residual": 0.04338566090279142,
+      "rho_between_event": 0.03595903345313306,
+      "rho_y": 0.02323465055186285,
+      "rho_eta": 0.030395548515588566,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_ust_facility_distance_m_conf",
+      "rho_residual": 0.03362939704064232,
+      "rho_between_event": 0.06883592220489805,
+      "rho_y": 0.012649705108512304,
+      "rho_eta": 0.0345193123335785,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "ust_facilities_within_1km_count",
+      "rho_residual": 0.0042163232447365705,
+      "rho_between_event": 0.01677693380870736,
+      "rho_y": -0.0150322010654217,
+      "rho_eta": 0.015486778123268886,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "ust_facilities_within_1km_count_conf",
+      "rho_residual": 0.03362939704064232,
+      "rho_between_event": 0.06883592220489805,
+      "rho_y": 0.012649705108512304,
+      "rho_eta": 0.0345193123335785,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "domestic_well_households_per_km2",
+      "rho_residual": 0.00426815752030105,
+      "rho_between_event": 0.02258967243957827,
+      "rho_y": -0.0137419431293071,
+      "rho_eta": 0.019489354953734647,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "domestic_well_households_per_km2_conf",
+      "rho_residual": 0.03362939704064232,
+      "rho_between_event": 0.06883592220489805,
+      "rho_y": 0.012649705108512304,
+      "rho_eta": 0.0345193123335785,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "nearest_usgs_gage_daily_discharge_cfs",
+      "rho_residual": 0.059563174617511816,
+      "rho_between_event": 0.028311014677091885,
+      "rho_y": 0.0459296850817232,
+      "rho_eta": 0.005426708030050666,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "nearest_usgs_gage_daily_discharge_cfs_conf",
+      "rho_residual": 0.03362939704064232,
+      "rho_between_event": 0.06883592220489805,
+      "rho_y": 0.012649705108512304,
+      "rho_eta": 0.0345193123335785,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "surface_management_agency__BLM",
+      "rho_residual": -0.002638876704810185,
+      "rho_between_event": 0.054929807634321946,
+      "rho_y": -0.02516794916115323,
+      "rho_eta": 0.020494529115244187,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "surface_management_agency__USFS",
+      "rho_residual": 0.02901300320994281,
+      "rho_between_event": 0.06293825076788517,
+      "rho_y": 0.03334264401525483,
+      "rho_eta": 0.01512119157716851,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "surface_management_agency__NPS",
+      "rho_residual": 0.03309111149023349,
+      "rho_between_event": 0.04239463912017067,
+      "rho_y": 0.019315782377601773,
+      "rho_eta": 0.001890274744195584,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "surface_management_agency__FWS",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "surface_management_agency__DOD",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "surface_management_agency__state",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "surface_management_agency__local",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "surface_management_agency__private_or_unknown",
+      "rho_residual": 0.003760586805514141,
+      "rho_between_event": 0.01895202814416577,
+      "rho_y": 0.008488747010956142,
+      "rho_eta": -0.007518577690229705,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "surface_management_agency__other",
+      "rho_residual": -0.001789670064686131,
+      "rho_between_event": 0.02863343299300619,
+      "rho_y": -0.039088174866426656,
+      "rho_eta": 0.04094638114608686,
+      "p_residual": null,
+      "is_conf": false
+    },
+    {
+      "column": "surface_management_agency_conf",
+      "rho_residual": 0.03362939704064232,
+      "rho_between_event": 0.06883592220489805,
+      "rho_y": 0.012649705108512304,
+      "rho_eta": 0.0345193123335785,
+      "p_residual": null,
+      "is_conf": true
+    },
+    {
+      "column": "within_water_service_area",
+      "rho_residual": 0.04150024453064658,
+      "rho_between_event": 0.04636638011710356,
+      "rho_y": 0.045647648955899636,
+      "rho_eta": -0.022019762732540197,
+      "p_residual": 1.0,
+      "is_conf": false
+    },
+    {
+      "column": "within_water_service_area_conf",
+      "rho_residual": 0.03362939704064232,
+      "rho_between_event": 0.06883592220489805,
+      "rho_y": 0.012649705108512304,
+      "rho_eta": 0.0345193123335785,
+      "p_residual": null,
+      "is_conf": true
+    }
+  ],
+  "fields": [
+    {
+      "field": "nearest_usgs_gage_daily_discharge_cfs",
+      "n_columns": 2,
+      "value_column": "nearest_usgs_gage_daily_discharge_cfs",
+      "rho_residual": 0.059563174617511816,
+      "rho_between_event": 0.028311014677091885,
+      "rho_y": 0.0459296850817232,
+      "rho_eta": 0.005426708030050666,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_gas_pipeline_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_gas_pipeline_distance_m",
+      "rho_residual": 0.04692332386077808,
+      "rho_between_event": 0.062071288829838554,
+      "rho_y": 0.0237556804848816,
+      "rho_eta": 0.013199693765544222,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_ust_facility_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_ust_facility_distance_m",
+      "rho_residual": 0.04338566090279142,
+      "rho_between_event": 0.03595903345313306,
+      "rho_y": 0.02323465055186285,
+      "rho_eta": 0.030395548515588566,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "within_water_service_area",
+      "n_columns": 2,
+      "value_column": "within_water_service_area",
+      "rho_residual": 0.04150024453064658,
+      "rho_between_event": 0.04636638011710356,
+      "rho_y": 0.045647648955899636,
+      "rho_eta": -0.022019762732540197,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_fire_station_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_fire_station_distance_m",
+      "rho_residual": 0.036649389132727306,
+      "rho_between_event": 0.0028989302697670035,
+      "rho_y": 0.007382800493819517,
+      "rho_eta": 0.023469009241802934,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "surface_management_agency",
+      "n_columns": 10,
+      "value_column": "surface_management_agency__NPS",
+      "rho_residual": 0.03309111149023349,
+      "rho_between_event": 0.04239463912017067,
+      "rho_y": 0.019315782377601773,
+      "rho_eta": 0.001890274744195584,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_osm_transmission_line_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_osm_transmission_line_distance_m",
+      "rho_residual": 0.03298256638300374,
+      "rho_between_event": 0.014728175264042978,
+      "rho_y": 0.007306060460114268,
+      "rho_eta": 0.032158021647845786,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "soil_available_water_capacity",
+      "n_columns": 2,
+      "value_column": "soil_available_water_capacity",
+      "rho_residual": 0.03181271188941986,
+      "rho_between_event": -0.015452792468812551,
+      "rho_y": 0.00381709889131488,
+      "rho_eta": 0.03239122748341186,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "aspect_cardinal",
+      "n_columns": 11,
+      "value_column": "aspect_cardinal__SW",
+      "rho_residual": 0.02814911365652134,
+      "rho_between_event": 0.013259072918926619,
+      "rho_y": 0.03069766057978472,
+      "rho_eta": 0.01236138393676829,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "cdl_class",
+      "n_columns": 14,
+      "value_column": "cdl_class__other",
+      "rho_residual": 0.02795158781848955,
+      "rho_between_event": -0.014543455388314598,
+      "rho_y": 0.001064954252197825,
+      "rho_eta": 0.044535958481712205,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "lightning_annual_flash_days",
+      "n_columns": 2,
+      "value_column": "lightning_annual_flash_days",
+      "rho_residual": 0.02549080437512515,
+      "rho_between_event": 0.014220150272954177,
+      "rho_y": -0.0015958293285523117,
+      "rho_eta": 0.031871019100898124,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "wildfire_annual_frequency",
+      "n_columns": 2,
+      "value_column": "wildfire_annual_frequency",
+      "rho_residual": 0.024729107340388412,
+      "rho_between_event": 0.013044868577151739,
+      "rho_y": -0.0017492481137865255,
+      "rho_eta": 0.031160088759941758,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "land_use_class",
+      "n_columns": 9,
+      "value_column": "land_use_class__Forest",
+      "rho_residual": 0.022228938385995968,
+      "rho_between_event": 0.01250000517368994,
+      "rho_y": -0.0010896260538653408,
+      "rho_eta": 0.034811192931604194,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_school_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_school_distance_m",
+      "rho_residual": 0.02139407468836902,
+      "rho_between_event": 0.014993561453417723,
+      "rho_y": -0.0020505991961061944,
+      "rho_eta": 0.031380476861485915,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "slope_degrees",
+      "n_columns": 2,
+      "value_column": "slope_degrees",
+      "rho_residual": 0.021183946014071243,
+      "rho_between_event": 0.014946550185585624,
+      "rho_y": -0.0029095612887969206,
+      "rho_eta": 0.0398497299227781,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "near_surface_wind_speed_annual_mean_ms",
+      "n_columns": 2,
+      "value_column": "near_surface_wind_speed_annual_mean_ms",
+      "rho_residual": 0.020570762126278497,
+      "rho_between_event": 0.0148965059327321,
+      "rho_y": -0.0003726362085792681,
+      "rho_eta": 0.03272205299124658,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "aspect_degrees",
+      "n_columns": 2,
+      "value_column": "aspect_degrees",
+      "rho_residual": 0.019193112225696866,
+      "rho_between_event": 0.013656015058969009,
+      "rho_y": -0.004732028339697167,
+      "rho_eta": 0.04102598629018408,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "mean_annual_dry_bulb_temperature_degc",
+      "n_columns": 2,
+      "value_column": "mean_annual_dry_bulb_temperature_degc",
+      "rho_residual": 0.01825891409639918,
+      "rho_between_event": 0.01479945041204648,
+      "rho_y": -0.00399450338945174,
+      "rho_eta": 0.04158178624794633,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "mean_annual_snow_cover_days",
+      "n_columns": 2,
+      "value_column": "mean_annual_snow_cover_days",
+      "rho_residual": 0.017843145678377494,
+      "rho_between_event": 0.01435360161389691,
+      "rho_y": -0.002134036961540234,
+      "rho_eta": 0.03981082636869348,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_hospital_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_hospital_distance_m",
+      "rho_residual": 0.016965023088088935,
+      "rho_between_event": 0.03015377618754372,
+      "rho_y": -0.00412038609787801,
+      "rho_eta": 0.017080982717025524,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "mean_annual_relative_humidity_pct",
+      "n_columns": 2,
+      "value_column": "mean_annual_relative_humidity_pct",
+      "rho_residual": 0.016724023632813438,
+      "rho_between_event": 0.015143694211978292,
+      "rho_y": -0.003880185578429418,
+      "rho_eta": 0.03799761991654894,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "days_above_32c_annual_count",
+      "n_columns": 2,
+      "value_column": "days_above_32c_annual_count",
+      "rho_residual": 0.01653009443315068,
+      "rho_between_event": 0.002710780445877026,
+      "rho_y": -0.023037079651540313,
+      "rho_eta": 0.04758958347552713,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "mean_wind_speed_100m_ms",
+      "n_columns": 2,
+      "value_column": "mean_wind_speed_100m_ms",
+      "rho_residual": 0.01602647518346782,
+      "rho_between_event": 0.01492683578294636,
+      "rho_y": -0.0052752859471213,
+      "rho_eta": 0.0410532055990443,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "landslide_susceptibility_index",
+      "n_columns": 2,
+      "value_column": "landslide_susceptibility_index",
+      "rho_residual": 0.015677526200091538,
+      "rho_between_event": 0.014926868201404217,
+      "rho_y": -0.0021346448002715793,
+      "rho_eta": 0.039898293311120235,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "housing_units_within_1km",
+      "n_columns": 2,
+      "value_column": "housing_units_within_1km",
+      "rho_residual": -0.015524493748614723,
+      "rho_between_event": 0.003392230648369297,
+      "rho_y": -0.01732295234697726,
+      "rho_eta": 0.024934988794952727,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "housing_units_density_per_km2",
+      "n_columns": 2,
+      "value_column": "housing_units_density_per_km2",
+      "rho_residual": -0.015364235916092442,
+      "rho_between_event": 0.003406460466982825,
+      "rho_y": -0.017417937715474133,
+      "rho_eta": 0.024998115931167568,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "elevation",
+      "n_columns": 2,
+      "value_column": "elevation",
+      "rho_residual": 0.0148978743254524,
+      "rho_between_event": 0.013712125281865384,
+      "rho_y": -0.005197117111671187,
+      "rho_eta": 0.04241641381397868,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_hazardous_facility_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_hazardous_facility_distance_m",
+      "rho_residual": 0.011826435078374137,
+      "rho_between_event": 0.04285012406589795,
+      "rho_y": -0.020172891513151395,
+      "rho_eta": 0.020782924177856286,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "total_road_length_within_500m_m",
+      "n_columns": 2,
+      "value_column": "total_road_length_within_500m_m",
+      "rho_residual": 0.011547512947213094,
+      "rho_between_event": 0.06365141868065399,
+      "rho_y": -0.03921742510092113,
+      "rho_eta": 0.05961922331140017,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "roads_within_500m_count",
+      "n_columns": 2,
+      "value_column": "roads_within_500m_count",
+      "rho_residual": 0.007813396880535698,
+      "rho_between_event": 0.018637500138972904,
+      "rho_y": -0.020172891903995755,
+      "rho_eta": 0.020782924580519866,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_road_class",
+      "n_columns": 2,
+      "value_column": "nearest_road_class",
+      "rho_residual": 0.007813240480717956,
+      "rho_between_event": 0.01876956161963808,
+      "rho_y": -0.020172892365902757,
+      "rho_eta": 0.02078292505639504,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_road_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_road_distance_m",
+      "rho_residual": 0.007805588519940612,
+      "rho_between_event": 0.018726776555729525,
+      "rho_y": -0.020172891513151395,
+      "rho_eta": 0.020782924177856286,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_petroleum_pipeline_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_petroleum_pipeline_distance_m",
+      "rho_residual": 0.006955502515632401,
+      "rho_between_event": -0.008747089912691892,
+      "rho_y": -0.016467987336129437,
+      "rho_eta": 0.016965982885772682,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "surface_water_permanence_pct",
+      "n_columns": 2,
+      "value_column": "surface_water_permanence_pct",
+      "rho_residual": -0.006910956851875949,
+      "rho_between_event": -0.04169653001780339,
+      "rho_y": -0.01344436367262274,
+      "rho_eta": 0.013850924179386229,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_road_surface",
+      "n_columns": 2,
+      "value_column": "nearest_road_surface",
+      "rho_residual": 0.006694709016529082,
+      "rho_between_event": 0.051118009653173334,
+      "rho_y": -0.009505404094957023,
+      "rho_eta": 0.009792849599998436,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "poi_count_1km",
+      "n_columns": 2,
+      "value_column": "poi_count_1km",
+      "rho_residual": -0.005743349890370876,
+      "rho_between_event": -0.011945052579034887,
+      "rho_y": -0.020172892756747166,
+      "rho_eta": 0.020782925459058667,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "dominant_crop_5y",
+      "n_columns": 7,
+      "value_column": "dominant_crop_5y__Winter Wheat",
+      "rho_residual": 0.005653847748979881,
+      "rho_between_event": 0.017494179825383784,
+      "rho_y": -0.009505404094957023,
+      "rho_eta": 0.009792849599998436,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "is_cultivated",
+      "n_columns": 2,
+      "value_column": "is_cultivated",
+      "rho_residual": 0.005653847748979881,
+      "rho_between_event": 0.017494179825383784,
+      "rho_y": -0.009505404094957023,
+      "rho_eta": 0.009792849599998436,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "domestic_well_households_per_km2",
+      "n_columns": 2,
+      "value_column": "domestic_well_households_per_km2",
+      "rho_residual": 0.00426815752030105,
+      "rho_between_event": 0.02258967243957827,
+      "rho_y": -0.0137419431293071,
+      "rho_eta": 0.019489354953734647,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "ust_facilities_within_1km_count",
+      "n_columns": 2,
+      "value_column": "ust_facilities_within_1km_count",
+      "rho_residual": 0.0042163232447365705,
+      "rho_between_event": 0.01677693380870736,
+      "rho_y": -0.0150322010654217,
+      "rho_eta": 0.015486778123268886,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_major_road_class",
+      "n_columns": 2,
+      "value_column": "nearest_major_road_class",
+      "rho_residual": 0.003796017638106877,
+      "rho_between_event": 0.01802249405878744,
+      "rho_y": -0.014633496578171855,
+      "rho_eta": 0.022979281103796014,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_major_road_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_major_road_distance_m",
+      "rho_residual": 0.0037922569549667987,
+      "rho_between_event": 0.017825167481501446,
+      "rho_y": -0.014619971246688897,
+      "rho_eta": 0.022979279778848703,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_transmission_line_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_transmission_line_distance_m",
+      "rho_residual": 0.0011643587459096135,
+      "rho_between_event": -0.05676659252770189,
+      "rho_y": -0.020172891513151395,
+      "rho_eta": 0.020782924177856286,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "soil_drainage_class",
+      "n_columns": 2,
+      "value_column": "soil_drainage_class",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "aerosol_optical_depth_annual_mean",
+      "n_columns": 2,
+      "value_column": "aerosol_optical_depth_annual_mean",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "prevailing_wind_direction_100m_cardinal",
+      "n_columns": 10,
+      "value_column": "prevailing_wind_direction_100m_cardinal__N",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "weibull_k_100m",
+      "n_columns": 2,
+      "value_column": "weibull_k_100m",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "fire_hazard_responsibility_area",
+      "n_columns": 5,
+      "value_column": "fire_hazard_responsibility_area__SRA",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "fire_hazard_severity_zone_class",
+      "n_columns": 2,
+      "value_column": "fire_hazard_severity_zone_class",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "primary_building_footprint_sqm",
+      "n_columns": 2,
+      "value_column": "primary_building_footprint_sqm",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "primary_building_height_m",
+      "n_columns": 2,
+      "value_column": "primary_building_height_m",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "primary_building_num_floors",
+      "n_columns": 2,
+      "value_column": "primary_building_num_floors",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "primary_building_overture_class",
+      "n_columns": 13,
+      "value_column": "primary_building_overture_class__residential",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    },
+    {
+      "field": "nearest_rcra_tsd_distance_m",
+      "n_columns": 2,
+      "value_column": "nearest_rcra_tsd_distance_m",
+      "rho_residual": 0.0,
+      "rho_between_event": 0.0,
+      "rho_y": 0.0,
+      "rho_eta": 0.0,
+      "p_residual": 1.0,
+      "q_residual": 1.0,
+      "selected_fdr": false
+    }
+  ],
+  "selected_fdr_fields": [],
+  "exploratory_top_k": [
+    "nearest_usgs_gage_daily_discharge_cfs",
+    "nearest_gas_pipeline_distance_m",
+    "nearest_ust_facility_distance_m",
+    "within_water_service_area",
+    "nearest_fire_station_distance_m",
+    "surface_management_agency",
+    "nearest_osm_transmission_line_distance_m",
+    "soil_available_water_capacity"
+  ],
+  "head_fields": [
+    "nearest_usgs_gage_daily_discharge_cfs",
+    "nearest_gas_pipeline_distance_m",
+    "nearest_ust_facility_distance_m",
+    "within_water_service_area",
+    "nearest_fire_station_distance_m",
+    "surface_management_agency",
+    "nearest_osm_transmission_line_distance_m",
+    "soil_available_water_capacity"
+  ],
+  "head_rule": "FDR survivors of within-fire residual Spearman (q<=0.10 and |rho|>=0.05) if any; else exploratory top-8 by |rho_residual|",
+  "gbm_residual_ranks": [
+    {
+      "field": "nearest_ust_facility_distance_m",
+      "gbm_perm_importance": 0.015178381824424395
+    },
+    {
+      "field": "surface_management_agency",
+      "gbm_perm_importance": 0.005268668616991101
+    },
+    {
+      "field": "nearest_osm_transmission_line_distance_m",
+      "gbm_perm_importance": 0.003219005344530887
+    },
+    {
+      "field": "total_road_length_within_500m_m",
+      "gbm_perm_importance": 0.0029259416822854656
+    },
+    {
+      "field": "nearest_usgs_gage_daily_discharge_cfs",
+      "gbm_perm_importance": 0.002567708875853905
+    },
+    {
+      "field": "domestic_well_households_per_km2",
+      "gbm_perm_importance": 0.0024891427953070977
+    },
+    {
+      "field": "mean_annual_snow_cover_days",
+      "gbm_perm_importance": 0.0019398946387765847
+    },
+    {
+      "field": "wildfire_annual_frequency",
+      "gbm_perm_importance": 0.001760732729785358
+    }
+  ],
+  "gbm_note": "HistGradientBoosting on LOGO engine residual is a ranking diagnostic only; the Job C head remains logistic. not_a_218d_gbm still true."
+}

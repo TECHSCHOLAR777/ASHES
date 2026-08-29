@@ -34,19 +34,22 @@ book. Huygens rows are skipped. Failed ELMFIRE fires are not written so
 `--resume` retries them (empty PHI before the coarsen fix; a few Fortran runs
 with no TOA).
 
-**Eval (LOGO, 247 events / 6978 rows, `elmfire_2025.0212` only, 0 Huygens):**
+**Eval (LOGO, 283 events / 7947 rows, `elmfire_2025.0212` only, 0 Huygens).**
+The 171-D W_allowed dump never had a top-k (the head is logistic, not a GBM).
+Within-fire Spearman vs the engine residual + FDR: **no field survived**. Exploratory
+top-8 still used for the same LOGO protocol. Map: `data/models/job_c_w_correlation.json`.
 
 | Head | Brier | log-loss | PR-AUC (side) |
 |---|---|---|---|
-| Raw engine p72 | 0.246 | 3.405 | 0.423 |
-| Isotonic(eta) | 0.165 | 0.509 | 0.488 |
-| Logistic P(y\|engine) | **0.165** | **0.508** | 0.466 |
-| Logistic P(y\|engine, W_allowed) | 0.174 | 0.581 | 0.430 |
-| Logistic shuffled-W | 0.168 | 0.527 | 0.459 |
+| Raw engine p72 | 0.247 | 3.411 | 0.416 |
+| Isotonic(eta) | 0.163 | 0.504 | 0.486 |
+| Logistic P(y\|engine) | **0.163** | **0.503** | 0.465 |
+| Logistic P(y\|engine, top-8 W) | 0.168 | 0.542 | 0.447 |
+| Logistic shuffled top-8 W | 0.164 | 0.506 | 0.462 |
 
-Kill still **failed**. W_allowed ΔBrier vs engine: −0.064 → … → −0.010 → **−0.009 (N=247)**. Shuffled W still beats the real W head. 5004/6978 rows never received a 72 h TOA. Constant-prevalence Brier 0.197. ECE: engine 0.006 vs engine+W 0.025 vs raw p72 0.246.
+Kill still **failed**. FDR selected **nothing** (within-fire perm p ≈ 1: the tiny |ρ| is between-fire, not parcel). Top-8 ΔBrier **−0.005**. Shuffled W still beats real W. 5693/7947 rows never received a 72 h TOA.
 
-First pass finished **265/283** success events (Huygens 0). `--resume` is retrying the 18 misses (NMLNF, IDBOF-000923, CABTU-013761, ORVAD-240141, …). W is caught up on evaluable rows (265 events / 7369 rows) and `--resume`s when new ELMFIRE rows appear. Report: `data/models/job_c_report.json`.
+ELMFIRE **283/283**, W **7947 evaluable / 2099 pos**. Report: `data/models/job_c_report.json`.
 
 Do not re-run Path A / Path B / R0–R4 on the 2015–2022 MTBS book for this claim.
 
