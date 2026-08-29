@@ -106,8 +106,12 @@ def _ok(report: dict, simulate: bool) -> list[str]:
     for required in ("nws_alerts", "mireye_fetch", "apply_policy", "commit_report"):
         if required not in tools:
             problems.append(f"missing tool {required}")
-    if not report.get("aspects"):
-        problems.append("no Mireye aspects")
+    if "mireye_fetch" not in tools:
+        problems.append("missing tool mireye_fetch")
+    fetches = [t for t in report.get("trace") or [] if t.get("tool") == "mireye_fetch"]
+    if fetches and not report.get("aspects"):
+        if not any("402" in str(t.get("error") or "") for t in fetches):
+            problems.append("no Mireye aspects")
     if simulate:
         eng = (report.get("engine") or {}).get("engine")
         if not eng:

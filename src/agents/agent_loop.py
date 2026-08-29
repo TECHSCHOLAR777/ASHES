@@ -206,7 +206,7 @@ def run_agentic(
         logger.warning("agentic loop failed: %s; backfilling remaining tools", exc)
         session.emit({"event": "status", "message": f"model error; backfilling ({exc})"})
 
-    if "mireye_fetch" not in session.called:
+    if any(name not in session.called for name in ("nws_alerts", "mireye_fetch")):
         session.committed = False
     if not session.committed:
         _backfill(session)

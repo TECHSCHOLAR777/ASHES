@@ -340,5 +340,7 @@ One line per decision, in build order.
   died (`LIST_TAGGED <= 2`), which skips `time_of_arrival.tif` (`IDUMPCOUNT` jumped
   past `NDUMPS`). Adapter now sets `DUMP_BINARY_OUTPUTS` and rebuilds the arrival
   grid from `toa_*.bin`. T=0 ignition cells are 0 h, not null. Pin-ignition AOIs
-  no longer refine below LANDFIRE 30 m (was ~1 m × 800 cells).
+  no longer refine below LANDFIRE 30 m (was ~1 m × 800 cells). Urban warehouse
+  pins never leave the phi seed (FBFM 91); `toa_*.bin` IX/IY stay 0, so the
+  adapter sets 0 h on `phi < 0` cells instead of inventing spread.
 

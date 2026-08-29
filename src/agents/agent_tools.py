@@ -871,6 +871,13 @@ def handle_run_spread(session: AgentSession, args: dict[str, Any]) -> dict[str, 
 
 
 def handle_simulate(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
+    live = [p for p in session.perimeters if p.irwin_id and p.irwin_id != "SIMULATED"]
+    if live and not session.simulate:
+        return {
+            "ok": False,
+            "error": "live_perimeter_exists",
+            "hint": "call run_spread for the WFIGS incident; simulate_ignition is only for --simulate / no live fire",
+        }
     lat = float(args.get("lat") if args.get("lat") is not None else session.site.lat)
     lng = float(args.get("lng") if args.get("lng") is not None else session.site.lng)
     buffer_km = float(args.get("buffer_km") or 4)

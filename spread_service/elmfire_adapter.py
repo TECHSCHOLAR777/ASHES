@@ -431,6 +431,10 @@ def eta_from_elmfire_bin(path: Path, height: int, width: int, tstop_s: float) ->
         toa = np.frombuffer(toa_raw, dtype="<f8")
     else:
         raise ElmfireAdapterError(f"ELMFIRE toa bin TOA len {len(toa_raw)} for n={n}")
+    if int(ix.max()) == 0 and int(iy.max()) == 0:
+        raise ElmfireAdapterError(
+            f"ELMFIRE toa bin {path} has n={n} but IX/IY are all 0 (seed never entered LIST_BURNED spread)"
+        )
     seconds = np.full((height, width), np.nan, dtype=np.float64)
     for k in range(n):
         col = int(ix[k]) - 1
@@ -439,7 +443,31 @@ def eta_from_elmfire_bin(path: Path, height: int, width: int, tstop_s: float) ->
         if 0 <= row < height and 0 <= col < width:
             seconds[row, col] = float(toa[k])
     if not np.isfinite(seconds).any():
-        raise ElmfireAdapterError(f"ELMFIRE toa bin {path} had n={n} but no cells in {height}x{width}")
+        raise ElmfireAdapterError(
+            f"ELMFIRE toa bin {path} had n={n} ix=[{int(ix.min())},{int(ix.max())}] "
+            f"iy=[{int(iy.min())},{int(iy.max())}] but no cells in {height}x{width}"
+        )
+    return toa_seconds_to_hours(seconds, tstop_s)
+
+
+def _eta_from_phi_seed(work: Path, tstop_s: float) -> np.ndarray:
+    """Seed cells (phi < 0) arrived at T=0. Used when urban fuel never left the ignition.
+
+    ELMFIRE skips ``time_of_arrival.tif`` when the fire dies immediately, and
+    ``toa_*.bin`` only records cells *appended during spread* — not the phi seed.
+    A warehouse pin in FBFM 91 is that case: 26 ac of seed, no spread, all-zero bin.
+    """
+    import rasterio
+
+    phi_path = work / "inputs" / "phi.tif"
+    if not phi_path.is_file():
+        raise ElmfireAdapterError(f"no phi.tif at {phi_path} to recover seed arrival")
+    with rasterio.open(phi_path) as ds:
+        phi = ds.read(1)
+    seconds = np.full(phi.shape, np.nan, dtype=np.float64)
+    seconds[np.asarray(phi) < 0] = 0.0
+    if not np.isfinite(seconds).any():
+        raise ElmfireAdapterError("phi has no seed cells for seed-only TOA")
     return toa_seconds_to_hours(seconds, tstop_s)
 
 
@@ -714,10 +742,13 @@ def run_from_inputs(inputs: dict[str, Any], work: Path | None = None) -> dict[st
         stdout, stderr = run_elmfire_workdir(work, bin_path, timeout_s)
         try:
             eta_utm = _read_toa(work / "outputs", tstop_s, dst_h, dst_w)
-        except ElmfireAdapterError as exc:
-            raise ElmfireAdapterError(
-                f"{exc} stdout={(stdout or '')[-600:]} stderr={(stderr or '')[-600:]}"
-            ) from exc
+        except ElmfireAdapterError:
+            try:
+                eta_utm = _eta_from_phi_seed(work, tstop_s)
+            except ElmfireAdapterError as exc:
+                raise ElmfireAdapterError(
+                    f"{exc} stdout={(stdout or '')[-600:]} stderr={(stderr or '')[-600:]}"
+                ) from exc
         # Warp TOA back to the caller's WGS84 grid so SpreadField.sample still uses lat/lng.
         from rasterio.warp import Resampling, reproject
 

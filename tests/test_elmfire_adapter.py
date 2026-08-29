@@ -143,6 +143,59 @@ def test_wide_aoi_keeps_square_cells():
     assert cellsize == abs(dst_t.a)
 
 
+def test_phi_seed_recovers_toa_when_binary_ix_are_zero(tmp_path):
+    """Urban pin: fire dies in the seed, toa.bin is zeros, phi < 0 is T=0 arrival."""
+    import rasterio
+    from rasterio.transform import from_origin
+
+    from spread_service.elmfire_adapter import ElmfireAdapterError, _eta_from_phi_seed, eta_from_elmfire_bin
+
+    work = tmp_path / "job"
+    (work / "inputs").mkdir(parents=True)
+    (work / "outputs").mkdir()
+    phi = np.ones((6, 5), dtype=np.float32)
+    phi[2:4, 1:3] = -1.0
+    transform = from_origin(0, 6, 30, 30)
+    with rasterio.open(
+        work / "inputs" / "phi.tif",
+        "w",
+        driver="GTiff",
+        height=6,
+        width=5,
+        count=1,
+        dtype="float32",
+        transform=transform,
+        crs="EPSG:32611",
+        nodata=-9999.0,
+    ) as ds:
+        ds.write(phi, 1)
+    n = np.int32(4)
+    zeros2 = np.zeros(4, dtype="<i2")
+    zeros4 = np.zeros(4, dtype="<f4")
+    payload = (
+        _write_fortran_record(int(n).to_bytes(4, "little", signed=True))
+        + _write_fortran_record(zeros2.tobytes())
+        + _write_fortran_record(zeros2.tobytes())
+        + _write_fortran_record(zeros4.tobytes())
+        + _write_fortran_record(zeros4.tobytes())
+        + _write_fortran_record(zeros4.tobytes())
+        + _write_fortran_record(np.zeros(4, dtype="<i1").tobytes())
+    )
+    (work / "outputs" / "toa_0001_0000001.bin").write_bytes(payload)
+    (work / "outputs" / "fire_size_stats.csv").write_text("x\n", encoding="utf-8")
+
+    try:
+        eta_from_elmfire_bin(work / "outputs" / "toa_0001_0000001.bin", 6, 5, 259200.0)
+        raise AssertionError("zero IX bin should not parse as a spread field")
+    except ElmfireAdapterError as exc:
+        assert "all 0" in str(exc)
+
+    hours = _eta_from_phi_seed(work, 259200.0)
+    assert hours[2, 1] == 0.0
+    assert hours[3, 2] == 0.0
+    assert not np.isfinite(hours[0, 0])
+
+
 def test_small_aoi_does_not_oversample_below_landfire_30m():
     from spread_service.elmfire_adapter import square_utm_transform
 
