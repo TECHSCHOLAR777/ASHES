@@ -73,7 +73,17 @@ async function loadHealth() {
 }
 
 async function renderWatch() {
-  app.innerHTML = `<h1>Watch board</h1><p class="muted">Book of sites. Last card from this UI session (watch loop is separate).</p><div id="board">Loading…</div>`;
+  const recent = await (await fetch("/api/recent")).json();
+  const recentHtml = (recent.cards || []).length
+    ? `<h2>Recent asks</h2><table class="table"><thead><tr><th>Site</th><th>Action</th><th>Engine</th></tr></thead><tbody>${(recent.cards || [])
+        .map(
+          (c) => `<tr data-card="${c.card_id}">
+        <td>${c.site?.name || ""}</td><td>${pill(c.action)}</td>
+        <td class="muted">${c.spread_field_version || "no field"}</td></tr>`
+        )
+        .join("")}</tbody></table>`
+    : "";
+  app.innerHTML = `<h1>Watch board</h1><p class="muted">Book of sites. Last card from this UI session (watch loop is separate).</p>${recentHtml}<div id="board">Loading…</div>`;
   const data = await (await fetch("/api/sites")).json();
   const rows = (data.sites || []).sort((a, b) => ACTION_ORDER.indexOf(a.action) - ACTION_ORDER.indexOf(b.action));
   if (!rows.length) {
@@ -98,6 +108,12 @@ async function renderWatch() {
     tr.addEventListener("click", () => {
       if (tr.dataset.card) location.hash = `#/card/${tr.dataset.card}`;
       else location.hash = "#/ask";
+    });
+  });
+  app.querySelectorAll("h2 + table tr[data-card], table tr[data-card]").forEach((tr) => {
+    if (tr.closest("#board")) return;
+    tr.addEventListener("click", () => {
+      if (tr.dataset.card) location.hash = `#/card/${tr.dataset.card}`;
     });
   });
 }

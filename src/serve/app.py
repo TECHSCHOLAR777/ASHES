@@ -69,6 +69,23 @@ def _store_report(report: dict[str, Any]) -> None:
             }
 
 
+def _hydrate_saved_reports() -> None:
+    path = Path(__file__).resolve().parent.parent.parent / "data" / "models" / "agentic_live_report.json"
+    if not path.exists():
+        return
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    for key in ("ask", "simulate"):
+        report = payload.get(key)
+        if isinstance(report, dict) and report.get("action_card"):
+            _store_report(report)
+
+
+_hydrate_saved_reports()
+
+
 def _sse(body: AskBody) -> Any:
     from src.agents.agent_loop import run_agentic
     from src.agents.main_agent import Site
@@ -142,6 +159,24 @@ def health():
         "engine_required": os.environ.get("SPREAD_ENGINE_REQUIRED", "").lower() in {"1", "true", "yes"},
         "model": os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
     }
+
+
+@app.get("/api/recent")
+def recent():
+    with _STORE_LOCK:
+        items = []
+        for cid, report in list(_REPORTS.items())[-20:]:
+            card = report.get("action_card") or {}
+            items.append(
+                {
+                    "card_id": cid,
+                    "site": report.get("site"),
+                    "action": card.get("action"),
+                    "eta_hours": card.get("eta_hours"),
+                    "spread_field_version": card.get("spread_field_version"),
+                }
+            )
+    return {"cards": list(reversed(items))}
 
 
 @app.get("/api/sites")

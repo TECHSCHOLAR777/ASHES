@@ -113,6 +113,27 @@ def test_commit_backfills_mireye_when_model_skips_it(tmp_path, monkeypatch, mock
     assert report["aspects"]
 
 
+def test_mireye_fetch_falls_back_to_core_fields_on_402(tmp_path, monkeypatch, mocker):
+    from src.agents.agent_tools import handle_mireye_fetch
+    from src.clients.mireye import MireyeRequestFailed
+
+    monkeypatch.delenv("OPENAI_KEY", raising=False)
+    deps = make_deps(tmp_path, monkeypatch, mocker)
+    mocker.patch.object(
+        deps.mireye,
+        "fetch",
+        side_effect=[
+            MireyeRequestFailed("HTTP 402 credits_exhausted"),
+            {"aspect_degrees": 180.0, "aspect_cardinal": "S", "elevation": 412.0},
+        ],
+    )
+    session = AgentSession(deps=deps, site=Site("s1", "T", 34.0, -118.0), question="q")
+    out = handle_mireye_fetch(session, {"roles": ["A", "B"]})
+    assert out["ok"] is True
+    assert session.raw_w["aspect_degrees"] == 180.0
+    assert "degraded" in session.flags
+
+
 def test_llm_cannot_pass_an_action_into_policy(tmp_path, monkeypatch, mocker):
     monkeypatch.delenv("OPENAI_KEY", raising=False)
     deps = make_deps(tmp_path, monkeypatch, mocker)

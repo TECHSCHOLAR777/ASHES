@@ -238,6 +238,19 @@ def _fields_for_roles(roles: list[str] | None, extra: list[str] | None = None) -
     return list(dict.fromkeys(names))
 
 
+CORE_ASPECT_FIELDS = [
+    "aspect_degrees",
+    "aspect_cardinal",
+    "elevation",
+    "surface_management_agency",
+    "nearest_road_class",
+    "fire_hazard_severity_zone_class",
+    "land_use_class",
+    "housing_units_density_per_km2",
+    "ndvi_current",
+]
+
+
 def default_aspect_roles() -> list[str]:
     return ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
 
@@ -758,7 +771,18 @@ def handle_mireye_fetch(session: AgentSession, args: dict[str, Any]) -> dict[str
     fields = _fields_for_roles(roles, args.get("fields"))
     if not fields:
         return {"ok": False, "error": "no_fields"}
-    fetched = session.deps.mireye.fetch(session.site.lat, session.site.lng, fields, site_id=session.site.site_id)
+    from src.clients.mireye import MireyeRequestFailed
+
+    try:
+        fetched = session.deps.mireye.fetch(session.site.lat, session.site.lng, fields, site_id=session.site.site_id)
+    except MireyeRequestFailed as exc:
+        if "402" not in str(exc) and "credits" not in str(exc).lower():
+            raise
+        # Spend remaining monthly credits on a short core aspect list rather than fail empty.
+        fetched = session.deps.mireye.fetch(
+            session.site.lat, session.site.lng, CORE_ASPECT_FIELDS[:3], site_id=session.site.site_id
+        )
+        session.flags.append("degraded")
     session.raw_w.update(fetched)
     now = datetime.now(timezone.utc)
     catalog = session.deps.field_catalog
