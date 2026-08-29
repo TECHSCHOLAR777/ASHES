@@ -43,13 +43,46 @@ def main() -> None:
         default=None,
         help="Comma-separated W_allowed field subset. Default: full W_allowed.",
     )
+    parser.add_argument(
+        "--estimator",
+        choices=("logistic", "gbm"),
+        default="logistic",
+        help="Calibrator head. gbm = HistGradientBoosting predict_proba, same Brier protocol.",
+    )
+    parser.add_argument(
+        "--ablate",
+        action="store_true",
+        help="GBM only: LOGO permute each W_allowed field on the test fold (OOS ablation).",
+    )
+    parser.add_argument(
+        "--refit-kept",
+        action="store_true",
+        help="After ablation, re-run GBM LOGO on fields that earned keep.",
+    )
     args = parser.parse_args()
     rows = load_evaluable_job_c(args.input)
     logger.info("evaluable rows %d events %d", len(rows), len({r["event_id"] for r in rows}))
     include = None
     if args.include_fields:
         include = [s.strip() for s in args.include_fields.split(",") if s.strip()]
-    report = evaluate_job_c(rows, include_fields=include)
+    report = evaluate_job_c(
+        rows,
+        include_fields=include,
+        estimator=args.estimator,
+        ablate=args.ablate,
+    )
+    if args.refit_kept and report.get("w_ablation_keep"):
+        logger.info("refitting GBM on ablated keep %s", report["w_ablation_keep"])
+        sub = evaluate_job_c(
+            rows,
+            include_fields=report["w_ablation_keep"],
+            estimator=args.estimator,
+            ablate=False,
+        )
+        report["scores_ablated_subset"] = sub["scores"]
+        report["deltas_ablated_subset"] = sub["deltas"]
+        report["w_ablated_subset_fields"] = sub["w_allowed_fields"]
+        report["w_ablated_subset_dim"] = sub["w_allowed_dim"]
     engines = {r.get("engine") for r in rows}
     report["engines_seen"] = sorted(str(e) for e in engines)
     report["input"] = str(args.input)
@@ -66,7 +99,9 @@ def main() -> None:
             "w_allowed_dim",
             "scores",
             "deltas",
+            "w_ablation_keep",
             "engines_seen",
+            "estimator",
         )
         if k in report
     }

@@ -1,15 +1,16 @@
 """Job C calibrator: P(y_72 | engine) vs P(y_72 | engine, W_allowed).
 
-This is not a 218-D ranking GBM. The claim is calibration of a small logistic
-head on the ELMFIRE arrival clock, with W_allowed explaining residual hit rate
-at the same ETA. Protocol is leave-one-event-out. Metrics are Brier, log-loss,
-reliability, and a shuffle-W kill — PR-AUC is a side check only.
+Protocol is leave-one-event-out. Metrics are Brier, log-loss, reliability,
+and a shuffle-W kill — PR-AUC is a side check only. The head may be logistic
+or a HistGradientBoosting *calibrator* (predict_proba). That is not the V1
+218-D ranking GBM whose primary score was PR-AUC.
 """
 from __future__ import annotations
 
 from typing import Any
 
 import numpy as np
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss, log_loss
@@ -23,6 +24,14 @@ ENGINE_NAMES = ("eta_hours", "eta_sigma_hours", "p_burn_24", "p_burn_48", "p_bur
 KILL_BRIER = 0.005
 RELIABILITY_BINS = 10
 ETA_BINS_H = (0.0, 6.0, 12.0, 18.0, 24.0, 36.0, 48.0, 72.0, 96.0)
+ABLATION_KEEP_BRIER = 0.001
+GBM_PARAMS = dict(
+    max_depth=3,
+    max_iter=80,
+    learning_rate=0.08,
+    l2_regularization=0.1,
+    random_state=42,
+)
 
 
 def _finite_clip01(p: np.ndarray) -> np.ndarray:
@@ -147,6 +156,14 @@ def _fit_isotonic_eta(eta_tr: np.ndarray, ytr: np.ndarray, eta_te: np.ndarray) -
     return np.asarray(iso.predict(eta_te), dtype=np.float64)
 
 
+def _fit_gbm(Xtr: np.ndarray, ytr: np.ndarray, Xte: np.ndarray):
+    if len(np.unique(ytr)) < 2:
+        return np.full(len(Xte), float(ytr[0])), None
+    model = HistGradientBoostingClassifier(**GBM_PARAMS)
+    model.fit(Xtr, ytr)
+    return model.predict_proba(Xte)[:, 1], model
+
+
 def logo_predict(
     X: np.ndarray,
     y: np.ndarray,
@@ -158,9 +175,48 @@ def logo_predict(
     for train_idx, test_idx in LeaveOneGroupOut().split(dummy, dummy, groups):
         if kind == "isotonic_eta":
             oos[test_idx] = _fit_isotonic_eta(X[train_idx, 0], y[train_idx], X[test_idx, 0])
+        elif kind == "gbm":
+            oos[test_idx], _ = _fit_gbm(X[train_idx], y[train_idx], X[test_idx])
         else:
             oos[test_idx] = _fit_logistic(X[train_idx], y[train_idx], X[test_idx])
     return oos
+
+
+def _field_slices(n_engine: int, kept: list[dict]) -> list[tuple[str, np.ndarray]]:
+    out: list[tuple[str, np.ndarray]] = []
+    offset = n_engine
+    for row in kept:
+        n = len(row["columns"])
+        out.append((row["field"], np.arange(offset, offset + n)))
+        offset += n
+    return out
+
+
+def logo_gbm_with_field_ablation(
+    X: np.ndarray,
+    y: np.ndarray,
+    groups: np.ndarray,
+    field_slices: list[tuple[str, np.ndarray]],
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
+    """LOGO GBM probabilities plus test-fold permutations of each W field block."""
+    dummy = np.zeros(len(groups))
+    oos = np.full(len(y), np.nan, dtype=np.float64)
+    permuted = {name: np.full(len(y), np.nan, dtype=np.float64) for name, _ in field_slices}
+    for train_idx, test_idx in LeaveOneGroupOut().split(dummy, dummy, groups):
+        p_te, model = _fit_gbm(X[train_idx], y[train_idx], X[test_idx])
+        oos[test_idx] = p_te
+        if model is None:
+            for name, _cols in field_slices:
+                permuted[name][test_idx] = p_te
+            continue
+        Xte = X[test_idx]
+        for name, cols in field_slices:
+            Xp = Xte.copy()
+            order = rng.permutation(len(Xp))
+            Xp[:, cols] = Xp[order][:, cols]
+            permuted[name][test_idx] = model.predict_proba(Xp)[:, 1]
+    return oos, permuted
 
 
 def same_eta_slices(
@@ -196,9 +252,16 @@ def same_eta_slices(
     return out
 
 
-def evaluate_job_c(rows: list[dict], include_fields: list[str] | None = None) -> dict[str, Any]:
+def evaluate_job_c(
+    rows: list[dict],
+    include_fields: list[str] | None = None,
+    estimator: str = "logistic",
+    ablate: bool = False,
+) -> dict[str, Any]:
     if len(rows) < 20:
         raise ValueError(f"Job C needs more evaluable rows than {len(rows)}")
+    if estimator not in {"logistic", "gbm"}:
+        raise ValueError(f"unknown estimator {estimator!r}")
     indices, w_names, kept = allowed_column_indices(include_fields=include_fields)
     y = np.array([rec["_y"] for rec in rows], dtype=np.int64)
     groups = np.array([rec["event_id"] for rec in rows])
@@ -211,9 +274,31 @@ def evaluate_job_c(rows: list[dict], include_fields: list[str] | None = None) ->
 
     p_raw72 = X_eng[:, 5]
     p_iso = logo_predict(X_eng, y, groups, kind="isotonic_eta")
-    p_eng = logo_predict(X_eng, y, groups, kind="logistic")
-    p_both = logo_predict(X_both, y, groups, kind="logistic")
-    p_sw = logo_predict(X_sw, y, groups, kind="logistic")
+    kind = "gbm" if estimator == "gbm" else "logistic"
+    p_eng = logo_predict(X_eng, y, groups, kind=kind)
+    ablation_rows: list[dict[str, Any]] = []
+    kept_from_ablation: list[str] = []
+    if estimator == "gbm" and ablate and kept:
+        p_both, permuted = logo_gbm_with_field_ablation(
+            X_both, y, groups, _field_slices(X_eng.shape[1], kept), rng
+        )
+        brier_full = brier(y, p_both)
+        for name, _cols in _field_slices(X_eng.shape[1], kept):
+            b_perm = brier(y, permuted[name])
+            dlt = b_perm - brier_full
+            row = {
+                "field": name,
+                "brier_when_permuted": b_perm,
+                "delta_brier_perm_minus_full": dlt,
+                "earns_keep": bool(dlt > ABLATION_KEEP_BRIER),
+            }
+            ablation_rows.append(row)
+            if row["earns_keep"]:
+                kept_from_ablation.append(name)
+        ablation_rows.sort(key=lambda r: r["delta_brier_perm_minus_full"], reverse=True)
+    else:
+        p_both = logo_predict(X_both, y, groups, kind=kind)
+    p_sw = logo_predict(X_sw, y, groups, kind=kind)
 
     brier_eng = brier(y, p_eng)
     brier_both = brier(y, p_both)
@@ -224,10 +309,16 @@ def evaluate_job_c(rows: list[dict], include_fields: list[str] | None = None) ->
     shuffle_delta = brier_sw - brier_both
     kill = bool(delta > KILL_BRIER and shuffle_delta > KILL_BRIER)
 
+    prefix = "gbm" if estimator == "gbm" else "logistic"
     eta = X_eng[:, 0]
     n_events = int(len(set(groups.tolist())))
     n_eta_imputed = int(sum(1 for rec in rows if not np.isfinite(rec["_spread"][0])))
     n_p72_imputed = int(sum(1 for rec in rows if not np.isfinite(rec["_spread"][4])))
+    head_name = (
+        "HistGradientBoostingClassifier calibrator (predict_proba); isotonic(eta) baseline"
+        if estimator == "gbm"
+        else "LogisticRegression on StandardScaler features; isotonic(eta) as a one-D engine baseline"
+    )
     return {
         "n_evaluable": int(len(rows)),
         "n_events": n_events,
@@ -240,25 +331,28 @@ def evaluate_job_c(rows: list[dict], include_fields: list[str] | None = None) ->
         "w_allowed_fields": sorted({row["field"] for row in kept}),
         "w_allowed_columns": w_names,
         "w_include_fields": list(include_fields) if include_fields is not None else None,
+        "estimator": estimator,
         "engine_identity_required": "elmfire (SPREAD_ENGINE_REQUIRED; Huygens rows dropped)",
         "protocol": {
-            "primary": "leave_one_event_out Brier / log-loss of a logistic calibrator",
+            "primary": f"leave_one_event_out Brier / log-loss of a {estimator} calibrator",
             "engine_features": ["eta_hours", "log1p(eta)", "eta_sigma_hours", "p_burn_24", "p_burn_48", "p_burn_72"],
-            "head": "LogisticRegression on StandardScaler features; isotonic(eta) as a one-D engine baseline",
+            "head": head_name,
             "kill_brier": KILL_BRIER,
-            "not_a_218d_gbm": True,
+            "not_a_ranking_gbm": True,
+            "not_a_218d_gbm": estimator != "gbm",
             "w_subset": include_fields is not None,
+            "ablation": "LOGO test-fold permutation of each W_allowed field block" if ablate else None,
         },
         "scores": {
             "raw_engine_p72": {"brier": brier_raw, "log_loss": logloss(y, p_raw72), "pr_auc": pr_auc(y, p_raw72)},
             "isotonic_eta": {"brier": brier_iso, "log_loss": logloss(y, p_iso), "pr_auc": pr_auc(y, -eta)},
-            "logistic_engine": {"brier": brier_eng, "log_loss": logloss(y, p_eng), "pr_auc": pr_auc(y, p_eng)},
-            "logistic_engine_w_allowed": {
+            f"{prefix}_engine": {"brier": brier_eng, "log_loss": logloss(y, p_eng), "pr_auc": pr_auc(y, p_eng)},
+            f"{prefix}_engine_w_allowed": {
                 "brier": brier_both,
                 "log_loss": logloss(y, p_both),
                 "pr_auc": pr_auc(y, p_both),
             },
-            "logistic_engine_shuffled_w": {
+            f"{prefix}_engine_shuffled_w": {
                 "brier": brier_sw,
                 "log_loss": logloss(y, p_sw),
                 "pr_auc": pr_auc(y, p_sw),
@@ -271,10 +365,12 @@ def evaluate_job_c(rows: list[dict], include_fields: list[str] | None = None) ->
             "w_kill_test_passed": kill,
         },
         "reliability": {
-            "logistic_engine": reliability(y, p_eng),
-            "logistic_engine_w_allowed": reliability(y, p_both),
+            f"{prefix}_engine": reliability(y, p_eng),
+            f"{prefix}_engine_w_allowed": reliability(y, p_both),
             "raw_engine_p72": reliability(y, p_raw72),
         },
         "same_eta_slices": same_eta_slices(y, eta, p_eng, p_both),
         "constant_prevalence_brier": float(y.mean() * (1.0 - y.mean())),
+        "w_ablation": ablation_rows,
+        "w_ablation_keep": kept_from_ablation,
     }
