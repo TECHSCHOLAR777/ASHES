@@ -246,21 +246,26 @@ def square_utm_transform(
     utm_right: float,
     utm_top: float,
     max_dim: int = 800,
+    min_cell_m: float = 30.0,
 ):
     """Integer UTM grid with square cells.
 
     ELMFIRE Fortran aborts with ``XDIM is not equal to YDIM`` if the GeoTIFF
     pixel is a rectangle (coarsen-by-axis + ``from_bounds`` did that on wide
     LANDFIRE tiles: 539×800, 578×800, no TOA).
+
+    Do not refine finer than LANDFIRE's 30 m. A 4 km pin-ignition AOI used to
+    become ~1 m × 800 cells; Fortran then ran a huge urban grid and often died
+    before dumping ``time_of_arrival.tif``.
     """
     from rasterio.transform import from_bounds
 
     width_m = float(utm_right - utm_left)
     height_m = float(utm_top - utm_bottom)
-    cell = max(width_m / max_dim, height_m / max_dim, 1.0)
+    cell = max(width_m / max_dim, height_m / max_dim, float(min_cell_m), 1.0)
     dst_w = max(32, min(max_dim, int(math.ceil(width_m / cell))))
     dst_h = max(32, min(max_dim, int(math.ceil(height_m / cell))))
-    cell = max(width_m / dst_w, height_m / dst_h)
+    cell = max(width_m / dst_w, height_m / dst_h, float(min_cell_m), 1.0)
     transform = from_bounds(
         utm_left,
         utm_bottom,

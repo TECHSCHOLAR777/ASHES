@@ -143,6 +143,15 @@ def test_wide_aoi_keeps_square_cells():
     assert cellsize == abs(dst_t.a)
 
 
+def test_small_aoi_does_not_oversample_below_landfire_30m():
+    from spread_service.elmfire_adapter import square_utm_transform
+
+    transform, dw, dh, cell = square_utm_transform(0.0, 0.0, 4_000.0, 4_000.0, max_dim=800)
+    assert cell >= 30.0 - 1e-6
+    assert dw <= 140 and dh <= 140
+    assert abs(abs(transform.a) - abs(transform.e)) < 1e-6
+
+
 def _write_fortran_record(payload: bytes) -> bytes:
     n = len(payload)
     return n.to_bytes(4, "little", signed=True) + payload + n.to_bytes(4, "little", signed=True)
