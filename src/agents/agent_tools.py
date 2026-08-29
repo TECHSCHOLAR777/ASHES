@@ -778,10 +778,17 @@ def handle_mireye_fetch(session: AgentSession, args: dict[str, Any]) -> dict[str
     except MireyeRequestFailed as exc:
         if "402" not in str(exc) and "credits" not in str(exc).lower():
             raise
-        # Spend remaining monthly credits on a short core aspect list rather than fail empty.
-        fetched = session.deps.mireye.fetch(
-            session.site.lat, session.site.lng, CORE_ASPECT_FIELDS[:3], site_id=session.site.site_id
-        )
+        fetched: dict[str, Any] = {}
+        for name in CORE_ASPECT_FIELDS:
+            try:
+                one = session.deps.mireye.fetch(
+                    session.site.lat, session.site.lng, [name], site_id=session.site.site_id
+                )
+            except MireyeRequestFailed:
+                break
+            fetched.update(one)
+        if not fetched:
+            raise
         session.flags.append("degraded")
     session.raw_w.update(fetched)
     now = datetime.now(timezone.utc)

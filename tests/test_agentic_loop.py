@@ -124,7 +124,8 @@ def test_mireye_fetch_falls_back_to_core_fields_on_402(tmp_path, monkeypatch, mo
         "fetch",
         side_effect=[
             MireyeRequestFailed("HTTP 402 credits_exhausted"),
-            {"aspect_degrees": 180.0, "aspect_cardinal": "S", "elevation": 412.0},
+            {"aspect_degrees": 180.0},
+            MireyeRequestFailed("HTTP 402 credits_exhausted"),
         ],
     )
     session = AgentSession(deps=deps, site=Site("s1", "T", 34.0, -118.0), question="q")
