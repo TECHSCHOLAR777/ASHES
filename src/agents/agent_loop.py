@@ -121,10 +121,11 @@ def _backfill(session: AgentSession) -> None:
         if name == "mireye_fetch":
             args = {"roles": ["A", "B", "C", "D", "E", "F", "G", "H", "I"]}
         execute_tool(session, name, args, backfill=True)
-    if "run_spread" not in session.called and "simulate_ignition" not in session.called:
-        result = execute_tool(session, "run_spread", {}, backfill=True)
-        if not result.get("ok") and session.simulate:
+    if session.simulate:
+        if "simulate_ignition" not in session.called:
             execute_tool(session, "simulate_ignition", {}, backfill=True)
+    elif "run_spread" not in session.called:
+        execute_tool(session, "run_spread", {}, backfill=True)
     if "model_infer" not in session.called:
         execute_tool(session, "model_infer", {}, backfill=True)
     if "apply_policy" not in session.called:

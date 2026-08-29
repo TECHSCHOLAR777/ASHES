@@ -60,8 +60,10 @@ def validate_brief(
     ]
 
     severity_violation = False
-    if action_card.action in SUPPRESSED_ACTIONS:
-        lowered = brief.lower()
+    lowered = brief.lower()
+    if "evacuate" in lowered and action_card.action != "evacuate_site":
+        severity_violation = True
+    elif action_card.action in SUPPRESSED_ACTIONS:
         if any(word in lowered for word in ESCALATION_WORDS):
             severity_violation = True
 

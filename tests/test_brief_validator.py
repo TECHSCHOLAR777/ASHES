@@ -44,7 +44,12 @@ def test_brief_escalation_word_on_monitor_card_is_invalid():
     assert result.severity_violation is True
 
 
-def test_brief_escalation_word_on_evacuate_card_is_valid():
+def test_brief_evacuate_word_on_protect_card_is_invalid():
+    card = _card(action="protect_asset")
+    brief = "Evacuate the site immediately given the 8000.0 m distance."
+    result = validate_brief(brief, card)
+    assert result.valid is False
+    assert result.severity_violation is True
     card = _card(action="evacuate_site")
     brief = "Evacuate the site now given the 8000.0 m distance."
     result = validate_brief(brief, card)

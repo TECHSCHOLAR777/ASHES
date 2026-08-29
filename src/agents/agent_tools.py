@@ -883,8 +883,9 @@ def handle_run_spread(session: AgentSession, args: dict[str, Any]) -> dict[str, 
 
 
 def handle_simulate(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
-    live = [p for p in session.perimeters if p.irwin_id and p.irwin_id != "SIMULATED"]
-    if live and not session.simulate:
+    live = [p for p in session.perimeters if p.irwin_id != "SIMULATED"]
+    live_inc = [i for i in session.incidents if i.irwin_id != "SIMULATED"]
+    if not session.simulate and (live or live_inc):
         return {
             "ok": False,
             "error": "live_perimeter_exists",
