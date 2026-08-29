@@ -1,0 +1,52 @@
+{
+  "as_of": "2026-08-29T00:01:00Z",
+  "book": {
+    "rows": 7987,
+    "events": 283,
+    "evaluable_72": 7947,
+    "y_72_pos": 2099,
+    "skipped_no_tape": 34,
+    "skipped_sparse_early_tape": 90
+  },
+  "elmfire": {
+    "rows": 2088,
+    "ok_events": 57,
+    "engine": "elmfire_2025.0212",
+    "huygens_rows": 0,
+    "loop": "61/283",
+    "failures_this_pass": [
+      {
+        "event_id": "2026-NMLNF-000335",
+        "error": "no seed cells in phi (before coarsen fix; resume will retry)"
+      },
+      {
+        "event_id": "2024-IDBOF-000923",
+        "error": "ELMFIRE rc=0 but no TOA raster (125-ring seed)"
+      },
+      {
+        "event_id": "2026-COCUX-001160",
+        "error": "ELMFIRE wrote no TOA raster"
+      },
+      {
+        "event_id": "2025-COSJF-000763",
+        "error": "ELMFIRE wrote no TOA raster"
+      },
+      {
+        "event_id": "2024-ORSHR-240269",
+        "error": "ELMFIRE wrote no TOA raster"
+      }
+    ]
+  },
+  "w": {
+    "rows": 152,
+    "events": 5,
+    "y_72_pos": 37,
+    "batch_size": 10,
+    "note": "new Mireye spend on Job C coordinates; 200-D full A-I; head subsets W_allowed"
+  },
+  "eval": {
+    "status": "waiting",
+    "need_events_with_elmfire_and_w": 20,
+    "have_events": 5
+  }
+}

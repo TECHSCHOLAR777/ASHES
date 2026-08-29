@@ -353,7 +353,7 @@ def _read_toa(outputs: Path, tstop_s: float) -> np.ndarray:
     return toa_seconds_to_hours(arr, tstop_s)
 
 
-def run_elmfire_workdir(work: Path, bin_path: Path, timeout_s: float) -> None:
+def run_elmfire_workdir(work: Path, bin_path: Path, timeout_s: float) -> tuple[str, str]:
     env = os.environ.copy()
     env.setdefault("OMPI_MCA_btl", "^openib")
     cmd_direct = [str(bin_path), str(work / "inputs" / "elmfire.data")]
@@ -370,7 +370,7 @@ def run_elmfire_workdir(work: Path, bin_path: Path, timeout_s: float) -> None:
     except subprocess.TimeoutExpired as exc:
         raise ElmfireAdapterError(f"ELMFIRE timed out after {timeout_s}s") from exc
     if proc.returncode == 0:
-        return
+        return proc.stdout or "", proc.stderr or ""
     mpirun = shutil.which("mpirun")
     if not mpirun:
         raise ElmfireAdapterError(
@@ -389,6 +389,7 @@ def run_elmfire_workdir(work: Path, bin_path: Path, timeout_s: float) -> None:
         raise ElmfireAdapterError(
             f"ELMFIRE mpirun rc={proc2.returncode} stderr={proc2.stderr[-800:]} stdout={proc2.stdout[-400:]}"
         )
+    return proc2.stdout or "", proc2.stderr or ""
 
 
 def build_result(eta: np.ndarray, inputs: dict[str, Any], horizon: float) -> dict[str, Any]:
@@ -578,8 +579,13 @@ def run_from_inputs(inputs: dict[str, Any], work: Path | None = None) -> dict[st
         )
         bin_path = find_elmfire_bin()
         timeout_s = float(os.environ.get("SPREAD_ENGINE_TIMEOUT_S", "1800"))
-        run_elmfire_workdir(work, bin_path, timeout_s)
-        eta_utm = _read_toa(work / "outputs", tstop_s)
+        stdout, stderr = run_elmfire_workdir(work, bin_path, timeout_s)
+        try:
+            eta_utm = _read_toa(work / "outputs", tstop_s)
+        except ElmfireAdapterError as exc:
+            raise ElmfireAdapterError(
+                f"{exc} stdout={(stdout or '')[-600:]} stderr={(stderr or '')[-600:]}"
+            ) from exc
         # Warp TOA back to the caller's WGS84 grid so SpreadField.sample still uses lat/lng.
         from rasterio.warp import Resampling, reproject
 

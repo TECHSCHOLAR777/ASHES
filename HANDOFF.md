@@ -25,10 +25,15 @@ python scripts/enrich_job_c_elmfire.py --resume
 
 Huygens is not the claim. If the binary is missing the Job C script fails closed.
 
-**W:** new Mireye spend on new coordinates (`scripts/encode_job_c_w.py`). Fetch A–I;
-the head subsets W_allowed (`src/model/w_allowed.py`).
+**W:** new Mireye spend on new coordinates (`scripts/encode_job_c_w.py --resume --batch-size 10`).
+Fetch A–I; the head subsets W_allowed (`src/model/w_allowed.py`). Snapshot
+`data/training/job_c_2023/progress.json`: ELMFIRE **57 events / 2088 rows**
+(`elmfire_2025.0212`, 0 Huygens); W **152 rows / 5 events**; eval waiting on ≥20
+events with both. Failures this pass are listed in that file (empty PHI before
+the coarsen fix; a few Fortran runs with no TOA). `--resume` retries them.
 
 **Eval:** `python scripts/evaluate_job_c.py` → `data/models/job_c_report.json`.
+Not written until ≥20 events have ELMFIRE + W.
 
 Do not re-run Path A / Path B / R0–R4 on the 2015–2022 MTBS book for this claim.
 
