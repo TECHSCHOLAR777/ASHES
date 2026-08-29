@@ -79,6 +79,19 @@ Runs the full pipeline once for that coordinate: fetches live E and cited W, sco
 applies the policy, prints the ActionCard JSON and its brief, and - if the action is
 `protect_asset` or `evacuate_site` - the ResponseCard JSON as well.
 
+Agential tool loop (OpenAI calls NWS/FIRMS/WFIGS/HRRR/Mireye/`spread_run`; policy still
+picks the action):
+
+```bash
+python scripts/ask.py --agentic --lat 33.98 --lng -117.37 --q "Is the site at risk?"
+python scripts/ask.py --agentic --simulate --lat 33.98 --lng -117.37 --q "Simulate ignition here"
+python scripts/serve.py   # UI at http://127.0.0.1:8080
+```
+
+The UI is the V1/V2 card surface: watch board, ask, ELMFIRE simulator map, Mireye aspects
+by role, response dossier, and the tool trace. Design: `docs/UI_DESIGN_V1.md` and
+`docs/UI_DESIGN_V2.md`.
+
 ## Config
 
 - `config/sites.yaml` - the book of sites for watch mode. Add a site with `site_id`, `name`,

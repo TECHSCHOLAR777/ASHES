@@ -65,3 +65,17 @@ def test_safe_brief_returns_original_on_valid():
     safe_text, result = safe_brief(brief, card)
     assert result.valid is True
     assert safe_text == brief
+
+
+def test_brief_may_copy_grounded_mireye_and_engine_numbers():
+    card = _card()
+    brief = "Aspect is 212.0 degrees. Engine p_burn is 0.81."
+    result = validate_brief(brief, card)
+    assert result.valid is False
+    ok = validate_brief(
+        "Aspect is 212.0 degrees. Engine p_burn is 0.81.",
+        card,
+        grounded={"aspects": {"B": {"aspect_degrees": 212.0}}, "engine": {"p_burn_72": 0.81}},
+    )
+    assert ok.valid is True
+

@@ -330,4 +330,10 @@ One line per decision, in build order.
   the seed never burned (`no seed cells in phi`). Coarsen now `transform_bounds`
   to UTM metres. Confirmed: `2024-WASES-000173` (previous 500) runs
   `elmfire_2025.0212` after the 72 h AOI + this fix.
+- [2026-08-29] Agentic UI: OpenAI tool-calling loop (`src/agents/agent_loop.py`)
+  actually invokes NWS/FIRMS/WFIGS/HRRR/Mireye/`spread_run`/`simulate_ignition`.
+  The policy table still owns the Action enum (`apply_policy` tool). Mireye W is
+  shown as cited site aspects, not a 72 h pixel-hit head (Job C kill failed).
+  Brief validator accepts a grounded payload so the prose may copy aspect and
+  engine numbers. FastAPI UI in `src/serve`.
 
