@@ -953,6 +953,11 @@ def handle_response(session: AgentSession, args: dict[str, Any]) -> dict[str, An
 
 
 def handle_commit(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
+    value_keys = [
+        k for k in session.raw_w if not str(k).endswith(("_confidence", "_vintage", "_source_url"))
+    ]
+    if len(value_keys) < 8:
+        execute_tool(session, "mireye_fetch", {"roles": default_aspect_roles()}, backfill=True)
     if session.policy_result is None:
         handle_apply_policy(session, {})
     card = _assemble_card(session)

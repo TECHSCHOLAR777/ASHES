@@ -30,6 +30,9 @@ What each source is for:
 - model_infer: combines E + encoded W + engine sample. y_hat is not the action.
 - apply_policy: versioned table. First match wins. You may not override it.
 
+You MUST call mireye_fetch (roles A–I at minimum) before commit_report. mireye_quote is not a fetch.
+A sealed report without cited site aspects is incomplete.
+
 Tool order for a live ask (call independent live feeds in one turn when you can):
 geocode if needed → nws_alerts, firms_hotspots, wfigs_incidents, wfigs_perimeters, hrrr_weather in parallel → list_mireye_roles then mireye_quote + mireye_fetch for roles A–I (add J if you will build a dossier) → run_spread if a WFIGS perimeter exists, else simulate_ignition when the user asked to simulate or there is no live fire → model_infer → apply_policy → build_response_dossier if action is protect_asset or evacuate_site → commit_report.
 
@@ -203,6 +206,8 @@ def run_agentic(
         logger.warning("agentic loop failed: %s; backfilling remaining tools", exc)
         session.emit({"event": "status", "message": f"model error; backfilling ({exc})"})
 
+    if "mireye_fetch" not in session.called:
+        session.committed = False
     if not session.committed:
         _backfill(session)
 

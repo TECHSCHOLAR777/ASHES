@@ -92,6 +92,27 @@ def test_agentic_loop_calls_tools_and_policy_owns_action(tmp_path, monkeypatch, 
     assert all(t["tool"] != "unknown" for t in report["trace"])
 
 
+def test_commit_backfills_mireye_when_model_skips_it(tmp_path, monkeypatch, mocker):
+    monkeypatch.delenv("OPENAI_KEY", raising=False)
+    deps = make_deps(tmp_path, monkeypatch, mocker)
+    mocker.patch.object(
+        deps.mireye,
+        "fetch",
+        return_value={"ndvi_current": 0.42, "aspect_degrees": 180.0, "aspect_cardinal": "S"},
+    )
+    site = Site(site_id="s_w", name="Test Site", lat=34.0, lng=-118.0)
+    client = FakeOpenAI(
+        [
+            [_TC("1", "nws_alerts"), _TC("2", "hrrr_weather")],
+            [_TC("3", "commit_report")],
+        ]
+    )
+    report = run_agentic(deps, site, "risk?", client=client)
+    tools = [t["tool"] for t in report["trace"]]
+    assert "mireye_fetch" in tools
+    assert report["aspects"]
+
+
 def test_llm_cannot_pass_an_action_into_policy(tmp_path, monkeypatch, mocker):
     monkeypatch.delenv("OPENAI_KEY", raising=False)
     deps = make_deps(tmp_path, monkeypatch, mocker)
