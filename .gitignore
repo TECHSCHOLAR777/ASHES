@@ -10,6 +10,7 @@ data/logs/*.jsonl
 data/logs/*.jsonl
 data/models/*.pkl
 data/models/metrics_*.json
+data/models/agentic_live_report.json
 data/training/*.jsonl
 data/training/job_c_2023/*.jsonl
 data/cache/job_c_tapes/

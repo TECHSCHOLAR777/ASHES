@@ -541,12 +541,13 @@ def _write_grounded_brief(session: AgentSession) -> str:
     api_key = os.environ.get("OPENAI_KEY")
     prompt = (
         "You are a fire brief writer. You receive a grounded JSON payload: ActionCard, "
-        "Mireye site aspects (cited facts), and the spread-engine sample. Write 2-3 "
-        "paragraphs that copy those values verbatim. Do not invent any number. Do not "
-        "alter the action. If action is evacuate_site, lead with that. Use engine ETA "
-        "and P(burn by T) as the clock. Use Mireye fields as site facts (roads, water, "
-        "agency, terrain aspect, buildings), never as P(the fire hits this pixel). "
-        "Return only the prose."
+        "Mireye site aspects (cited facts), the spread-engine sample, and copy_these_numbers. "
+        "Write 2-3 paragraphs that copy those values. Every number you write MUST appear in "
+        "copy_these_numbers or elsewhere in this JSON (1- or 2-decimal rounding is listed). "
+        "Do not invent any number. Do not alter the action. If action is evacuate_site, lead "
+        "with that. Use engine ETA and P(burn by T) as the clock. Use Mireye fields as site "
+        "facts (roads, water, agency, terrain aspect, buildings), never as P(the fire hits "
+        "this pixel). Return only the prose."
     )
     if not api_key:
         brief = _fallback_brief(card)
@@ -586,18 +587,50 @@ def _write_grounded_brief(session: AgentSession) -> str:
     return brief
 
 
+def copyable_numbers(*objs: Any) -> list[float]:
+    """Rounded forms the brief writer may copy so the validator does not suppress 258.85 vs 258.8479."""
+    found: list[float] = []
+
+    def walk(x: Any) -> None:
+        if isinstance(x, bool) or x is None:
+            return
+        if isinstance(x, (int, float)):
+            v = float(x)
+            if not math.isfinite(v):
+                return
+            found.extend((v, round(v, 1), round(v, 2), float(int(round(v)))))
+            return
+        if isinstance(x, dict):
+            for val in x.values():
+                walk(val)
+            return
+        if isinstance(x, (list, tuple)):
+            for val in x:
+                walk(val)
+
+    for obj in objs:
+        walk(obj)
+    uniq = sorted({n for n in found if math.isfinite(n)})
+    return uniq[:400]
+
+
 def grounded_payload(session: AgentSession) -> dict[str, Any]:
     card = session.action_card
+    aspects = aspects_by_role(session.raw_w)
+    engine = {
+        "sample": sample_dict(session.spread_sample),
+        "engine": session.spread_field.engine if session.spread_field else None,
+        "spread_field_version": session.spread_field.spread_field_version if session.spread_field else None,
+    }
+    card_dump = card.model_dump(mode="json", by_alias=True) if card else None
+    response = session.response_card.model_dump(mode="json") if session.response_card is not None else None
     return {
-        "action_card": card.model_dump(mode="json", by_alias=True) if card else None,
-        "aspects": aspects_by_role(session.raw_w),
-        "engine": {
-            "sample": sample_dict(session.spread_sample),
-            "engine": session.spread_field.engine if session.spread_field else None,
-            "spread_field_version": session.spread_field.spread_field_version if session.spread_field else None,
-        },
-        "response_card": session.response_card.model_dump(mode="json") if session.response_card is not None else None,
+        "action_card": card_dump,
+        "aspects": aspects,
+        "engine": engine,
+        "response_card": response,
         "question": session.question,
+        "copy_these_numbers": copyable_numbers(card_dump, aspects, engine, response),
     }
 
 

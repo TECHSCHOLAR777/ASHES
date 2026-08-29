@@ -20,7 +20,9 @@ def _free_port() -> int:
         return int(sock.getsockname()[1])
 
 
-def test_spread_run_http_roundtrip():
+def test_spread_run_http_roundtrip(monkeypatch):
+    monkeypatch.delenv("SPREAD_ENGINE_BIN", raising=False)
+    monkeypatch.delenv("SPREAD_ENGINE_REQUIRED", raising=False)
     port = _free_port()
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)

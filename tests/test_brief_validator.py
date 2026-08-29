@@ -79,3 +79,16 @@ def test_brief_may_copy_grounded_mireye_and_engine_numbers():
     )
     assert ok.valid is True
 
+
+def test_brief_may_copy_rounded_forms_from_copy_these_numbers():
+    card = _card()
+    from src.agents.agent_tools import copyable_numbers
+
+    grounded = {
+        "aspects": {"B": {"elevation": 258.847900390625, "aspect_degrees": 1.190338134765625}},
+        "copy_these_numbers": copyable_numbers({"elevation": 258.847900390625, "aspect_degrees": 1.190338134765625}),
+    }
+    brief = "Site elevation is 258.85 m with terrain aspect 1.19 degrees (N)."
+    result = validate_brief(brief, card, grounded=grounded)
+    assert result.valid is True
+

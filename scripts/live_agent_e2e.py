@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from src.agents.agent_loop import run_agentic  # noqa: E402
 from src.agents.main_agent import MainAgentDeps, Site  # noqa: E402
@@ -24,6 +24,7 @@ from src.agents.main_agent import MainAgentDeps, Site  # noqa: E402
 
 ACTIONS = {"monitor", "prepare", "protect_asset", "evacuate_site", "inspect_after", "no_action"}
 OUT = Path("data/models/agentic_live_report.json")
+SUMMARY = Path("data/models/agentic_live_summary.json")
 
 
 def _run(simulate: bool) -> dict:
@@ -49,6 +50,50 @@ def _run(simulate: bool) -> dict:
     )
 
 
+def _aspect_values(report: dict) -> dict:
+    out = {}
+    for role, block in (report.get("aspects") or {}).items():
+        fields = block.get("fields") if isinstance(block, dict) else None
+        if not fields:
+            continue
+        vals = {}
+        for name, meta in fields.items():
+            if isinstance(meta, dict):
+                if meta.get("value") is not None:
+                    vals[name] = meta["value"]
+            elif meta is not None:
+                vals[name] = meta
+        if vals:
+            out[role] = vals
+    return out
+
+
+def _slim(report: dict | None) -> dict | None:
+    if not report:
+        return None
+    card = report.get("action_card") or {}
+    eng = report.get("engine") or {}
+    sample = eng.get("sample") or {}
+    return {
+        "action": card.get("action"),
+        "incident": (card.get("incident") or {}).get("incident_name"),
+        "irwin_id": (card.get("incident") or {}).get("irwin_id"),
+        "dist_perimeter_m": (card.get("incident") or {}).get("dist_perimeter_m"),
+        "spread_field_version": card.get("spread_field_version"),
+        "engine": eng.get("engine"),
+        "eta_hours": card.get("eta_hours"),
+        "p_burn_by_T": card.get("p_burn_by_T"),
+        "site_inside_aoi": sample.get("inside_aoi"),
+        "sample": sample,
+        "tools": [t.get("tool") for t in report.get("trace") or []],
+        "aspects": _aspect_values(report),
+        "brief_replaced": report.get("brief_replaced"),
+        "flags": card.get("flags"),
+        "simulate": report.get("simulate"),
+        "brief": (report.get("brief") or "")[:800],
+    }
+
+
 def _ok(report: dict, simulate: bool) -> list[str]:
     problems = []
     card = report.get("action_card")
@@ -67,6 +112,8 @@ def _ok(report: dict, simulate: bool) -> list[str]:
         eng = (report.get("engine") or {}).get("engine")
         if not eng:
             problems.append("simulator produced no engine id (LANDFIRE/spread degraded)")
+        if "simulate_ignition" not in tools:
+            problems.append("missing tool simulate_ignition")
     return problems
 
 
@@ -92,9 +139,16 @@ def main() -> int:
             problems.append(f"simulate raised: {exc}")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    # Strip any accidental env-looking strings
     OUT.write_text(json.dumps(payload, indent=2, default=str)[:400_000], encoding="utf-8")
-    print(json.dumps({"ask_action": (ask.get("action_card") or {}).get("action"), "ask_tools": [t["tool"] for t in ask.get("trace") or []], "problems": problems, "out": str(OUT)}, indent=2))
+    summary = {
+        "ask": _slim(ask),
+        "simulate": _slim(payload.get("simulate") if isinstance(payload.get("simulate"), dict) else None),
+        "simulate_error": payload.get("simulate_error"),
+        "problems": problems,
+        "out": str(OUT),
+    }
+    SUMMARY.write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
+    print(json.dumps({"ask_action": (ask.get("action_card") or {}).get("action"), "ask_tools": [t["tool"] for t in ask.get("trace") or []], "simulate_action": ((payload.get("simulate") or {}).get("action_card") or {}).get("action") if isinstance(payload.get("simulate"), dict) else None, "simulate_engine": ((payload.get("simulate") or {}).get("engine") or {}).get("engine") if isinstance(payload.get("simulate"), dict) else None, "problems": problems, "summary": str(SUMMARY)}, indent=2))
     return 0 if not problems else 1
 
 

@@ -140,6 +140,13 @@ def index():
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/favicon.ico")
+def favicon():
+    from fastapi.responses import Response
+
+    return Response(status_code=204)
+
+
 @app.get("/api/health")
 def health():
     from src.spread.client import DEFAULT_HOST, DEFAULT_PORT, _port_open

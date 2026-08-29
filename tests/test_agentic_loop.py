@@ -260,5 +260,6 @@ def test_ui_index_served():
     assert r.status_code == 200
     assert b"ASHES" in r.content
     css = client.get("/assets/styles.css")
-    assert r.status_code == 200 or css.status_code == 200
     assert css.status_code == 200
+    ico = client.get("/favicon.ico")
+    assert ico.status_code == 204

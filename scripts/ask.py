@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dotenv import load_dotenv  # noqa: E402
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from src.agents.main_agent import MainAgentDeps, Site, response_cards, run_site  # noqa: E402
 from src.logging_ import tool_logger  # noqa: E402

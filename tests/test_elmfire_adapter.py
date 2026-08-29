@@ -39,6 +39,7 @@ def test_namelist_is_elmfire_not_json(tmp_path):
     assert "&INPUTS" in text
     assert "WS_AT_10M" in text
     assert "DUMP_TIME_OF_ARRIVAL" in text
+    assert "DUMP_BINARY_OUTPUTS" in text
     assert "NUM_IGNITIONS = 0" in text
 
 
@@ -140,3 +141,48 @@ def test_wide_aoi_keeps_square_cells():
     assert abs(abs(dst_t.a) - abs(dst_t.e)) < 1e-3
     assert projected["fbfm40"].shape == (dh, dw)
     assert cellsize == abs(dst_t.a)
+
+
+def _write_fortran_record(payload: bytes) -> bytes:
+    n = len(payload)
+    return n.to_bytes(4, "little", signed=True) + payload + n.to_bytes(4, "little", signed=True)
+
+
+def test_binary_toa_recovers_when_geotiff_dump_is_missing(tmp_path):
+    """Pin ignitions that die before TSTOP skip time_of_arrival.tif; toa_*.bin still has cells."""
+    import struct
+
+    from spread_service.elmfire_adapter import _read_toa, eta_from_elmfire_bin, toa_seconds_to_hours
+
+    height, width = 5, 4
+    # Fortran 1-based: IX=2 (col 1), IY=1 (south → numpy row 4)
+    ix = np.array([2, 3], dtype="<i2")
+    iy = np.array([1, 5], dtype="<i2")
+    toa_s = np.array([0.0, 7200.0], dtype="<f4")
+    n = np.int32(2)
+    payload = (
+        _write_fortran_record(struct.pack("<i", int(n)))
+        + _write_fortran_record(ix.tobytes())
+        + _write_fortran_record(iy.tobytes())
+        + _write_fortran_record(toa_s.tobytes())
+        + _write_fortran_record(np.zeros(2, dtype="<f4").tobytes())
+        + _write_fortran_record(np.zeros(2, dtype="<f4").tobytes())
+        + _write_fortran_record(np.zeros(2, dtype="<i1").tobytes())
+    )
+    outputs = tmp_path / "outputs"
+    outputs.mkdir()
+    (outputs / "fire_size_stats.csv").write_text("icase,tstop\n", encoding="utf-8")
+    bin_path = outputs / "toa_0001_0000001.bin"
+    bin_path.write_bytes(payload)
+
+    hours = eta_from_elmfire_bin(bin_path, height, width, 259200.0)
+    assert hours[height - 1, 1] == 0.0  # IY=1 south, ignition T=0
+    assert abs(hours[0, 2] - 2.0) < 1e-6  # IY=5 north, 7200 s
+
+    recovered = _read_toa(outputs, 259200.0, height, width)
+    assert recovered[height - 1, 1] == 0.0
+    assert abs(recovered[0, 2] - 2.0) < 1e-6
+
+    zero = toa_seconds_to_hours(np.array([[0.0, -9999.0]]), 72 * 3600)
+    assert zero[0, 0] == 0.0
+    assert not np.isfinite(zero[0, 1])

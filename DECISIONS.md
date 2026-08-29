@@ -336,4 +336,8 @@ One line per decision, in build order.
   shown as cited site aspects, not a 72 h pixel-hit head (Job C kill failed).
   Brief validator accepts a grounded payload so the prose may copy aspect and
   engine numbers. FastAPI UI in `src/serve`.
+- [2026-08-29] ELMFIRE pin-ignition (warehouse simulator) completed 24.5 ac then
+  died (`LIST_TAGGED <= 2`), which skips `time_of_arrival.tif` (`IDUMPCOUNT` jumped
+  past `NDUMPS`). Adapter now sets `DUMP_BINARY_OUTPUTS` and rebuilds the arrival
+  grid from `toa_*.bin`. T=0 ignition cells are 0 h, not null.
 

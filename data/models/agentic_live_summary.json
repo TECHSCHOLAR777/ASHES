@@ -1,0 +1,37 @@
+{
+  "ask_action": "monitor",
+  "incident": "MTZ/RRU/WOOD",
+  "dist_perimeter_m": 54689.589485810095,
+  "spread_field_version": "elmfire_2025.0212:n1:h72:grid346x345",
+  "engine": "elmfire_2025.0212",
+  "site_inside_aoi": false,
+  "eta_hours": null,
+  "tools": [
+    "firms_hotspots",
+    "nws_alerts",
+    "wfigs_perimeters",
+    "wfigs_incidents",
+    "hrrr_weather",
+    "list_mireye_roles",
+    "run_spread",
+    "mireye_quote",
+    "apply_policy",
+    "mireye_fetch",
+    "commit_report"
+  ],
+  "aspects": {
+    "B": {
+      "elevation": 258.847900390625,
+      "aspect_degrees": 1.190338134765625,
+      "aspect_cardinal": "N"
+    }
+  },
+  "brief_replaced": true,
+  "flags": [
+    "aoi_coarse_advisory",
+    "firms_unavailable",
+    "perimeter_unofficial",
+    "degraded",
+    "fhsz_missing"
+  ]
+}

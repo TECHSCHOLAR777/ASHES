@@ -187,6 +187,10 @@ DTDUMP               = {tstop_s:.1f}
 DUMP_FLIN            = .FALSE.
 DUMP_SPREAD_RATE     = .FALSE.
 DUMP_TIME_OF_ARRIVAL = .TRUE.
+DUMP_BINARY_OUTPUTS  = .TRUE.
+FULL_BINARY_OUTPUTS  = .TRUE.
+MINIMUM_AREA_FOR_BINARY_OUTPUTS = 0.0
+BINARY_OUTPUTS_DUMP_FRACTION    = 1.0
 CONVERT_TO_GEOTIFF   = .TRUE.
 /
 
@@ -319,7 +323,8 @@ def _reproject_to_utm(
 def toa_seconds_to_hours(toa_s: np.ndarray, tstop_s: float) -> np.ndarray:
     arr = np.asarray(toa_s, dtype=np.float64)
     hours = np.full(arr.shape, np.nan, dtype=np.float64)
-    ok = np.isfinite(arr) & (arr > 0) & (arr <= tstop_s * 1.05)
+    # Ignition cells can be T=0 s. Negative / nodata stay null — not a zero ETA.
+    ok = np.isfinite(arr) & (arr >= 0) & (arr <= tstop_s * 1.05)
     hours[ok] = arr[ok] / 3600.0
     hours[ok & (arr <= 1.0)] = 0.0
     return hours
@@ -356,25 +361,123 @@ def find_elmfire_bin() -> Path:
     )
 
 
-def _read_toa(outputs: Path, tstop_s: float) -> np.ndarray:
+def _fortran_unformatted_records(path: Path) -> list[bytes]:
+    """Parse gfortran sequential unformatted records (4-byte, then 8-byte markers)."""
+    raw = path.read_bytes()
+    recs: list[bytes] = []
+    i = 0
+    n = len(raw)
+
+    def _try(marker_bytes: int) -> bool:
+        nonlocal i
+        if i + 2 * marker_bytes > n:
+            return False
+        marker = int.from_bytes(raw[i : i + marker_bytes], "little", signed=True)
+        if marker < 0 or i + 2 * marker_bytes + marker > n:
+            return False
+        trailer = int.from_bytes(
+            raw[i + marker_bytes + marker : i + 2 * marker_bytes + marker], "little", signed=True
+        )
+        if trailer != marker:
+            return False
+        recs.append(raw[i + marker_bytes : i + marker_bytes + marker])
+        i += 2 * marker_bytes + marker
+        return True
+
+    while i < n:
+        if _try(4) or _try(8):
+            continue
+        break
+    return recs
+
+
+def eta_from_elmfire_bin(path: Path, height: int, width: int, tstop_s: float) -> np.ndarray:
+    """Rebuild a north-up TOA grid from ELMFIRE ``toa_<band>_<case>.bin``.
+
+    The GeoTIFF dump only runs when ``IDUMPCOUNT == NDUMPS``. Pin ignitions in
+    urban/non-burnable fuel often die (``LIST_TAGGED <= 2``) and skip that dump,
+    leaving only ``fire_size_stats.csv``. The binary dump is written after the
+    timestep loop regardless. IX/IY are Fortran 1-based; IY=1 is south.
+    """
+    recs = _fortran_unformatted_records(path)
+    if len(recs) < 4:
+        raise ElmfireAdapterError(f"ELMFIRE toa bin has {len(recs)} records, need >=4: {path}")
+    header = recs[0]
+    if len(header) >= 8:
+        n = int(np.frombuffer(header[:8], dtype="<i8")[0])
+        if n <= 0 or n > height * width * 4:
+            n = int(np.frombuffer(header[:4], dtype="<i4")[0])
+    else:
+        n = int(np.frombuffer(header[:4], dtype="<i4")[0])
+    if n <= 0:
+        raise ElmfireAdapterError(f"ELMFIRE toa bin NUM_BURNED={n} in {path}")
+    ix_raw, iy_raw, toa_raw = recs[1], recs[2], recs[3]
+    if len(ix_raw) == n * 2:
+        ix = np.frombuffer(ix_raw, dtype="<i2")
+        iy = np.frombuffer(iy_raw, dtype="<i2")
+    elif len(ix_raw) == n * 4:
+        ix = np.frombuffer(ix_raw, dtype="<i4")
+        iy = np.frombuffer(iy_raw, dtype="<i4")
+    else:
+        raise ElmfireAdapterError(f"ELMFIRE toa bin IX len {len(ix_raw)} for n={n}")
+    if len(toa_raw) == n * 4:
+        toa = np.frombuffer(toa_raw, dtype="<f4").astype(np.float64)
+    elif len(toa_raw) == n * 8:
+        toa = np.frombuffer(toa_raw, dtype="<f8")
+    else:
+        raise ElmfireAdapterError(f"ELMFIRE toa bin TOA len {len(toa_raw)} for n={n}")
+    seconds = np.full((height, width), np.nan, dtype=np.float64)
+    for k in range(n):
+        col = int(ix[k]) - 1
+        south_row = int(iy[k]) - 1
+        row = height - 1 - south_row
+        if 0 <= row < height and 0 <= col < width:
+            seconds[row, col] = float(toa[k])
+    if not np.isfinite(seconds).any():
+        raise ElmfireAdapterError(f"ELMFIRE toa bin {path} had n={n} but no cells in {height}x{width}")
+    return toa_seconds_to_hours(seconds, tstop_s)
+
+
+def _read_toa(outputs: Path, tstop_s: float, height: int, width: int) -> np.ndarray:
     import rasterio
 
-    tifs = sorted(outputs.glob("time_of_arrival*.tif")) + sorted(outputs.glob("toa_*.tif"))
-    bils = sorted(outputs.glob("time_of_arrival*.bil")) + sorted(outputs.glob("toa_*.bil"))
-    extras = sorted(outputs.parent.rglob("time_of_arrival*")) + sorted(outputs.parent.rglob("toa_*"))
-    path = tifs[0] if tifs else (bils[0] if bils else None)
-    if path is None and extras:
-        path = extras[0]
-    if path is None:
-        names = [p.name for p in outputs.iterdir()] if outputs.exists() else []
-        more = [str(p.relative_to(outputs.parent)) for p in extras]
-        raise ElmfireAdapterError(f"ELMFIRE wrote no TOA raster in {outputs} (files={names} extra={more[:20]})")
-    with rasterio.open(path) as ds:
-        arr = ds.read(1).astype(np.float64)
-        nodata = ds.nodata
-    if nodata is not None:
-        arr = np.where(arr == nodata, np.nan, arr)
-    return toa_seconds_to_hours(arr, tstop_s)
+    raster_ext = {".tif", ".tiff", ".bil", ".img"}
+    rasters: list[Path] = []
+    bins: list[Path] = []
+    roots = [outputs]
+    parent = outputs.parent
+    if parent.exists():
+        roots.extend([parent / "scratch", parent])
+    for folder in roots:
+        if not folder.exists():
+            continue
+        for path in folder.rglob("*"):
+            if not path.is_file() or path.stat().st_size < 16:
+                continue
+            name = path.name.lower()
+            if name.startswith("toa_") and name.endswith(".bin"):
+                bins.append(path)
+                continue
+            if "time_of_arrival" in name or name.startswith("toa_"):
+                if path.suffix.lower() in raster_ext:
+                    rasters.append(path)
+    if rasters:
+        path = sorted(rasters)[0]
+        with rasterio.open(path) as ds:
+            arr = ds.read(1).astype(np.float64)
+            nodata = ds.nodata
+        if nodata is not None:
+            arr = np.where(arr == nodata, np.nan, arr)
+        return toa_seconds_to_hours(arr, tstop_s)
+    if bins:
+        return eta_from_elmfire_bin(sorted(bins)[0], height, width, tstop_s)
+    names = [p.name for p in outputs.iterdir()] if outputs.exists() else []
+    extra = []
+    if parent.exists():
+        extra = [str(p.relative_to(parent))[:80] for p in parent.rglob("*") if p.is_file()][:30]
+    raise ElmfireAdapterError(
+        f"ELMFIRE wrote no TOA raster or toa_*.bin in {outputs} (files={names} extra={extra})"
+    )
 
 
 def run_elmfire_workdir(work: Path, bin_path: Path, timeout_s: float) -> tuple[str, str]:
@@ -605,7 +708,7 @@ def run_from_inputs(inputs: dict[str, Any], work: Path | None = None) -> dict[st
         timeout_s = float(os.environ.get("SPREAD_ENGINE_TIMEOUT_S", "1800"))
         stdout, stderr = run_elmfire_workdir(work, bin_path, timeout_s)
         try:
-            eta_utm = _read_toa(work / "outputs", tstop_s)
+            eta_utm = _read_toa(work / "outputs", tstop_s, dst_h, dst_w)
         except ElmfireAdapterError as exc:
             raise ElmfireAdapterError(
                 f"{exc} stdout={(stdout or '')[-600:]} stderr={(stderr or '')[-600:]}"

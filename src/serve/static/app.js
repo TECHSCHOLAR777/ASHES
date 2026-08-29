@@ -382,6 +382,7 @@ async function renderCard(cardId) {
           <div>${card.site.name} · ${card.site.lat.toFixed(4)}, ${card.site.lng.toFixed(4)}</div>
           <div class="muted">${card.generated_at}</div>
           ${card.flags?.includes("no_ros_high_sigma") ? `<div class="banner warn">Evacuate was suppressed because uncertainty is too high. Action is protect_asset.</div>` : ""}
+          ${report.simulate ? `<div class="banner warn">Simulated ignition. Engine raster is not an official perimeter.</div>` : ""}
           ${card.model_version && card.model_version.includes("untrained") ? `<div class="banner">Model is untrained (${card.model_version}). Engine ETA / P(burn) still shown when a field exists.</div>` : ""}
           <h2>Recommended actions</h2>
           <ul class="list">${(card.recommended_actions || []).map((a) => `<li>${a}</li>`).join("")}</ul>
