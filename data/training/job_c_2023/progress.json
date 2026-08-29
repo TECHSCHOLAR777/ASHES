@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-29T04:11:00Z",
+  "as_of": "2026-08-29T05:05:00Z",
   "book": {
     "rows": 7987,
     "events": 283,
@@ -9,31 +9,31 @@
     "skipped_sparse_early_tape": 90
   },
   "elmfire": {
-    "rows": 5350,
-    "ok_events": 173,
+    "rows": 5758,
+    "ok_events": 190,
     "engine": "elmfire_2025.0212",
     "huygens_rows": 0,
-    "loop": "189/283",
+    "loop": "206/283",
     "n_failures_unique": 16
   },
   "w": {
-    "rows": 5148,
-    "events": 164,
-    "y_72_pos": 1343,
+    "rows": 5580,
+    "events": 183,
+    "y_72_pos": 1454,
     "batch_size": 10,
     "note": "exits after each pending list; --resume to catch new ELMFIRE rows"
   },
   "eval": {
-    "status": "fifth_cut",
-    "snapshot_events": 152,
-    "snapshot_rows": 4834,
-    "have_events_now": 164,
+    "status": "sixth_cut",
+    "snapshot_events": 173,
+    "snapshot_rows": 5336,
+    "have_events_now": 183,
     "w_kill_test_passed": false,
     "brier": {
-      "raw_p72": 0.231,
+      "raw_p72": 0.237,
       "isotonic_eta": 0.160,
       "logistic_engine": 0.160,
-      "logistic_engine_w_allowed": 0.175,
+      "logistic_engine_w_allowed": 0.173,
       "logistic_shuffled_w": 0.164
     },
     "report": "data/models/job_c_report.json"
