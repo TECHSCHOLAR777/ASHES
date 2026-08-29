@@ -34,20 +34,20 @@ book. Huygens rows are skipped. Failed ELMFIRE fires are not written so
 `--resume` retries them (empty PHI before the coarsen fix; a few Fortran runs
 with no TOA).
 
-**Eval (first LOGO cut, 25 events / 888 rows, `elmfire_2025.0212` only, 0 Huygens):**
+**Eval (LOGO, 67 events / 2398 rows, `elmfire_2025.0212` only, 0 Huygens):**
 
 | Head | Brier | log-loss | PR-AUC (side) |
 |---|---|---|---|
-| Raw engine p72 | 0.223 | 3.080 | 0.473 |
-| Isotonic(eta) | **0.180** | 0.597 | 0.501 |
-| Logistic P(y\|engine) | 0.180 | **0.552** | 0.410 |
-| Logistic P(y\|engine, W_allowed) | 0.244 | 0.915 | 0.333 |
-| Logistic shuffled-W | 0.201 | 0.695 | 0.410 |
+| Raw engine p72 | 0.216 | 2.984 | 0.457 |
+| Isotonic(eta) | **0.164** | 0.511 | 0.506 |
+| Logistic P(y\|engine) | 0.164 | **0.508** | 0.464 |
+| Logistic P(y\|engine, W_allowed) | 0.192 | 0.705 | 0.379 |
+| Logistic shuffled-W | 0.170 | 0.550 | 0.464 |
 
 Kill (ΔBrier engine−engine+W > 0.005 **and** shuffle−engine+W > 0.005): **failed**.
-W_allowed (171-D) **hurt** LOGO Brier by 0.064; shuffled W beat the real W head, so the extra columns overfit 25 folds. 733/888 rows never received a 72 h TOA (ETA imputed to 72 h, p72=0). Constant-prevalence Brier is 0.209 — isotonic(eta) and engine logistic both beat it; engine+W does not. ECE: engine 0.059 vs engine+W 0.140 vs raw p72 0.223.
+W_allowed (171-D) still **hurts** LOGO Brier by 0.027 (was 0.064 at 25 events); shuffled W still beats the real W head. 1861/2398 rows never received a 72 h TOA (ETA imputed to 72 h). Constant-prevalence Brier 0.199 — isotonic(eta) and engine logistic beat it; engine+W is about prevalence. ECE: engine 0.021 vs engine+W 0.069 vs raw p72 0.216.
 
-Jobs still running (ELMFIRE ~113/283; W encoding). Re-eval when N is larger. Report: `data/models/job_c_report.json`.
+Fortran no-TOA on wide tiles was `XDIM != YDIM` (rectangular pixels after coarsen). Adapter now forces square UTM cells. Jobs still running (ELMFIRE ~131/283; W `--resume` after a 22 min silent hang). Report: `data/models/job_c_report.json`.
 
 Do not re-run Path A / Path B / R0–R4 on the 2015–2022 MTBS book for this claim.
 

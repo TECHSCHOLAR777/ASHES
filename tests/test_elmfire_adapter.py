@@ -117,3 +117,26 @@ def test_coarsen_keeps_utm_metres_not_lonlat():
     phi = rasterize_phi(dh, dw, dst_t, ring, dst_crs)
     assert (phi < 0).any()
     assert (phi > 0).any()
+    assert abs(abs(dst_t.a) - abs(dst_t.e)) < 1e-6
+
+
+def test_wide_aoi_keeps_square_cells():
+    """A 539×800-style rectangle must not ship XDIM != YDIM to Fortran."""
+    from rasterio.transform import Affine
+
+    from spread_service.elmfire_adapter import _reproject_to_utm, square_utm_transform
+
+    transform, dw, dh, cell = square_utm_transform(0.0, 0.0, 53_900.0, 80_000.0, max_dim=800)
+    assert dw <= 800 and dh <= 800
+    assert abs(abs(transform.a) - abs(transform.e)) < 1e-6
+    assert abs(cell - abs(transform.a)) < 1e-6
+
+    src_t = Affine(0.0005, 0, -122.6, 0, -0.0005, 43.4)
+    fbfm = np.full((400, 1600), 122.0, dtype=np.float32)
+    projected, dst_t, _crs, cellsize, _xll, _yll, dh, dw = _reproject_to_utm(
+        {"fbfm40": fbfm}, src_t, "EPSG:4326", 32610, max_dim=800
+    )
+    assert dw <= 800 and dh <= 800
+    assert abs(abs(dst_t.a) - abs(dst_t.e)) < 1e-3
+    assert projected["fbfm40"].shape == (dh, dw)
+    assert cellsize == abs(dst_t.a)

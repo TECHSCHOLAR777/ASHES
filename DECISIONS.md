@@ -270,6 +270,15 @@ One line per decision, in build order.
   logistic engine 0.180, raw p72 0.223, engine+W_allowed 0.244, shuffled-W 0.201.
   Kill test **failed**. 171-D W_allowed overfits 25 leave-one-event folds;
   this is not a 218-D GBM and not MTBS in/out. Collection continues.
+- [2026-08-29] Second Job C LOGO cut at **67 events / 2398 rows** (same
+  protocol, still only `elmfire_2025.0212`). Brier: isotonic(eta) 0.164,
+  logistic engine 0.164, shuffled-W 0.170, engine+W_allowed 0.192, raw p72
+  0.216. Kill still **failed**. Overfit shrank (ΔBrier −0.027 vs −0.064) but
+  W_allowed still loses to engine-only and to shuffled W.
+- [2026-08-29] ELMFIRE Fortran `Error opening ./scratch/ws.hdr because XDIM is
+  not equal to YDIM` on wide tiles (`2024-CABTU-013761` 539×800, `2024-ORVAD-240141`
+  578×800). Coarsen fitted `max_dim` per axis then `from_bounds`, so pixels
+  were rectangles. Adapter now always builds a square UTM cell (`square_utm_transform`).
 - [2026-08-28] ELMFIRE adapter coarsen used `from_bounds(lon, lat)` on a UTM
   grid, so any LANDFIRE tile wider than 800 cells wrote PHI in degree-space and
   the seed never burned (`no seed cells in phi`). Coarsen now `transform_bounds`

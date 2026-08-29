@@ -236,6 +236,38 @@ def _write_tif(path: Path, array: np.ndarray, transform, crs, dtype, nodata) -> 
         ds.write(arr.astype(dtype), 1)
 
 
+def square_utm_transform(
+    utm_left: float,
+    utm_bottom: float,
+    utm_right: float,
+    utm_top: float,
+    max_dim: int = 800,
+):
+    """Integer UTM grid with square cells.
+
+    ELMFIRE Fortran aborts with ``XDIM is not equal to YDIM`` if the GeoTIFF
+    pixel is a rectangle (coarsen-by-axis + ``from_bounds`` did that on wide
+    LANDFIRE tiles: 539×800, 578×800, no TOA).
+    """
+    from rasterio.transform import from_bounds
+
+    width_m = float(utm_right - utm_left)
+    height_m = float(utm_top - utm_bottom)
+    cell = max(width_m / max_dim, height_m / max_dim, 1.0)
+    dst_w = max(32, min(max_dim, int(math.ceil(width_m / cell))))
+    dst_h = max(32, min(max_dim, int(math.ceil(height_m / cell))))
+    cell = max(width_m / dst_w, height_m / dst_h)
+    transform = from_bounds(
+        utm_left,
+        utm_bottom,
+        utm_left + dst_w * cell,
+        utm_bottom + dst_h * cell,
+        dst_w,
+        dst_h,
+    )
+    return transform, dst_w, dst_h, cell
+
+
 def _reproject_to_utm(
     arrays: dict[str, np.ndarray],
     src_transform,
@@ -245,7 +277,7 @@ def _reproject_to_utm(
 ):
     import rasterio
     from rasterio.crs import CRS
-    from rasterio.warp import Resampling, calculate_default_transform, reproject
+    from rasterio.warp import Resampling, reproject, transform_bounds
 
     height, width = next(iter(arrays.values())).shape
     src_crs_obj = CRS.from_user_input(src_crs)
@@ -255,22 +287,14 @@ def _reproject_to_utm(
     east = west + width * float(a)
     south = north + height * float(e)
     left, bottom, right, top = min(west, east), min(south, north), max(west, east), max(south, north)
-    transform, dst_w, dst_h = calculate_default_transform(
-        src_crs_obj, dst_crs, width, height, left=left, bottom=bottom, right=right, top=top
+    # Projected metres, then a square cell. Do not from_bounds(lon, lat), and do
+    # not keep a rectangular pixel after fitting max_dim on one axis only.
+    utm_left, utm_bottom, utm_right, utm_top = transform_bounds(
+        src_crs_obj, dst_crs, left, bottom, right, top
     )
-    if dst_w > max_dim or dst_h > max_dim:
-        scale = max(dst_w / max_dim, dst_h / max_dim)
-        dst_w = max(32, int(dst_w / scale))
-        dst_h = max(32, int(dst_h / scale))
-        from rasterio.transform import from_bounds
-        from rasterio.warp import transform_bounds
-
-        # from_bounds must see projected metres. Passing lon/lat here made PHI
-        # miss the seed on any tile that needed coarsening (the 500 we were seeing).
-        utm_left, utm_bottom, utm_right, utm_top = transform_bounds(
-            src_crs_obj, dst_crs, left, bottom, right, top
-        )
-        transform = from_bounds(utm_left, utm_bottom, utm_right, utm_top, dst_w, dst_h)
+    transform, dst_w, dst_h, _cell = square_utm_transform(
+        utm_left, utm_bottom, utm_right, utm_top, max_dim=max_dim
+    )
     out = {}
     for name, src in arrays.items():
         dst = np.zeros((dst_h, dst_w), dtype=np.float32)
