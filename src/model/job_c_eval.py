@@ -95,16 +95,22 @@ def load_evaluable_job_c(path) -> list[dict]:
                 continue
             rec["_y"] = int(arr["y_72"])
             rec["_spread"] = [float(x) if x is not None else float("nan") for x in vec]
+            if not rec.get("w_vector") or rec.get("w_mask") is None:
+                continue
             rows.append(rec)
     return rows
 
 
 def _engine_matrix(rows: list[dict]) -> np.ndarray:
+    """ELMFIRE clock. Missing ETA means the cell never burned in the 72 h field."""
     X = np.zeros((len(rows), 6), dtype=np.float64)
     for i, rec in enumerate(rows):
         eta, sigma, p24, p48, p72 = rec["_spread"][:5]
         eta = eta if np.isfinite(eta) else 72.0
         sigma = sigma if np.isfinite(sigma) else 0.0
+        p24 = p24 if np.isfinite(p24) else 0.0
+        p48 = p48 if np.isfinite(p48) else 0.0
+        p72 = p72 if np.isfinite(p72) else 0.0
         X[i] = [eta, math_log1p(eta), sigma, p24, p48, p72]
     return X
 
@@ -218,12 +224,16 @@ def evaluate_job_c(rows: list[dict]) -> dict[str, Any]:
 
     eta = X_eng[:, 0]
     n_events = int(len(set(groups.tolist())))
+    n_eta_imputed = int(sum(1 for rec in rows if not np.isfinite(rec["_spread"][0])))
+    n_p72_imputed = int(sum(1 for rec in rows if not np.isfinite(rec["_spread"][4])))
     return {
         "n_evaluable": int(len(rows)),
         "n_events": n_events,
         "n_pos": int(y.sum()),
         "n_neg": int((1 - y).sum()),
         "pos_rate": float(y.mean()),
+        "n_eta_imputed_to_72h": n_eta_imputed,
+        "n_p72_imputed_to_0": n_p72_imputed,
         "w_allowed_dim": int(X_w.shape[1]),
         "w_allowed_fields": sorted({row["field"] for row in kept}),
         "w_allowed_columns": w_names,

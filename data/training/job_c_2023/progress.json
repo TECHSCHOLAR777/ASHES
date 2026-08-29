@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-29T00:50:00Z",
+  "as_of": "2026-08-29T00:54:00Z",
   "book": {
     "rows": 7987,
     "events": 283,
@@ -9,35 +9,42 @@
     "skipped_sparse_early_tape": 90
   },
   "elmfire": {
-    "rows": 3330,
-    "ok_events": 98,
+    "rows": 3394,
+    "ok_events": 100,
     "engine": "elmfire_2025.0212",
     "huygens_rows": 0,
-    "loop": "108/283",
-    "note": "still running on 8766 with SPREAD_ENGINE_REQUIRED=1; ~1 fire/min",
+    "loop": "113/283",
+    "note": "still running on 8766 with SPREAD_ENGINE_REQUIRED=1",
     "failures_this_pass": [
       {"event_id": "2026-NMLNF-000335", "error": "no seed cells in phi (before coarsen fix; resume will retry)"},
       {"event_id": "2024-IDBOF-000923", "error": "ELMFIRE rc=0 but no TOA raster (125-ring seed)"},
       {"event_id": "2026-COCUX-001160", "error": "ELMFIRE wrote no TOA raster"},
       {"event_id": "2025-COSJF-000763", "error": "ELMFIRE wrote no TOA raster"},
       {"event_id": "2024-ORSHR-240269", "error": "ELMFIRE wrote no TOA raster"},
-      {"event_id": "2023-CASRF-000939", "error": "ELMFIRE wrote no TOA raster"},
-      {"event_id": "2026-UTMLF-005112", "error": "ELMFIRE wrote no TOA raster"},
-      {"event_id": "2025-COWRD-001004", "error": "ELMFIRE wrote no TOA raster"},
-      {"event_id": "2024-ORPRD-000404", "error": "ELMFIRE wrote no TOA raster"},
-      {"event_id": "2023-WAGPF-001297", "error": "ELMFIRE wrote no TOA raster"}
+      {"event_id": "2026-COSJF-000536", "error": "field=False (resume will retry)"},
+      {"event_id": "2025-NMGNF-000384", "error": "field=False (resume will retry)"}
     ]
   },
   "w": {
-    "rows": 588,
-    "events": 16,
-    "y_72_pos": 167,
+    "rows": 888,
+    "events": 25,
+    "y_72_pos": 265,
     "batch_size": 10,
-    "note": "new Mireye spend on Job C coordinates; 200-D full A-I; head subsets W_allowed; 429 retry + startup/batch pause after resume burst killed the encoder"
+    "note": "new Mireye spend on Job C coordinates; 200-D full A-I; head subsets W_allowed; 429 backoff is holding"
   },
   "eval": {
-    "status": "waiting",
+    "status": "first_cut",
     "need_events_with_elmfire_and_w": 20,
-    "have_events": 16
+    "have_events": 25,
+    "n_evaluable": 888,
+    "w_kill_test_passed": false,
+    "brier": {
+      "raw_p72": 0.223,
+      "isotonic_eta": 0.180,
+      "logistic_engine": 0.180,
+      "logistic_engine_w_allowed": 0.244,
+      "logistic_shuffled_w": 0.201
+    },
+    "report": "data/models/job_c_report.json"
   }
 }

@@ -54,3 +54,12 @@ def test_engine_plus_w_allowed_beats_engine_only_when_residual_is_in_w():
     mid = [s for s in slices if s["eta_lo"] <= 18 < s["eta_hi"]]
     assert mid
     assert mid[0]["n"] >= 20
+
+
+def test_missing_eta_and_p72_are_imputed_not_nan():
+    rows = _rows(n_events=8, n_per=8)
+    for rec in rows[::3]:
+        rec["_spread"] = [float("nan")] * 5
+    report = evaluate_job_c(rows)
+    assert report["n_eta_imputed_to_72h"] >= 1
+    assert report["scores"]["logistic_engine"]["brier"] == report["scores"]["logistic_engine"]["brier"]

@@ -264,6 +264,12 @@ One line per decision, in build order.
   every key is at cap instead of firing a request that will 429. `_request` retries
   429 up to 8 times with 20s–90s backoff (Retry-After honored). `encode_job_c_w.py`
   adds `--startup-pause` / `--batch-pause` and retries rate-limited batches.
+- [2026-08-29] First Job C LOGO cut at **25 events / 888 evaluable rows**
+  (`elmfire_2025.0212`, Huygens 0). Missing ETA (733 rows never burned in the
+  72 h TOA) is imputed to 72 h; missing p72 to 0. Brier: isotonic(eta) 0.180,
+  logistic engine 0.180, raw p72 0.223, engine+W_allowed 0.244, shuffled-W 0.201.
+  Kill test **failed**. 171-D W_allowed overfits 25 leave-one-event folds;
+  this is not a 218-D GBM and not MTBS in/out. Collection continues.
 - [2026-08-28] ELMFIRE adapter coarsen used `from_bounds(lon, lat)` on a UTM
   grid, so any LANDFIRE tile wider than 800 cells wrote PHI in degree-space and
   the seed never burned (`no seed cells in phi`). Coarsen now `transform_bounds`
