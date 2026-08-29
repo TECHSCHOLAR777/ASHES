@@ -37,10 +37,19 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, default=DEFAULT_IN)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUT)
+    parser.add_argument(
+        "--include-fields",
+        type=str,
+        default=None,
+        help="Comma-separated W_allowed field subset. Default: full W_allowed.",
+    )
     args = parser.parse_args()
     rows = load_evaluable_job_c(args.input)
     logger.info("evaluable rows %d events %d", len(rows), len({r["event_id"] for r in rows}))
-    report = evaluate_job_c(rows)
+    include = None
+    if args.include_fields:
+        include = [s.strip() for s in args.include_fields.split(",") if s.strip()]
+    report = evaluate_job_c(rows, include_fields=include)
     engines = {r.get("engine") for r in rows}
     report["engines_seen"] = sorted(str(e) for e in engines)
     report["input"] = str(args.input)

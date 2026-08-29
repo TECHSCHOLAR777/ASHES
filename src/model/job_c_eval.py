@@ -120,6 +120,8 @@ def math_log1p(x: float) -> float:
 
 
 def _w_matrix(rows: list[dict], indices: list[int]) -> np.ndarray:
+    if not indices:
+        return np.zeros((len(rows), 0), dtype=np.float64)
     return np.vstack(
         [slice_w(rec["w_vector"], rec["w_mask"], indices) for rec in rows]
     )
@@ -194,10 +196,10 @@ def same_eta_slices(
     return out
 
 
-def evaluate_job_c(rows: list[dict]) -> dict[str, Any]:
+def evaluate_job_c(rows: list[dict], include_fields: list[str] | None = None) -> dict[str, Any]:
     if len(rows) < 20:
         raise ValueError(f"Job C needs more evaluable rows than {len(rows)}")
-    indices, w_names, kept = allowed_column_indices()
+    indices, w_names, kept = allowed_column_indices(include_fields=include_fields)
     y = np.array([rec["_y"] for rec in rows], dtype=np.int64)
     groups = np.array([rec["event_id"] for rec in rows])
     X_eng = _engine_matrix(rows)
@@ -237,6 +239,7 @@ def evaluate_job_c(rows: list[dict]) -> dict[str, Any]:
         "w_allowed_dim": int(X_w.shape[1]),
         "w_allowed_fields": sorted({row["field"] for row in kept}),
         "w_allowed_columns": w_names,
+        "w_include_fields": list(include_fields) if include_fields is not None else None,
         "engine_identity_required": "elmfire (SPREAD_ENGINE_REQUIRED; Huygens rows dropped)",
         "protocol": {
             "primary": "leave_one_event_out Brier / log-loss of a logistic calibrator",
@@ -244,6 +247,7 @@ def evaluate_job_c(rows: list[dict]) -> dict[str, Any]:
             "head": "LogisticRegression on StandardScaler features; isotonic(eta) as a one-D engine baseline",
             "kill_brier": KILL_BRIER,
             "not_a_218d_gbm": True,
+            "w_subset": include_fields is not None,
         },
         "scores": {
             "raw_engine_p72": {"brier": brier_raw, "log_loss": logloss(y, p_raw72), "pr_auc": pr_auc(y, p_raw72)},

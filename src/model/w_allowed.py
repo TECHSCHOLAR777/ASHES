@@ -41,10 +41,27 @@ def allowed_fields(catalog: dict[str, Any] | None = None) -> list[str]:
     return [name for _role, name, _meta in ordered_model_fields(catalog) if name not in skip]
 
 
-def allowed_column_indices(catalog: dict[str, Any] | None = None) -> tuple[list[int], list[str], list[dict[str, Any]]]:
-    """Indices into the 200-D encoded W vector, plus the column names and field spans."""
+def allowed_column_indices(
+    catalog: dict[str, Any] | None = None,
+    include_fields: list[str] | None = None,
+) -> tuple[list[int], list[str], list[dict[str, Any]]]:
+    """Indices into the 200-D encoded W vector, plus the column names and field spans.
+
+    ``include_fields`` further subsets W_allowed. Excluded leaks/t0-fuel cannot
+    be re-introduced here — collection still stores the full fetch.
+    """
     catalog = catalog or load_field_catalog()
     skip = excluded_fields(catalog)
+    allowed = set(allowed_fields(catalog))
+    if include_fields is not None:
+        wanted = []
+        for name in include_fields:
+            if name in skip or name not in allowed:
+                raise ValueError(f"field {name!r} is not in W_allowed")
+            wanted.append(name)
+        keep = set(wanted)
+    else:
+        keep = None
     layout = model_feature_layout(catalog)
     indices: list[int] = []
     names: list[str] = []
@@ -52,10 +69,15 @@ def allowed_column_indices(catalog: dict[str, Any] | None = None) -> tuple[list[
     for row in layout:
         if row["field"] in skip:
             continue
+        if keep is not None and row["field"] not in keep:
+            continue
         kept_layout.append(row)
         for offset, col in enumerate(row["columns"]):
             indices.append(row["start"] + offset)
             names.append(col)
+    if keep is not None and {row["field"] for row in kept_layout} != keep:
+        missing = keep - {row["field"] for row in kept_layout}
+        raise ValueError(f"include_fields not in encoded layout: {sorted(missing)}")
     return indices, names, kept_layout
 
 
