@@ -211,6 +211,7 @@ def test_simulate_ignition_uses_engine_sample(tmp_path, monkeypatch, mocker):
     assert sample is not None
     assert sample["p_burn_72"] == 0.7
     assert report["action_card"]["spread_field_version"] == "elmfire_2025.0212:test"
+    assert report["action_card"]["incident"]["irwin_id"] == "SIMULATED"
     assert report["engine"]["field"]["width"] >= 1
 
 

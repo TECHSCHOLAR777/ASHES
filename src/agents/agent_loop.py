@@ -115,6 +115,8 @@ def _backfill(session: AgentSession) -> None:
     for name in BACKFILL_ORDER:
         if name in session.called:
             continue
+        if session.simulate and name in {"wfigs_incidents", "wfigs_perimeters"}:
+            continue
         args: dict[str, Any] = {}
         if name == "mireye_fetch":
             args = {"roles": ["A", "B", "C", "D", "E", "F", "G", "H", "I"]}

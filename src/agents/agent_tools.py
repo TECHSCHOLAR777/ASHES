@@ -736,6 +736,8 @@ def handle_firms(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
 
 
 def handle_incidents(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
+    if session.simulate and session.incidents and session.incidents[0].irwin_id == "SIMULATED":
+        return {"ok": True, "skipped": "simulated_ignition", "count": 1, "incidents": [_incident_json(session.incidents[0])]}
     radius = float(args.get("radius_km") or 100)
     session.incidents = session.deps.wfigs.get_incidents(
         session.site.lat, session.site.lng, radius, session.site.site_id
@@ -750,6 +752,16 @@ def handle_incidents(session: AgentSession, args: dict[str, Any]) -> dict[str, A
 
 
 def handle_perimeters(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
+    if session.simulate and session.perimeters and session.perimeters[0].irwin_id == "SIMULATED":
+        nearest, dist = _nearest_incident_and_perimeter_distance(session.site, session.incidents, session.perimeters)
+        return {
+            "ok": True,
+            "skipped": "simulated_ignition",
+            "count": 1,
+            "dist_perimeter_m": dist,
+            "nearest_incident": _incident_json(nearest) if nearest else None,
+            "unofficial": True,
+        }
     radius = float(args.get("radius_km") or 100)
     session.perimeters = session.deps.wfigs.get_perimeters(
         session.site.lat, session.site.lng, radius, session.site.site_id
@@ -894,6 +906,8 @@ def handle_simulate(session: AgentSession, args: dict[str, Any]) -> dict[str, An
         lat=lat,
         lng=lng,
     )
+    session.incidents = [incident]
+    session.perimeters = [perimeter]
     try:
         result = _run_engine(
             session,
