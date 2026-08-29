@@ -1,6 +1,6 @@
-"""Evaluate Job C: logistic P(y|engine) vs P(y|engine, W_allowed). Event-held-out.
+"""Evaluate Job C: P(y|engine) vs P(y|engine, W). Logistic or GBM calibrator. Event-held-out.
 
-    python scripts/evaluate_job_c.py
+    python scripts/evaluate_job_c.py --estimator gbm --ablate --refit-kept
 """
 from __future__ import annotations
 

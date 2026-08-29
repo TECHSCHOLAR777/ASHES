@@ -314,7 +314,13 @@ One line per decision, in build order.
   re-ran the same LOGO logistic on the finished **283 events / 7947 rows**.
   Kill still **failed** (ΔBrier −0.005; shuffled W still better). Within-fire
   perm p≈1: those |ρ|≤0.06 are not parcel effects. Huygens 0. Not a 218-D
-  GBM. Not MTBS.
+  ranking GBM. Not MTBS.
+- [2026-08-29] Job C GBM calibrator on the same 283-event book: HistGradientBoosting
+  predict_proba, LOGO Brier/log-loss/shuffle-W, OOS permute-each-W-field
+  ablation. Engine-only Brier 0.164; engine+W 0.166; shuffled W 0.164; isotonic(eta)
+  0.163 still best. Kill **failed**. Ablation keep list **empty** (best field
+  surface_management_agency ΔBrier +0.0005 < 0.001). Trees did not find a
+  hidden Mireye subset. Not ranking-PR-AUC. Not MTBS.
 - [2026-08-29] ELMFIRE Fortran `Error opening ./scratch/ws.hdr because XDIM is
   not equal to YDIM` on wide tiles (`2024-CABTU-013761` 539×800, `2024-ORVAD-240141`
   578×800). Coarsen fitted `max_dim` per axis then `from_bounds`, so pixels

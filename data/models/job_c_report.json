@@ -484,5 +484,94 @@
     "log_loss_engine_minus_engine_w": -0.07310440440478638,
     "w_kill_test_passed": false
   },
-  "n_events_full_w_allowed": 247
+  "n_events_full_w_allowed": 247,
+  "gbm_calibrator": {
+    "report": "data/models/job_c_gbm_report.json",
+    "n_events": 283,
+    "n_evaluable": 7947,
+    "scores": {
+      "raw_engine_p72": {
+        "brier": 0.24688561721404303,
+        "log_loss": 3.4108516043410684,
+        "pr_auc": 0.4157224922073119
+      },
+      "isotonic_eta": {
+        "brier": 0.1632785305413758,
+        "log_loss": 0.5039880074132107,
+        "pr_auc": 0.4858076126980925
+      },
+      "gbm_engine": {
+        "brier": 0.1640621157553662,
+        "log_loss": 0.5054921137636968,
+        "pr_auc": 0.45133801636773163
+      },
+      "gbm_engine_w_allowed": {
+        "brier": 0.16621809942607121,
+        "log_loss": 0.5131195659343217,
+        "pr_auc": 0.43642878119394857
+      },
+      "gbm_engine_shuffled_w": {
+        "brier": 0.1644866416996907,
+        "log_loss": 0.507423161364084,
+        "pr_auc": 0.44719601381618795
+      }
+    },
+    "deltas": {
+      "brier_engine_minus_engine_w": -0.0021559836707050195,
+      "brier_shuffled_minus_engine_w": -0.001731457726380503,
+      "log_loss_engine_minus_engine_w": -0.007627452170624882,
+      "w_kill_test_passed": false
+    },
+    "w_ablation_keep": [],
+    "ablation_top": [
+      {
+        "field": "surface_management_agency",
+        "brier_when_permuted": 0.16670995598821384,
+        "delta_brier_perm_minus_full": 0.000491856562142623,
+        "earns_keep": false
+      },
+      {
+        "field": "total_road_length_within_500m_m",
+        "brier_when_permuted": 0.16648423099582418,
+        "delta_brier_perm_minus_full": 0.0002661315697529698,
+        "earns_keep": false
+      },
+      {
+        "field": "nearest_school_distance_m",
+        "brier_when_permuted": 0.166339389943354,
+        "delta_brier_perm_minus_full": 0.00012129051728279605,
+        "earns_keep": false
+      },
+      {
+        "field": "lightning_annual_flash_days",
+        "brier_when_permuted": 0.16629986623846713,
+        "delta_brier_perm_minus_full": 8.176681239591144e-05,
+        "earns_keep": false
+      },
+      {
+        "field": "aspect_degrees",
+        "brier_when_permuted": 0.16626922592202073,
+        "delta_brier_perm_minus_full": 5.1126495949516126e-05,
+        "earns_keep": false
+      },
+      {
+        "field": "wildfire_annual_frequency",
+        "brier_when_permuted": 0.16625534420533292,
+        "delta_brier_perm_minus_full": 3.7244779261702554e-05,
+        "earns_keep": false
+      },
+      {
+        "field": "aspect_cardinal",
+        "brier_when_permuted": 0.16625000431612685,
+        "delta_brier_perm_minus_full": 3.190489005563957e-05,
+        "earns_keep": false
+      },
+      {
+        "field": "domestic_well_households_per_km2",
+        "brier_when_permuted": 0.16623675474635247,
+        "delta_brier_perm_minus_full": 1.8655320281252274e-05,
+        "earns_keep": false
+      }
+    ]
+  }
 }

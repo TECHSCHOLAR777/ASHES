@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-29T08:00:00Z",
+  "as_of": "2026-08-29T08:09:00Z",
   "book": {
     "rows": 7987,
     "events": 283,
@@ -47,6 +47,17 @@
       "logistic_shuffled_w": 0.164
     },
     "report": "data/models/job_c_report.json",
-    "correlation": "data/models/job_c_w_correlation.json"
+    "correlation": "data/models/job_c_w_correlation.json",
+    "gbm": {
+      "report": "data/models/job_c_gbm_report.json",
+      "w_kill_test_passed": false,
+      "w_ablation_keep": [],
+      "brier": {
+        "isotonic_eta": 0.163,
+        "gbm_engine": 0.164,
+        "gbm_engine_w_allowed": 0.166,
+        "gbm_shuffled_w": 0.164
+      }
+    }
   }
 }

@@ -49,7 +49,19 @@ top-8 still used for the same LOGO protocol. Map: `data/models/job_c_w_correlati
 
 Kill still **failed**. FDR selected **nothing** (within-fire perm p ≈ 1: the tiny |ρ| is between-fire, not parcel). Top-8 ΔBrier **−0.005**. Shuffled W still beats real W. 5693/7947 rows never received a 72 h TOA.
 
-ELMFIRE **283/283**, W **7947 evaluable / 2099 pos**. Report: `data/models/job_c_report.json`.
+**GBM calibrator (same task, 283 / 7947, Huygens 0):** HistGradientBoosting
+`predict_proba`, LOGO Brier, OOS permute-each-field ablation. Kill still **failed**.
+No field earned keep (threshold ΔBrier 0.001). Report: `data/models/job_c_gbm_report.json`.
+
+| Head | Brier | log-loss |
+|---|---|---|
+| Raw engine p72 | 0.247 | 3.411 |
+| Isotonic(eta) | **0.163** | **0.504** |
+| GBM P(y\|engine) | 0.164 | 0.505 |
+| GBM P(y\|engine, W_allowed 171-D) | 0.166 | 0.513 |
+| GBM shuffled W | 0.164 | 0.507 |
+
+Closest-to-useful ablation (still below keep): surface management +0.0005, road length +0.0003. Climate (temp, snow) **hurts** when left in. Switching logistic → GBM did not create a Mireye parcel effect.
 
 Do not re-run Path A / Path B / R0–R4 on the 2015–2022 MTBS book for this claim.
 
