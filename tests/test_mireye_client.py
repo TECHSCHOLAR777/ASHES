@@ -60,7 +60,19 @@ def test_ask_endpoint_is_banned(client):
         client._request("POST", "/v1/ask", {"q": "how far is the fire"})
 
 
-def test_retries_on_429_then_succeeds(client, mocker):
+def test_retries_on_402_then_next_key_succeeds(client, mocker):
+    mocker.patch("time.sleep")
+    responses = [
+        make_response(402, {"detail": {"error": "credits_exhausted"}}),
+        make_response(200, {"lat": 1.0, "lng": 2.0}),
+    ]
+    mock_request = mocker.patch.object(client._client, "request", side_effect=responses)
+
+    data = client._request("POST", "/v1/geocode", {"address": "x"})
+
+    assert data == {"lat": 1.0, "lng": 2.0}
+    assert mock_request.call_count == 2
+
     mocker.patch("time.sleep")
     responses = [make_response(429), make_response(429), make_response(200, {"lat": 1.0, "lng": 2.0})]
     mock_request = mocker.patch.object(client._client, "request", side_effect=responses)

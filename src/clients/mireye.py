@@ -160,6 +160,7 @@ class MireyeClient:
         last_error: Exception | None = None
         generic_attempts = 0
         retries_429 = 0
+        retries_402 = 0
         while generic_attempts < MAX_RETRIES:
             key_index = self._pick_key_index()
             headers = {"Authorization": f"Bearer {self._keys[key_index]}"}
@@ -199,6 +200,22 @@ class MireyeClient:
                 if sleep_s is None:
                     sleep_s = min(90.0, 20.0 * (2 ** (retries_429 - 1)))
                 time.sleep(sleep_s)
+                continue
+
+            if resp.status_code == 402:
+                tool_logger.log_tool_call(
+                    f"mireye:{path}",
+                    json_body or {},
+                    {"status_code": 402},
+                    site_id,
+                    latency_ms,
+                    key_index,
+                    error="HTTP 402 credits_exhausted",
+                )
+                last_error = MireyeRequestFailed(f"{path} returned HTTP 402")
+                retries_402 += 1
+                if retries_402 >= max(len(self._keys), 3):
+                    break
                 continue
 
             if resp.status_code >= 500:
