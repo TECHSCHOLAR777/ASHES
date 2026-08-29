@@ -89,7 +89,9 @@ def main() -> None:
     fields = [name for _role, name, _meta in ordered_model_fields(catalog)]
     # Batch of 25 × 61 fields is one real Mireye call, not thinning. 30s/point
     # would take a calendar day; the live /v1/fetch/batch endpoint is the contract.
-    client = MireyeClient(_keys(), timeout=300.0)
+    # 60s per HTTP call: a hung socket used to sit for 300s × retries with no
+    # encoded line, which looked like a dead job.
+    client = MireyeClient(_keys(), timeout=60.0)
 
     done: set[str] = set()
     if args.resume and args.output.exists():
@@ -134,6 +136,7 @@ def main() -> None:
         for start in range(0, len(pending), batch):
             chunk = pending[start : start + batch]
             coords = [(float(r["site_lat"]), float(r["site_lng"])) for r in chunk]
+            logger.info("fetching batch %d-%d / %d", start + 1, start + len(chunk), len(pending))
             raws = fetch_batch_with_retry(
                 client, coords, fields, site_ids=[r["site_id"] for r in chunk]
             )

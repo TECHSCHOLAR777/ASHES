@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-08-29T01:33:00Z",
+  "as_of": "2026-08-29T02:25:00Z",
   "book": {
     "rows": 7987,
     "events": 283,
@@ -9,33 +9,32 @@
     "skipped_sparse_early_tape": 90
   },
   "elmfire": {
-    "rows": 3812,
-    "ok_events": 115,
+    "rows": 4276,
+    "ok_events": 131,
     "engine": "elmfire_2025.0212",
     "huygens_rows": 0,
-    "loop": "131/283",
-    "note": "still running on 8766 with SPREAD_ENGINE_REQUIRED=1; square-cell adapter for XDIM==YDIM",
+    "loop": "147/283",
     "n_failures_unique": 16
   },
   "w": {
-    "rows": 2398,
-    "events": 67,
-    "y_72_pos": 658,
+    "rows": 4160,
+    "events": 127,
+    "y_72_pos": 1082,
     "batch_size": 10,
-    "note": "killed after 22 min silent hang (no encoded line); --resume pending=1396"
+    "note": "caught prior pending list then --resume for 116 new ELMFIRE rows; HTTP timeout 60s"
   },
   "eval": {
-    "status": "second_cut",
-    "need_events_with_elmfire_and_w": 20,
-    "have_events": 67,
-    "n_evaluable": 2398,
+    "status": "third_cut",
+    "snapshot_events": 111,
+    "snapshot_rows": 3688,
+    "have_events_now": 127,
     "w_kill_test_passed": false,
     "brier": {
-      "raw_p72": 0.216,
-      "isotonic_eta": 0.164,
-      "logistic_engine": 0.164,
-      "logistic_engine_w_allowed": 0.192,
-      "logistic_shuffled_w": 0.170
+      "raw_p72": 0.217,
+      "isotonic_eta": 0.160,
+      "logistic_engine": 0.160,
+      "logistic_engine_w_allowed": 0.179,
+      "logistic_shuffled_w": 0.166
     },
     "report": "data/models/job_c_report.json"
   }

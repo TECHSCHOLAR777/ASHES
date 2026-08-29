@@ -34,20 +34,20 @@ book. Huygens rows are skipped. Failed ELMFIRE fires are not written so
 `--resume` retries them (empty PHI before the coarsen fix; a few Fortran runs
 with no TOA).
 
-**Eval (LOGO, 67 events / 2398 rows, `elmfire_2025.0212` only, 0 Huygens):**
+**Eval (LOGO, 111 events / 3688 rows, `elmfire_2025.0212` only, 0 Huygens):**
 
 | Head | Brier | log-loss | PR-AUC (side) |
 |---|---|---|---|
-| Raw engine p72 | 0.216 | 2.984 | 0.457 |
-| Isotonic(eta) | **0.164** | 0.511 | 0.506 |
-| Logistic P(y\|engine) | 0.164 | **0.508** | 0.464 |
-| Logistic P(y\|engine, W_allowed) | 0.192 | 0.705 | 0.379 |
-| Logistic shuffled-W | 0.170 | 0.550 | 0.464 |
+| Raw engine p72 | 0.217 | 3.001 | 0.442 |
+| Isotonic(eta) | **0.160** | 0.501 | 0.491 |
+| Logistic P(y\|engine) | **0.160** | **0.497** | 0.459 |
+| Logistic P(y\|engine, W_allowed) | 0.179 | 0.647 | 0.395 |
+| Logistic shuffled-W | 0.166 | 0.533 | 0.443 |
 
 Kill (ΔBrier engine−engine+W > 0.005 **and** shuffle−engine+W > 0.005): **failed**.
-W_allowed (171-D) still **hurts** LOGO Brier by 0.027 (was 0.064 at 25 events); shuffled W still beats the real W head. 1861/2398 rows never received a 72 h TOA (ETA imputed to 72 h). Constant-prevalence Brier 0.199 — isotonic(eta) and engine logistic beat it; engine+W is about prevalence. ECE: engine 0.021 vs engine+W 0.069 vs raw p72 0.216.
+W_allowed still **hurts** LOGO Brier by 0.019 (was 0.064 at 25, 0.027 at 67). Shuffled W still beats the real W head. 2831/3688 rows never received a 72 h TOA. Constant-prevalence Brier 0.194. ECE: engine 0.010 vs engine+W 0.042 vs raw p72 0.217.
 
-Fortran no-TOA on wide tiles was `XDIM != YDIM` (rectangular pixels after coarsen). Adapter now forces square UTM cells. Jobs still running (ELMFIRE ~131/283; W `--resume` after a 22 min silent hang). Report: `data/models/job_c_report.json`.
+Jobs still running (ELMFIRE ~147/283; W `--resume` after finishing its pending list). Report: `data/models/job_c_report.json`.
 
 Do not re-run Path A / Path B / R0–R4 on the 2015–2022 MTBS book for this claim.
 

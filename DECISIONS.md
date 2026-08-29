@@ -275,6 +275,11 @@ One line per decision, in build order.
   logistic engine 0.164, shuffled-W 0.170, engine+W_allowed 0.192, raw p72
   0.216. Kill still **failed**. Overfit shrank (ΔBrier −0.027 vs −0.064) but
   W_allowed still loses to engine-only and to shuffled W.
+- [2026-08-29] Third Job C LOGO cut at **111 events / 3688 rows**. Brier:
+  isotonic(eta) 0.160, logistic engine 0.160, shuffled-W 0.166,
+  engine+W_allowed 0.179, raw p72 0.217. Kill still **failed**. Overfit
+  continues to shrink (ΔBrier −0.019) but W_allowed still loses. W encoder
+  HTTP timeout lowered to 60s after a 29 min silent hang on a dead socket.
 - [2026-08-29] ELMFIRE Fortran `Error opening ./scratch/ws.hdr because XDIM is
   not equal to YDIM` on wide tiles (`2024-CABTU-013761` 539×800, `2024-ORVAD-240141`
   578×800). Coarsen fitted `max_dim` per axis then `from_bounds`, so pixels
