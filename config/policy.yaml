@@ -11,6 +11,7 @@ distance_thresholds:
   protect_km: 4
   firms_urban_suppress: true
 
+# Agentic copilot passes y_hat=None. Watch/h_fire tests may still set these.
 y_hat_thresholds:
   prepare: 0.4
   protect: 0.7

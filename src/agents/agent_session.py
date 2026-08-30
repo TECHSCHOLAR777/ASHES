@@ -47,6 +47,11 @@ class AgentSession:
 
     geocode_confidence: str = "n/a"
     range_interpolation: bool = False
+    parse: dict[str, Any] | None = None
+    playbook_steps: list[str] = field(default_factory=list)
+    notify: dict[str, Any] | None = None
+    coords_supplied: bool = True
+    situation_injected: bool = False
     cap_alerts: list[CAPAlert] = field(default_factory=list)
     spc: Optional[SPCOutlook] = None
     firms: Optional[FIRMSResult] = None

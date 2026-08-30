@@ -74,8 +74,8 @@ def test_agentic_loop_calls_tools_and_policy_owns_action(tmp_path, monkeypatch, 
                 _TC("5", "hrrr_weather"),
             ],
             [_TC("6", "mireye_fetch", json.dumps({"roles": ["A", "B", "G"]}))],
-            [_TC("7", "model_infer")],
-            [_TC("8", "apply_policy")],
+            [_TC("7", "apply_policy")],
+            [_TC("8", "draft_watch_note")],
             [_TC("9", "commit_report")],
         ]
     )
@@ -83,12 +83,18 @@ def test_agentic_loop_calls_tools_and_policy_owns_action(tmp_path, monkeypatch, 
     card = report["action_card"]
     assert card is not None
     assert card["action"] == "no_action"  # mocked empty live signals
+    assert card["y_hat"] is None
+    assert card["model_version"] == "none"
     tools = [t["tool"] for t in report["trace"]]
+    assert "parse_place" in tools
     assert "nws_alerts" in tools
     assert "mireye_fetch" in tools
     assert "apply_policy" in tools
     assert "commit_report" in tools
+    assert "model_infer" not in tools
     assert report["brief"]
+    assert report["parse"]
+    assert "point" in (report["parse"].get("honesty") or "").lower()
     assert all(t["tool"] != "unknown" for t in report["trace"])
 
 
@@ -212,6 +218,9 @@ def test_simulate_ignition_uses_engine_sample(tmp_path, monkeypatch, mocker):
     assert sample["p_burn_72"] == 0.7
     assert report["action_card"]["spread_field_version"] == "elmfire_2025.0212:test"
     assert report["action_card"]["incident"]["irwin_id"] == "SIMULATED"
+    assert report["action_card"]["y_hat"] is None
+    assert report["action_card"]["model_version"] == "none"
+    assert report["playbook"]
     assert report["engine"]["field"]["width"] >= 1
 
 
@@ -237,6 +246,8 @@ def test_downsample_keeps_nulls():
     viz = downsample_field(field, max_dim=8)
     assert viz["arrival_hours"][0][1] is None
     assert viz["p_burn_72"][1][0] == 0.9
+    assert viz["max_eta_hours"] == 72.0
+    assert viz["horizon_hours"] == 72.0
 
 
 def test_health_endpoint():
@@ -264,3 +275,100 @@ def test_ui_index_served():
     assert css.status_code == 200
     ico = client.get("/favicon.ico")
     assert ico.status_code == 204
+
+
+def test_openai_tools_have_no_hit_model():
+    from src.agents.agent_tools import OPENAI_TOOLS, HANDLERS
+
+    names = [t["function"]["name"] for t in OPENAI_TOOLS]
+    assert "model_infer" not in names
+    assert "model_infer" not in HANDLERS
+    assert "parse_place" in names
+    assert "list_suppression_steps" in names
+    assert "notify_ops" in names
+    assert "apply_policy" in names
+
+
+def test_extract_place_and_honesty():
+    from src.agents.place_parse import extract_place_heuristic, honesty_line
+
+    assert extract_place_heuristic("Is Idyllwild at risk this week?") == "Idyllwild"
+    line = honesty_line(
+        {"used_supplied_coords": True, "lat": 33.7435, "lng": -116.735, "place": "Idyllwild"}
+    )
+    assert "point" in line.lower()
+    assert "Idyllwild" in line
+    geo = honesty_line(
+        {
+            "used_supplied_coords": False,
+            "geocoded": True,
+            "place": "Idyllwild",
+            "lat": 33.7435,
+            "lng": -116.735,
+            "confidence": "high",
+        }
+    )
+    assert "No coordinates were supplied" in geo
+    assert "point, not a town" in geo
+
+
+def test_parse_place_geocodes_town_name(tmp_path, monkeypatch, mocker):
+    from src.agents.agent_tools import handle_parse_place
+    from src.clients.mireye import GeoPoint
+
+    monkeypatch.delenv("OPENAI_KEY", raising=False)
+    deps = make_deps(tmp_path, monkeypatch, mocker)
+    mocker.patch.object(
+        deps.mireye,
+        "geocode",
+        return_value=GeoPoint(lat=33.7435, lng=-116.735, confidence="high", range_interpolation=False),
+    )
+    session = AgentSession(
+        deps=deps,
+        site=Site("s1", "ask-mode-site", 0.0, 0.0),
+        question="Is Idyllwild at risk if the chaparral ignites?",
+        coords_supplied=False,
+    )
+    out = handle_parse_place(session, {})
+    assert out["ok"] is True
+    assert out["geocoded"] is True
+    assert session.site.lat == 33.7435
+    assert "Idyllwild" in out["honesty"]
+    assert "point" in out["honesty"].lower()
+    assert session.site.name == "Idyllwild"
+
+
+def test_bucket_skill_sets_playbook(tmp_path, monkeypatch, mocker):
+    from src.agents.bucket_skills import handle_suppression_steps
+    from src.policy.engine import PolicyResult
+
+    deps = make_deps(tmp_path, monkeypatch, mocker)
+    session = AgentSession(deps=deps, site=Site("s1", "T", 33.74, -116.73), question="q")
+    session.policy_result = PolicyResult("protect_asset", ["close"], "v2.0.0", [])
+    session.raw_w = {"surface_management_agency": "USFS", "nearest_road_class": "residential"}
+    out = handle_suppression_steps(session, {})
+    assert out["ok"] is True
+    assert session.playbook_steps
+    assert any("USFS" in s for s in session.playbook_steps)
+
+
+def test_ask_body_allows_town_only_and_showcase():
+    from fastapi.testclient import TestClient
+    from src.serve.app import AskBody, app
+
+    body = AskBody(q="Idyllwild")
+    assert body.lat is None
+    assert body.lng is None
+    client = TestClient(app)
+    r = client.get("/api/showcase")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["id"] == "idyllwild_chaparral"
+    assert data["simulate"] is True
+    js = client.get("/assets/app.js")
+    assert js.status_code == 200
+    assert b"Load Idyllwild case" in js.content
+    assert b"Engine case unfolding" in js.content
+    assert b"y_hat" not in js.content
+    html = client.get("/")
+    assert b"engine clock" in html.content

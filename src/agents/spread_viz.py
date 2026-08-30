@@ -52,6 +52,8 @@ def downsample_field(field: SpreadField, max_dim: int = 80) -> dict[str, Any]:
             out.append([_finite(v) for v in row])
         return out
 
+    finite = sub_a[np.isfinite(sub_a)]
+    max_eta = float(np.nanmax(finite)) if finite.size else None
     return {
         "incident_id": field.incident_id,
         "engine": field.engine,
@@ -65,6 +67,8 @@ def downsample_field(field: SpreadField, max_dim: int = 80) -> dict[str, Any]:
         "height": sh,
         "stride": stride,
         "source_shape": [int(h), int(w)],
+        "horizon_hours": 72.0,
+        "max_eta_hours": max_eta,
         "arrival_hours": _grid(sub_a),
         "p_burn_72": _grid(sub_p),
     }

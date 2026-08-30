@@ -39,7 +39,7 @@ def _compose_body(action_card: ActionCard, action_brief: str, response_card: Res
         f"({action_card.incident.acres if action_card.incident.acres is not None else 'n/a'} ac, "
         f"{action_card.incident.containment_pct if action_card.incident.containment_pct is not None else 'n/a'} contained)",
         f"Distance to perimeter: {action_card.incident.dist_perimeter_m if action_card.incident.dist_perimeter_m is not None else 'n/a'} m",
-        f"Model score: y_hat={action_card.y_hat} sigma={action_card.sigma} baseline={action_card.baseline_y}",
+        f"Engine ETA: {action_card.eta_hours if action_card.eta_hours is not None else 'null'} h (sigma={action_card.sigma})",
         "",
         "Reasons:",
         *[f"- {r}" for r in action_card.reasons],

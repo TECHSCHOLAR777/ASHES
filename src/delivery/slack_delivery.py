@@ -47,7 +47,9 @@ def _action_card_blocks(card: ActionCard, brief: str) -> list[dict]:
                     f"({card.incident.acres if card.incident.acres is not None else 'n/a'} ac, "
                     f"{card.incident.containment_pct if card.incident.containment_pct is not None else 'n/a'} contained)\n"
                     f"*Distance to perimeter:* {card.incident.dist_perimeter_m if card.incident.dist_perimeter_m is not None else 'n/a'} m\n"
-                    f"*Model score:* y_hat={card.y_hat} (sigma={card.sigma}), baseline={card.baseline_y}"
+                    f"*Engine ETA:* {card.eta_hours if card.eta_hours is not None else 'null'} h "
+                    f"(sigma={card.sigma})"
+                    + (f"\n*Model score:* y_hat={card.y_hat}" if card.y_hat is not None else "")
                 ),
             },
         },

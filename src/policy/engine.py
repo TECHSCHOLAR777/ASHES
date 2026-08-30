@@ -56,6 +56,10 @@ def load_policy_config(path: str | None = None) -> dict[str, Any]:
 
 
 def apply_policy(y_hat: Optional[float], sigma: float, pin: PolicyInput, config: dict[str, Any] | None = None) -> PolicyResult:
+    """First-match table. The agentic path passes y_hat=None; clock is ETA + distance + Mireye guards.
+
+    y_hat remains on the signature so watch/h_fire tests can still exercise those branches.
+    """
     cfg = config or load_policy_config()
     policy_version = cfg["version"]
     dist_km = pin.dist_perim_m / 1000.0

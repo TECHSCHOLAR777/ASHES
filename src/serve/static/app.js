@@ -16,6 +16,9 @@ const FLAG_LABEL = {
 
 let lastReport = null;
 let mapRef = null;
+let playbackOverlay = null;
+let playbackTimer = null;
+let playbackHour = 0;
 
 function route() {
   const h = (location.hash || "#/").replace(/^#/, "") || "/";
@@ -58,7 +61,7 @@ async function loadHealth() {
   try {
     const h = await (await fetch("/api/health")).json();
     const bits = [
-      h.openai ? "OpenAI" : "no OpenAI",
+      h.openai ? "OpenAI NLP" : "no OpenAI",
       h.mireye ? "Mireye" : "no Mireye",
       h.spread_up ? `engine :${h.spread_port}` : "engine down",
       h.elmfire_bin ? "ELMFIRE" : "no ELMFIRE bin",
@@ -83,7 +86,7 @@ async function renderWatch() {
         )
         .join("")}</tbody></table>`
     : "";
-  app.innerHTML = `<h1>Watch board</h1><p class="muted">Book of sites. Last card from this UI session (watch loop is separate).</p>${recentHtml}<div id="board">Loading…</div>`;
+  app.innerHTML = `<h1>Watch board</h1><p class="muted">Policy bucket + engine ETA. No hit-model score.</p>${recentHtml}<div id="board">Loading…</div>`;
   const data = await (await fetch("/api/sites")).json();
   const rows = (data.sites || []).sort((a, b) => ACTION_ORDER.indexOf(a.action) - ACTION_ORDER.indexOf(b.action));
   if (!rows.length) {
@@ -91,7 +94,7 @@ async function renderWatch() {
     return;
   }
   $("#board").innerHTML = `<table class="table"><thead><tr>
-    <th>Site</th><th>Action</th><th>ETA (σ)</th><th>Distance</th><th>y_hat</th><th>Weather</th>
+    <th>Site</th><th>Action</th><th>ETA (σ)</th><th>Distance</th><th>Engine</th><th>Weather</th>
   </tr></thead><tbody>${rows
     .map(
       (s) => `<tr data-card="${s.last_card_id || ""}" data-site="${s.site_id}">
@@ -99,7 +102,7 @@ async function renderWatch() {
       <td>${pill(s.action)}</td>
       <td>${etaCell(s)}</td>
       <td>${fmtKm(s.dist_perimeter_m)}<div class="muted">${s.incident_name || "no incident"}</div></td>
-      <td>${s.y_hat == null ? '<span class="na">n/a</span>' : `${Number(s.y_hat).toFixed(2)} ± ${Number(s.sigma ?? 0).toFixed(2)}`}</td>
+      <td class="muted">${s.engine || s.spread_field_version || "no field"}</td>
       <td>${s.red_flag ? "Red Flag" : "RF no"} ${chips(s.flags)}</td>
     </tr>`
     )
@@ -124,36 +127,60 @@ function etaCell(s) {
     return `<span class="na">no field</span>`;
   }
   const sig = s.eta_sigma_hours == null ? "" : ` ± ${Number(s.eta_sigma_hours).toFixed(0)} h`;
-  return `<div>${Number(s.eta_hours).toFixed(0)} h${sig}</div><div class="muted">arrival estimate with sigma</div>`;
+  return `<div>${Number(s.eta_hours).toFixed(0)} h${sig}</div><div class="muted">engine arrival</div>`;
 }
 
 function renderAsk(simulate) {
   const title = simulate ? "ELMFIRE simulator" : "Ask";
   const blurb = simulate
-    ? "Ignite at a point, fetch LANDFIRE, run the out-of-process engine, then Mireye aspects and the policy table."
-    : "One lat/lng. The agent calls live tools. Policy picks the action. The model writes the brief from grounded facts.";
+    ? "Name a place or pin a point. Policy picks the bucket. ELMFIRE playback is the case unfolding in time, not a snapshot."
+    : "Name a town near a forest, or pin lat/lng. NLP geocodes with an honest mention (point, not a town boundary). Policy picks the action. The agent tailors the playbook from Mireye + engine.";
   app.innerHTML = `
     <h1>${title}</h1>
     <p class="muted">${blurb}</p>
     <div class="form">
-      <input id="lat" type="number" step="0.0001" value="33.9806" />
-      <input id="lng" type="number" step="0.0001" value="-117.3755" />
-      <input id="name" class="wide" value="${simulate ? "Simulated ignition" : "Riverside Warehouse"}" />
-      <textarea id="q">${simulate ? "Simulate ignition at this parcel and report arrival, aspects, and action." : "Is this warehouse at risk this fire week?"}</textarea>
+      <textarea id="q" placeholder="Idyllwild, or a town near the forest">${simulate ? "Simulate ignition in the chaparral west of Idyllwild." : "Is Idyllwild in play if this ignites west of town?"}</textarea>
+      <input id="name" class="wide" placeholder="Site name (optional)" value="" />
+      <input id="lat" type="number" step="0.0001" placeholder="lat (optional)" />
+      <input id="lng" type="number" step="0.0001" placeholder="lng (optional)" />
+      <button type="button" class="ghost" id="showcase">Load Idyllwild case</button>
       <button id="go">${simulate ? "Run simulator" : "Ask"}</button>
     </div>
+    <p class="muted">Leave lat/lng empty to parse the town from the question. Honesty line is required in the playbook.</p>
     <div class="grid2">
       <div>
         <div id="map"></div>
+        <div id="playback"></div>
         <div id="trace" class="panel trace" style="margin-top:12px">Waiting for tools…</div>
       </div>
       <div id="result"><div class="empty">Submit to run the agent.</div></div>
     </div>`;
-  initMap(33.9806, -117.3755);
+  initMap(33.7435, -116.735);
   $("#go").addEventListener("click", () => startAsk(simulate));
+  $("#showcase").addEventListener("click", () => loadShowcase(simulate));
+}
+
+async function loadShowcase(simulate) {
+  const s = await (await fetch("/api/showcase")).json();
+  $("#lat").value = s.lat;
+  $("#lng").value = s.lng;
+  $("#name").value = s.name || "Idyllwild";
+  const q = String(s.q || "").replace(/^"|"$/g, "");
+  $("#q").value = simulate ? `Simulate ignition west of ${s.place || s.name}. ${q}` : q;
+  initMap(s.lat, s.lng);
+  $("#result").innerHTML = `<div class="banner">${s.honesty || "Showcase pin in burnable shrub. Playback is the engine case, not satellite."}</div>`;
+}
+
+function stopPlayback() {
+  if (playbackTimer) {
+    clearInterval(playbackTimer);
+    playbackTimer = null;
+  }
 }
 
 function initMap(lat, lng) {
+  stopPlayback();
+  playbackOverlay = null;
   if (mapRef) {
     mapRef.remove();
     mapRef = null;
@@ -165,8 +192,8 @@ function initMap(lat, lng) {
   L.circleMarker([lat, lng], { radius: 6, color: "#111", fillColor: "#111", fillOpacity: 1 }).addTo(mapRef);
 }
 
-function rasterCanvas(field, mode) {
-  const grid = mode === "p72" ? field.p_burn_72 : field.arrival_hours;
+function rasterAtHour(field, hour) {
+  const grid = field.arrival_hours;
   if (!grid || !grid.length) return null;
   const h = grid.length;
   const w = grid[0].length;
@@ -175,34 +202,98 @@ function rasterCanvas(field, mode) {
   canvas.height = h;
   const ctx = canvas.getContext("2d");
   const img = ctx.createImageData(w, h);
+  const cap = Math.max(1, Number(field.max_eta_hours) || Number(field.horizon_hours) || 72);
   for (let r = 0; r < h; r++) {
     for (let c = 0; c < w; c++) {
       const v = grid[r][c];
       const i = (r * w + c) * 4;
-      if (v === null || v === undefined) {
+      if (v === null || v === undefined || Number(v) > hour) {
         img.data[i + 3] = 0;
         continue;
       }
-      let t;
-      if (mode === "p72") t = Math.max(0, Math.min(1, Number(v)));
-      else t = 1 - Math.max(0, Math.min(1, Number(v) / 72));
+      const t = 1 - Math.max(0, Math.min(1, Number(v) / cap));
       img.data[i] = Math.round(180 + t * 60);
       img.data[i + 1] = Math.round(40 + (1 - t) * 140);
       img.data[i + 2] = Math.round(20 + (1 - t) * 30);
-      img.data[i + 3] = 170;
+      img.data[i + 3] = 190;
     }
   }
   ctx.putImageData(img, 0, 0);
   return canvas.toDataURL("image/png");
 }
 
+function setPlaybackHour(field, hour) {
+  if (!mapRef || !field || field.west == null) return;
+  const bounds = [
+    [field.south, field.west],
+    [field.north, field.east],
+  ];
+  const url = rasterAtHour(field, hour);
+  if (!url) return;
+  if (playbackOverlay) mapRef.removeLayer(playbackOverlay);
+  playbackOverlay = L.imageOverlay(url, bounds, { opacity: 0.72, pane: "overlayPane" }).addTo(mapRef);
+  const label = $("#hourLabel");
+  if (label) label.textContent = `${Math.round(hour)} h`;
+  const slider = $("#hour");
+  if (slider && Number(slider.value) !== Math.round(hour)) slider.value = String(Math.round(hour));
+}
+
+function mountPlayback(field, host) {
+  stopPlayback();
+  const el = host || $("#playback");
+  if (!el || !field || !field.arrival_hours) {
+    if (el) el.innerHTML = "";
+    return;
+  }
+  const maxH = Math.max(1, Math.ceil(Number(field.max_eta_hours) || Number(field.horizon_hours) || 72));
+  playbackHour = Math.min(maxH, Math.max(0, playbackHour || 0));
+  el.innerHTML = `
+    <div class="playback">
+      <div class="muted">Engine case unfolding in time — not satellite, not an official perimeter.</div>
+      <div class="play-row">
+        <button type="button" id="play">Play</button>
+        <input type="range" id="hour" min="0" max="${maxH}" step="1" value="${Math.round(playbackHour)}" />
+        <span id="hourLabel">${Math.round(playbackHour)} h</span>
+        <span class="muted">max ${maxH} h</span>
+      </div>
+    </div>`;
+  const apply = (h) => {
+    playbackHour = h;
+    setPlaybackHour(field, h);
+  };
+  $("#hour", el).addEventListener("input", (e) => apply(Number(e.target.value)));
+  $("#play", el).addEventListener("click", () => {
+    if (playbackTimer) {
+      stopPlayback();
+      $("#play", el).textContent = "Play";
+      return;
+    }
+    $("#play", el).textContent = "Pause";
+    playbackTimer = setInterval(() => {
+      let next = playbackHour + Math.max(1, Math.round(maxH / 24));
+      if (next > maxH) next = 0;
+      apply(next);
+    }, 400);
+  });
+  apply(playbackHour);
+  mapRef.fitBounds(
+    [
+      [field.south, field.west],
+      [field.north, field.east],
+    ],
+    { padding: [20, 20] }
+  );
+}
+
 function drawReportOnMap(report) {
   const site = report.site || {};
-  if (!mapRef) initMap(site.lat, site.lng);
-  mapRef.setView([site.lat, site.lng], 11);
-  L.circleMarker([site.lat, site.lng], { radius: 7, color: "#111", weight: 2, fillColor: "#f4f0e6", fillOpacity: 1 })
-    .bindTooltip(site.name || "site")
-    .addTo(mapRef);
+  if (!mapRef) initMap(site.lat || 33.74, site.lng || -116.74);
+  if (site.lat != null) {
+    mapRef.setView([site.lat, site.lng], 11);
+    L.circleMarker([site.lat, site.lng], { radius: 7, color: "#111", weight: 2, fillColor: "#f4f0e6", fillOpacity: 1 })
+      .bindTooltip(site.name || "site")
+      .addTo(mapRef);
+  }
   (report.map?.hotspots || []).forEach((hs) => {
     L.circleMarker([hs.lat, hs.lng], { radius: 3, color: "#c0392b", fillOpacity: 0.8 }).addTo(mapRef);
   });
@@ -212,18 +303,6 @@ function drawReportOnMap(report) {
       L.polygon(latlngs, { color: "#c2185b", weight: 2, fill: false }).bindTooltip("operational, unofficial").addTo(mapRef);
     });
   });
-  const field = report.engine?.field;
-  if (field && field.west != null) {
-    const bounds = [
-      [field.south, field.west],
-      [field.north, field.east],
-    ];
-    const url = rasterCanvas(field, field.p_burn_72 ? "p72" : "arrival");
-    if (url) {
-      L.imageOverlay(url, bounds, { opacity: 0.6, pane: "overlayPane" }).addTo(mapRef);
-      mapRef.fitBounds(bounds, { padding: [20, 20] });
-    }
-  }
   if (report.map?.ignition) {
     L.circleMarker([report.map.ignition.lat, report.map.ignition.lng], {
       radius: 8,
@@ -234,22 +313,31 @@ function drawReportOnMap(report) {
       .bindTooltip("ignition")
       .addTo(mapRef);
   }
+  const field = report.engine?.field;
+  if (field && field.arrival_hours) {
+    mountPlayback(field, $("#playback") || $("#map")?.parentElement);
+  }
 }
 
 async function startAsk(simulate) {
-  const lat = Number($("#lat").value);
-  const lng = Number($("#lng").value);
-  const name = $("#name").value;
+  const latRaw = ($("#lat").value || "").trim();
+  const lngRaw = ($("#lng").value || "").trim();
+  const name = $("#name").value || "ask-mode-site";
   const q = $("#q").value;
   $("#go").disabled = true;
   $("#trace").innerHTML = "Connecting…";
   $("#result").innerHTML = `<div class="muted">Agent is calling tools…</div>`;
-  initMap(lat, lng);
+  const payload = { name, q, simulate };
+  if (latRaw && lngRaw) {
+    payload.lat = Number(latRaw);
+    payload.lng = Number(lngRaw);
+    initMap(payload.lat, payload.lng);
+  }
   const url = simulate ? "/api/simulate" : "/api/ask";
   const resp = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ lat, lng, name, q, simulate }),
+    body: JSON.stringify(payload),
   });
   const reader = resp.body.getReader();
   const dec = new TextDecoder();
@@ -335,6 +423,13 @@ function aspectsHtml(aspects) {
     .join("");
 }
 
+function playbookHtml(report) {
+  const steps = report.playbook || report.action_card?.recommended_actions || [];
+  if (!steps.length) return "";
+  return `<h2>Playbook (${report.action_card?.action || ""})</h2>
+    <ul class="list">${steps.map((s) => `<li>${s}</li>`).join("")}</ul>`;
+}
+
 function responseHtml(rc) {
   if (!rc) return "";
   const water = (rc.water_sources || [])
@@ -373,6 +468,8 @@ async function renderCard(cardId) {
   const eng = report.engine || {};
   const etaNull = card.eta_hours == null;
   const hasField = Boolean(card.spread_field_version);
+  const honesty = (report.parse && report.parse.honesty) || "";
+  const notify = report.notify || {};
   app.innerHTML = `
     <div class="grid2">
       <div>
@@ -380,18 +477,18 @@ async function renderCard(cardId) {
           ${pill(card.action)}
           <div class="action-hero" style="color: var(--${card.action})">${(card.action || "").replaceAll("_", " ").toUpperCase()}</div>
           <div>${card.site.name} · ${card.site.lat.toFixed(4)}, ${card.site.lng.toFixed(4)}</div>
-          <div class="muted">${card.generated_at}</div>
+          <div class="muted">${card.generated_at} · policy ${card.policy_version} · no hit-model</div>
+          ${honesty ? `<div class="banner">${honesty}</div>` : ""}
           ${card.flags?.includes("no_ros_high_sigma") ? `<div class="banner warn">Evacuate was suppressed because uncertainty is too high. Action is protect_asset.</div>` : ""}
           ${report.simulate ? `<div class="banner warn">Simulated ignition. Engine raster is not an official perimeter.</div>` : ""}
-          ${card.model_version && card.model_version.includes("untrained") ? `<div class="banner">Model is untrained (${card.model_version}). Engine ETA / P(burn) still shown when a field exists.</div>` : ""}
-          <h2>Recommended actions</h2>
-          <ul class="list">${(card.recommended_actions || []).map((a) => `<li>${a}</li>`).join("")}</ul>
+          ${notify.log_only ? `<div class="banner">notify_ops logged only (no Slack token). Channel ${na(notify.channel)}.</div>` : ""}
+          ${playbookHtml(report)}
           <h2>Why this action</h2>
           <ul class="list">${(card.reasons || []).map((a) => `<li>${a}</li>`).join("")}</ul>
           <div>${chips(card.flags)}</div>
         </div>
         <div class="panel" style="margin-top:12px">
-          <h2>Arrival estimate with sigma</h2>
+          <h2>Engine clock</h2>
           ${
             etaNull
               ? hasField
@@ -402,22 +499,20 @@ async function renderCard(cardId) {
           }
           ${pburnBars(card.p_burn_by_T)}
           <div class="kv">
-            <span>Raw spread field / baseline</span><span>${card.baseline_y == null ? '<span class="na">n/a</span>' : Number(card.baseline_y).toFixed(2)}</span>
-            <span>Calibrated y_hat</span><span>${card.y_hat == null ? '<span class="na">n/a</span>' : `${Number(card.y_hat).toFixed(2)} ± ${Number(card.sigma).toFixed(2)}`}</span>
             <span>spread_field_version</span><span>${na(card.spread_field_version)}</span>
             <span>engine</span><span>${na(eng.engine)}</span>
             <span>policy</span><span>${card.policy_version}</span>
-            <span>model</span><span>${card.model_version}</span>
+            <span>clock</span><span>engine ETA + distance</span>
           </div>
         </div>
-        <h2>Brief</h2>
+        <h2>Playbook brief</h2>
         ${report.brief_replaced ? `<div class="banner">Brief failed validation and was replaced with the fallback.</div>` : ""}
         <div class="panel">${(report.brief || "").replaceAll("\n", "<br/>")}</div>
         ${responseHtml(report.response_card)}
       </div>
       <div>
         <div id="map"></div>
-        <p class="muted">Arrival / P(burn 72) overlay is the engine raster, not an official perimeter.</p>
+        <div id="playback"></div>
         <h2>Situation</h2>
         <div class="panel">
           <div class="kv">
@@ -430,7 +525,7 @@ async function renderCard(cardId) {
             <span>RH</span><span>${card.weather.rh_pct == null ? '<span class="na">n/a</span>' : card.weather.rh_pct + " %"}</span>
           </div>
         </div>
-        <h2>Mireye aspects</h2>
+        <h2>Mireye aspects (also in the agent API call)</h2>
         <div class="panel">${aspectsHtml(report.aspects)}</div>
         <h2>Tool trace</h2>
         <div class="panel trace">${(report.trace || [])
@@ -447,8 +542,9 @@ async function renderIncident(irwin) {
   try {
     const data = await (await fetch(`/api/incidents/${encodeURIComponent(irwin)}`)).json();
     app.innerHTML = `<h1>${na(data.incident_name)} <span class="muted">${irwin}</span></h1>
-      <p class="muted">One field per incident; nearby sites reuse it. Engine raster is not an official perimeter.</p>
+      <p class="muted">Hour playback of the engine field. Not an official perimeter.</p>
       <div id="map"></div>
+      <div id="playback"></div>
       <pre class="panel trace">${JSON.stringify(data.engine?.sample || {}, null, 2)}</pre>`;
     initMap(34, -118);
     drawReportOnMap({ site: { lat: 34, lng: -118, name: irwin }, engine: data.engine, map: data.map });

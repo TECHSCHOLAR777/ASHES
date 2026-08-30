@@ -14,6 +14,7 @@ from src.agents.agent_tools import (
     execute_tool,
     serialize_report,
 )
+from src.agents.bucket_skills import BUCKET_SKILLS, situation_for_llm
 from src.agents.main_agent import Site
 
 logger = logging.getLogger("fire_copilot.agent_loop")
@@ -21,24 +22,26 @@ logger = logging.getLogger("fire_copilot.agent_loop")
 SYSTEM_PROMPT = """You are ASHES, an unattended cited wildfire copilot for a book of named US sites.
 
 You actually call tools. You never invent a number, distance, acreage, ETA, or score.
-You never decide the Action enum. After gathering facts you MUST call apply_policy, then commit_report.
+You never decide the Action enum. After gathering facts you MUST call apply_policy, then the
+bucket skill for that action, then commit_report.
 
 What each source is for:
+- parse_place: NLP. Town/forest names become a Mireye geocode. Copy the honesty string (point vs town boundary).
 - NWS / FIRMS / WFIGS / HRRR: live fire week (E).
-- Mireye fields: cited site aspects (fuels, terrain including aspect_degrees/aspect_cardinal, hazard zone, buildings, roads, water, surface_management_agency). Not P(this pixel burns in 72 h).
-- spread_run / simulate_ignition: the out-of-process engine (ELMFIRE when configured). ETA and P(burn by T) come from the engine sample, not from you.
-- model_infer: combines E + encoded W + engine sample. y_hat is not the action.
-- apply_policy: versioned table. First match wins. You may not override it.
+- Mireye fields: cited site aspects (fuels, terrain including aspect_degrees/aspect_cardinal, hazard zone, buildings, roads, water, surface_management_agency). Not P(this pixel burns in 72 h). These fields are also given to you after policy in a situation JSON so you can tailor the playbook.
+- spread_run / simulate_ignition: the out-of-process engine (ELMFIRE when configured). ETA and P(burn by T) come from the engine sample. There is no tabular hit-model. Do not call model_infer; it does not exist.
+- apply_policy: versioned table. First match wins. Distance, Red Flag, FIRMS, engine ETA, Mireye guards. You may not override it.
+- Bucket skills (draft_watch_note, stage_prepare_plan, list_suppression_steps, list_evac_steps, inspect_checklist, notify_ops): tailor contact/stop-spread steps from Mireye + engine. Do not invent hydrants or phone numbers.
 
 You MUST call mireye_fetch (roles A–I at minimum) before commit_report. mireye_quote is not a fetch.
 A sealed report without cited site aspects is incomplete.
 
-Tool order for a live ask (call independent live feeds in one turn when you can):
-geocode if needed → nws_alerts, firms_hotspots, wfigs_incidents, wfigs_perimeters, hrrr_weather in parallel → list_mireye_roles then mireye_quote + mireye_fetch for roles A–I (add J if you will build a dossier) → run_spread if a WFIGS perimeter exists, else simulate_ignition when the user asked to simulate or there is no live fire → model_infer → apply_policy → build_response_dossier if action is protect_asset or evacuate_site → commit_report.
+Tool order:
+parse_place first → nws_alerts, firms_hotspots, wfigs_incidents, wfigs_perimeters, hrrr_weather in parallel → list_mireye_roles then mireye_quote + mireye_fetch for roles A–I (add J if you will build a dossier) → run_spread if a WFIGS perimeter exists, else simulate_ignition when the user asked to simulate or there is no live fire → apply_policy → the bucket skill(s) named in the situation JSON → commit_report.
 
 If run_spread fails, continue degraded and still apply_policy. Never fabricate an ETA.
 
-Copy rules: after commit_report the system writes the brief from grounded JSON. Your job is the tools.
+After commit_report the system writes the playbook from grounded JSON (parse honesty + Mireye + engine + steps). Your job is the tools.
 """
 
 MAX_ROUNDS = 18
@@ -108,8 +111,41 @@ def _run_tool_batch(session: AgentSession, calls: list[tuple[str, str, dict[str,
     return messages
 
 
+def _inject_situation(session: AgentSession, messages: list[dict[str, Any]]) -> None:
+    if session.policy_result is None or session.situation_injected:
+        return
+    session.situation_injected = True
+    action = session.policy_result.action
+    blob = {
+        "situation": situation_for_llm(session),
+        "instruction": (
+            f"Policy action is {action}. Call {BUCKET_SKILLS.get(action, [])} to tailor the "
+            "playbook from Mireye aspects + engine sample, then commit_report. "
+            "Copy parse.honesty into the playbook. Do not change the Action enum. "
+            "Mireye is cited site fact, not P(this pixel burns)."
+        ),
+    }
+    messages.append({"role": "user", "content": json.dumps(blob, default=str)[:24000]})
+
+
+def _backfill_bucket(session: AgentSession) -> None:
+    if session.policy_result is None:
+        return
+    action = session.policy_result.action
+    for name in BUCKET_SKILLS.get(action, []):
+        if name == "notify_ops":
+            continue
+        if name == "build_response_dossier":
+            continue
+        if name not in session.called:
+            execute_tool(session, name, {}, backfill=True)
+            break
+
+
 def _backfill(session: AgentSession) -> None:
     """If the model skipped required live tools, run them. Honest: labeled backfill in the trace."""
+    if "parse_place" not in session.called:
+        execute_tool(session, "parse_place", {}, backfill=True)
     if session.simulate and "simulate_ignition" not in session.called:
         execute_tool(session, "simulate_ignition", {}, backfill=True)
     for name in BACKFILL_ORDER:
@@ -126,10 +162,9 @@ def _backfill(session: AgentSession) -> None:
             execute_tool(session, "simulate_ignition", {}, backfill=True)
     elif "run_spread" not in session.called:
         execute_tool(session, "run_spread", {}, backfill=True)
-    if "model_infer" not in session.called:
-        execute_tool(session, "model_infer", {}, backfill=True)
     if "apply_policy" not in session.called:
         execute_tool(session, "apply_policy", {}, backfill=True)
+    _backfill_bucket(session)
     if not session.committed:
         execute_tool(session, "commit_report", {}, backfill=True)
 
@@ -142,6 +177,7 @@ def run_agentic(
     simulate: bool = False,
     ignition_lat: float | None = None,
     ignition_lng: float | None = None,
+    coords_supplied: bool = True,
     on_event=None,
     client=None,
 ) -> dict[str, Any]:
@@ -153,14 +189,21 @@ def run_agentic(
         simulate=simulate,
         ignition_lat=ignition_lat,
         ignition_lng=ignition_lng,
+        coords_supplied=coords_supplied,
         on_event=on_event,
     )
+    execute_tool(session, "parse_place", {})
     user_blob = {
         "site": {"site_id": site.site_id, "name": site.name, "lat": site.lat, "lng": site.lng, "address": site.address},
         "question": question,
-        "simulate": simulate,
+        "simulate": session.simulate,
+        "coords_supplied": coords_supplied,
+        "parse": session.parse,
         "ignition": {"lat": ignition_lat, "lng": ignition_lng} if ignition_lat is not None else None,
-        "instruction": "Call tools. Finish with apply_policy then commit_report.",
+        "instruction": (
+            "parse_place already ran. Call live E + mireye_fetch + spread, then apply_policy, "
+            "bucket skill, commit_report. Copy parse.honesty. No hit-model."
+        ),
     }
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -205,6 +248,7 @@ def run_agentic(
                 break
             parsed = [_tool_call_payload(tc) for tc in tool_calls]
             messages.extend(_run_tool_batch(session, parsed))
+            _inject_situation(session, messages)
     except Exception as exc:
         logger.warning("agentic loop failed: %s; backfilling remaining tools", exc)
         session.emit({"event": "status", "message": f"model error; backfilling ({exc})"})

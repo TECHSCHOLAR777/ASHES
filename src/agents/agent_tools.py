@@ -22,6 +22,15 @@ from src.features.e_packer import pack_e
 from src.features.ros_ellipse import compute_ros_ellipse_feature
 from src.features.w_encoder import encode_w, load_field_catalog
 from src.geometry.aoi import aoi_bbox_for_fetch, build_incident_aoi, point_geometry
+from src.agents.bucket_skills import (
+    BUCKET_SKILLS,
+    handle_evac_steps,
+    handle_inspect,
+    handle_notify_ops,
+    handle_prepare_plan,
+    handle_suppression_steps,
+    handle_watch_note,
+)
 from src.logging_ import tool_logger
 from src.model.h_fire import model_infer
 from src.policy.engine import PolicyInput, apply_policy, load_policy_config
@@ -42,6 +51,18 @@ from src.validator.brief_validator import safe_brief
 MAX_TOOL_RESULT_CHARS = 8000
 
 OPENAI_TOOLS: list[dict[str, Any]] = [
+    {
+        "type": "function",
+        "function": {
+            "name": "parse_place",
+            "description": (
+                "NLP: extract a US town/forest/address from the question and geocode via Mireye "
+                "when lat/lng were not supplied. Always call first. Copy the honesty string into "
+                "the playbook. Does not invent coordinates."
+            ),
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
     {
         "type": "function",
         "function": {
@@ -149,7 +170,8 @@ OPENAI_TOOLS: list[dict[str, Any]] = [
             "name": "run_spread",
             "description": (
                 "Run the out-of-process spread engine (ELMFIRE when configured) on the nearest "
-                "WFIGS incident AOI. Returns site ETA, ensemble sigma, P(burn by T), engine id."
+                "WFIGS incident AOI. Returns site ETA, ensemble sigma, P(burn by T), engine id. "
+                "There is no tabular hit-model. y_hat is not used."
             ),
             "parameters": {"type": "object", "properties": {}},
         },
@@ -175,19 +197,61 @@ OPENAI_TOOLS: list[dict[str, Any]] = [
     {
         "type": "function",
         "function": {
-            "name": "model_infer",
-            "description": "Run model_infer on packed E + encoded W + engine sample. Does not choose the action.",
+            "name": "apply_policy",
+            "description": (
+                "REQUIRED. Deterministic policy table picks monitor/prepare/protect_asset/"
+                "evacuate_site/inspect_after/no_action from distance, Red Flag, FIRMS, "
+                "engine ETA, and Mireye guards (density, roads, NDVI, land use). No hit-model. "
+                "You never pick the action."
+            ),
             "parameters": {"type": "object", "properties": {}},
         },
     },
     {
         "type": "function",
         "function": {
-            "name": "apply_policy",
-            "description": (
-                "REQUIRED before finishing. Deterministic policy table picks monitor/prepare/"
-                "protect_asset/evacuate_site/inspect_after/no_action. You never pick the action."
-            ),
+            "name": "draft_watch_note",
+            "description": "monitor/no_action skill. Tailor a watch note from Mireye agency + engine ETA-null honesty.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "stage_prepare_plan",
+            "description": "prepare skill. Stage contacts and egress from Mireye roads/agency.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_suppression_steps",
+            "description": "protect_asset skill. Contact agency, roads, water from Mireye + engine ETA. Do not invent hydrants.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_evac_steps",
+            "description": "evacuate_site skill. Egress + notify. Do not soften evacuate.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "inspect_checklist",
+            "description": "inspect_after skill. Post-containment inspection only.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "notify_ops",
+            "description": "Send the ActionCard to the site Slack/email channel. Log-only if no token. Never invents a phone number.",
             "parameters": {"type": "object", "properties": {}},
         },
     },
@@ -203,7 +267,7 @@ OPENAI_TOOLS: list[dict[str, Any]] = [
         "type": "function",
         "function": {
             "name": "commit_report",
-            "description": "Assemble the ActionCard, write the copy-only brief from grounded facts, and seal the report. Call once after apply_policy.",
+            "description": "Assemble the ActionCard, write the cited playbook from Mireye+engine (reasoner, not copy-only), and seal. Call after apply_policy and the bucket skill.",
             "parameters": {"type": "object", "properties": {}},
         },
     },
@@ -443,16 +507,43 @@ def _run_engine(
     }
 
 
+def _engine_clock(session: AgentSession) -> dict[str, Any]:
+    """ETA / P(burn) from the spread sample. No h_fire y_hat."""
+    sample = session.spread_sample
+    eta = sample.eta_hours if sample else None
+    eta_sigma = sample.eta_sigma_hours if sample else None
+    sigma = float(eta_sigma) if eta_sigma is not None else 0.0
+    p_burn = None
+    if sample is not None:
+        p_burn = {
+            "24": sample.p_burn_24,
+            "48": sample.p_burn_48,
+            "72": sample.p_burn_72,
+        }
+    version = None
+    if sample is not None:
+        version = sample.spread_field_version
+    elif session.spread_field is not None:
+        version = session.spread_field.spread_field_version
+    return {
+        "eta_hours": eta,
+        "eta_sigma_hours": eta_sigma,
+        "sigma": sigma,
+        "p_burn_by_T": p_burn,
+        "spread_field_version": version,
+        "y_hat": None,
+        "model_version": "none",
+        "baseline_y": None,
+    }
+
+
 def _assemble_card(session: AgentSession) -> ActionCard:
-    if session.e_features is None or session.w_features is None or session.model_output is None:
+    if session.e_features is None or session.w_features is None:
         _pack_session(session)
-        if session.model_output is None:
-            handle_model_infer(session, {})
-        if session.policy_result is None:
-            handle_apply_policy(session, {})
+    if session.policy_result is None:
+        handle_apply_policy(session, {})
     assert session.e_features is not None
     assert session.w_features is not None
-    assert session.model_output is not None
     assert session.policy_result is not None
 
     site = session.site
@@ -460,7 +551,7 @@ def _assemble_card(session: AgentSession) -> ActionCard:
     nearest, dist_perim_m = _nearest_incident_and_perimeter_distance(
         site, session.incidents, session.perimeters
     )
-    model_output = session.model_output
+    clock = _engine_clock(session)
     policy_result = session.policy_result
     flags = [f for f in dict.fromkeys(session.flags) if f in set(get_args(FlagEnum))]
     citations = [Citation(**c) for c in session.w_features.citations]
@@ -483,6 +574,10 @@ def _assemble_card(session: AgentSession) -> ActionCard:
         ),
     ]
     geom = session.geom or point_geometry(site.lat, site.lng)
+    recs = list(RECOMMENDED_ACTIONS.get(policy_result.action, []))
+    if session.playbook_steps:
+        recs = list(session.playbook_steps)
+    p_burn = PBurnByT.model_validate(clock["p_burn_by_T"]) if clock["p_burn_by_T"] else None
     card = ActionCard(
         card_id=str(uuid.uuid4()),
         generated_at=now.isoformat(),
@@ -496,12 +591,12 @@ def _assemble_card(session: AgentSession) -> ActionCard:
             range_interpolation=session.range_interpolation,
         ),
         action=policy_result.action,
-        eta_hours=model_output.eta_hours,
-        eta_sigma_hours=model_output.eta_sigma_hours,
-        p_burn_by_T=PBurnByT.model_validate(model_output.p_burn_by_T) if model_output.p_burn_by_T else None,
-        y_hat=model_output.y_hat,
-        sigma=model_output.sigma,
-        baseline_y=model_output.baseline_y,
+        eta_hours=clock["eta_hours"],
+        eta_sigma_hours=clock["eta_sigma_hours"],
+        p_burn_by_T=p_burn,
+        y_hat=None,
+        sigma=clock["sigma"],
+        baseline_y=None,
         incident=IncidentInfo(
             irwin_id=nearest.irwin_id if nearest else None,
             incident_name=nearest.name if nearest else None,
@@ -517,22 +612,38 @@ def _assemble_card(session: AgentSession) -> ActionCard:
             rh_pct=session.e_features.rh_pct,
             hrrr_valid_time=session.hrrr.hrrr_valid_time if session.hrrr else None,
         ),
-        recommended_actions=RECOMMENDED_ACTIONS.get(policy_result.action, []),
+        recommended_actions=recs,
         reasons=policy_result.reasons,
         flags=flags,
         citations=citations,
         e_product_times=e_product_times,
         w_sources=w_sources,
-        model_version=model_output.model_version,
-        spread_field_version=model_output.spread_field_version,
+        model_version="none",
+        spread_field_version=clock["spread_field_version"],
         policy_version=policy_result.policy_version,
     )
     session.action_card = card
     return card
 
 
+def _fallback_playbook(session: AgentSession) -> str:
+    card = session.action_card
+    assert card is not None
+    honesty = (session.parse or {}).get("honesty") or ""
+    steps = session.playbook_steps or card.recommended_actions
+    step_txt = " ".join(f"{i}. {s}" for i, s in enumerate(steps, 1)) if steps else ""
+    eta = "null" if card.eta_hours is None else f"{card.eta_hours}"
+    return (
+        f"{honesty} Action: {card.action} (policy {card.policy_version}, not the LLM). "
+        f"Engine clock ETA={eta} h (sigma={card.sigma}); no hit-model y_hat. "
+        f"Distance to perimeter: {card.incident.dist_perimeter_m} m. "
+        f"Reasons: {'; '.join(card.reasons)}. "
+        f"Playbook: {step_txt}".strip()
+    )
+
+
 def _write_grounded_brief(session: AgentSession) -> str:
-    from src.agents.main_agent import BRIEF_SYSTEM_PROMPT, _fallback_brief
+    import json
     import os
 
     card = session.action_card
@@ -540,17 +651,18 @@ def _write_grounded_brief(session: AgentSession) -> str:
     grounded = grounded_payload(session)
     api_key = os.environ.get("OPENAI_KEY")
     prompt = (
-        "You are a fire brief writer. You receive a grounded JSON payload: ActionCard, "
-        "Mireye site aspects (cited facts), the spread-engine sample, and copy_these_numbers. "
-        "Write 2-3 paragraphs that copy those values. Every number you write MUST appear in "
-        "copy_these_numbers or elsewhere in this JSON (1- or 2-decimal rounding is listed). "
-        "Do not invent any number. Do not alter the action. If action is evacuate_site, lead "
-        "with that. Use engine ETA and P(burn by T) as the clock. Use Mireye fields as site "
-        "facts (roads, water, agency, terrain aspect, buildings), never as P(the fire hits "
-        "this pixel). Return only the prose."
+        "You are the ASHES playbook reasoner. Policy already picked the Action enum; you may "
+        "not change it. You receive grounded JSON: parse honesty, ActionCard, Mireye site "
+        "aspects, engine sample, bucket playbook steps, copy_these_numbers. "
+        "Write: (1) the parse honesty sentence if present — town name vs a point, not a "
+        "boundary; (2) the action as given; (3) engine ETA and P(burn by T) as the clock, "
+        "never a tabular hit-model; (4) tailored next steps from the playbook and Mireye "
+        "facts (agency, roads, water, terrain). Do not invent hydrants, phone numbers, or "
+        "any number that is not in copy_these_numbers. If notify.log_only, say the alert "
+        "was logged, not posted. If action is evacuate_site, lead with that. Return prose."
     )
     if not api_key:
-        brief = _fallback_brief(card)
+        brief = _fallback_playbook(session)
         session.brief = brief
         session.brief_replaced = False
         card_briefs[card.card_id] = brief
@@ -559,20 +671,18 @@ def _write_grounded_brief(session: AgentSession) -> str:
         from openai import OpenAI
 
         client = OpenAI(api_key=api_key)
-        import json
-
         resp = client.chat.completions.create(
             model=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": json.dumps(grounded, default=str)[:24000]},
             ],
-            max_tokens=500,
+            max_tokens=700,
         )
-        raw = resp.choices[0].message.content or _fallback_brief(card)
+        raw = resp.choices[0].message.content or _fallback_playbook(session)
     except Exception as exc:
         tool_logger.log_tool_call("write_brief", {}, None, session.site.site_id, 0.0, error=str(exc))
-        raw = _fallback_brief(card)
+        raw = _fallback_playbook(session)
     brief, validation = safe_brief(raw, card, grounded=grounded)
     session.brief_replaced = not validation.valid
     if not validation.valid:
@@ -624,13 +734,19 @@ def grounded_payload(session: AgentSession) -> dict[str, Any]:
     }
     card_dump = card.model_dump(mode="json", by_alias=True) if card else None
     response = session.response_card.model_dump(mode="json") if session.response_card is not None else None
+    parse = session.parse or {}
+    playbook = session.playbook_steps
+    notify = session.notify
     return {
         "action_card": card_dump,
         "aspects": aspects,
         "engine": engine,
         "response_card": response,
         "question": session.question,
-        "copy_these_numbers": copyable_numbers(card_dump, aspects, engine, response),
+        "parse": parse,
+        "playbook": playbook,
+        "notify": notify,
+        "copy_these_numbers": copyable_numbers(card_dump, aspects, engine, response, parse, playbook, notify),
     }
 
 
@@ -677,10 +793,28 @@ def serialize_report(session: AgentSession) -> dict[str, Any]:
         ],
         "flags": list(dict.fromkeys(session.flags)),
         "quoted_credits": session.quoted_credits,
+        "parse": session.parse,
+        "playbook": session.playbook_steps,
+        "notify": session.notify,
     }
 
 
 # -- handlers ----------------------------------------------------------------
+
+
+def handle_parse_place(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
+    from src.agents.place_parse import parse_place
+
+    parsed = parse_place(session.deps, session.site, session.question, session.coords_supplied)
+    session.parse = parsed
+    if parsed.get("geocoded"):
+        session.geocode_confidence = str(parsed.get("confidence") or "n/a")
+        session.range_interpolation = bool(parsed.get("range_interpolation"))
+        if parsed.get("place") and session.site.name in {"ask-mode-site", "Ask", ""}:
+            session.site.name = str(parsed["place"])
+    if parsed.get("want_simulate"):
+        session.simulate = True
+    return {"ok": True, **parsed}
 
 
 def handle_geocode(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
@@ -929,6 +1063,7 @@ def handle_simulate(session: AgentSession, args: dict[str, Any]) -> dict[str, An
 
 
 def handle_model_infer(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
+    """Watch-loop leftover. Not registered on the agentic tool list."""
     _pack_session(session)
     assert session.e_features is not None
     assert session.w_features is not None
@@ -965,10 +1100,10 @@ def handle_model_infer(session: AgentSession, args: dict[str, Any]) -> dict[str,
 
 
 def handle_apply_policy(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
-    if session.e_features is None or session.model_output is None:
-        handle_model_infer(session, {})
+    if session.e_features is None:
+        _pack_session(session)
     assert session.e_features is not None
-    assert session.model_output is not None
+    clock = _engine_clock(session)
     prior_state = session.deps.site_state.get_state(session.site.site_id)
     previously_in_play = bool(prior_state and prior_state.last_action not in (None, "no_action", "monitor"))
     road_access_limited = session.raw_w.get("nearest_road_class") in (
@@ -990,13 +1125,13 @@ def handle_apply_policy(session: AgentSession, args: dict[str, Any]) -> dict[str
         road_access_limited=road_access_limited,
         containment_pct=session.e_features.containment_pct,
         previously_in_play=previously_in_play,
-        eta_hours=session.model_output.eta_hours,
-        eta_sigma_hours=session.model_output.eta_sigma_hours,
+        eta_hours=clock["eta_hours"],
+        eta_sigma_hours=clock["eta_sigma_hours"],
     )
-    session.policy_result = apply_policy(session.model_output.y_hat, session.model_output.sigma, pin)
+    session.policy_result = apply_policy(None, clock["sigma"], pin)
     pr = session.policy_result
     tool_logger.log_policy_call(
-        session.site.site_id, session.model_output.y_hat, session.model_output.sigma, pr.action, pr.reasons, pr.policy_version
+        session.site.site_id, None, clock["sigma"], pr.action, pr.reasons, pr.policy_version
     )
     session.flags.extend(pr.flags)
     return {
@@ -1005,6 +1140,8 @@ def handle_apply_policy(session: AgentSession, args: dict[str, Any]) -> dict[str
         "reasons": pr.reasons,
         "policy_version": pr.policy_version,
         "flags": pr.flags,
+        "clock": "engine_eta_distance_not_h_fire",
+        "bucket_skills": BUCKET_SKILLS.get(pr.action, []),
         "note": "Action is from the policy table, not the LLM.",
     }
 
@@ -1038,6 +1175,17 @@ def handle_response(session: AgentSession, args: dict[str, Any]) -> dict[str, An
     }
 
 
+def _run_bucket_skill(session: AgentSession, *, backfill: bool = False) -> None:
+    if session.policy_result is None:
+        return
+    skills = [s for s in BUCKET_SKILLS.get(session.policy_result.action, []) if s != "notify_ops"]
+    if not session.playbook_steps:
+        for name in skills:
+            if name not in session.called and name != "build_response_dossier":
+                execute_tool(session, name, {}, backfill=backfill)
+                break
+
+
 def handle_commit(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]:
     value_keys = [
         k for k in session.raw_w if not str(k).endswith(("_confidence", "_vintage", "_source_url"))
@@ -1046,6 +1194,7 @@ def handle_commit(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]
         execute_tool(session, "mireye_fetch", {"roles": default_aspect_roles()}, backfill=True)
     if session.policy_result is None:
         handle_apply_policy(session, {})
+    _run_bucket_skill(session, backfill=True)
     card = _assemble_card(session)
     if session.policy_result and session.policy_result.action in ESCALATION_ACTIONS and session.response_card is None:
         try:
@@ -1054,6 +1203,8 @@ def handle_commit(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]
             session.flags.append("degraded")
             tool_logger.log_tool_call("build_response_dossier", {}, None, session.site.site_id, 0.0, error=str(exc))
     brief = _write_grounded_brief(session)
+    if "notify_ops" in BUCKET_SKILLS.get(card.action, []) and "notify_ops" not in session.called:
+        execute_tool(session, "notify_ops", {}, backfill=True)
     session.committed = True
     return {
         "ok": True,
@@ -1062,13 +1213,16 @@ def handle_commit(session: AgentSession, args: dict[str, Any]) -> dict[str, Any]
         "brief": brief,
         "brief_replaced": session.brief_replaced,
         "eta_hours": card.eta_hours,
-        "y_hat": card.y_hat,
+        "y_hat": None,
         "sigma": card.sigma,
         "spread_field_version": card.spread_field_version,
+        "parse_honesty": (session.parse or {}).get("honesty"),
+        "playbook": session.playbook_steps,
     }
 
 
 HANDLERS = {
+    "parse_place": handle_parse_place,
     "geocode": handle_geocode,
     "nws_alerts": handle_nws,
     "firms_hotspots": handle_firms,
@@ -1080,8 +1234,13 @@ HANDLERS = {
     "mireye_fetch": handle_mireye_fetch,
     "run_spread": handle_run_spread,
     "simulate_ignition": handle_simulate,
-    "model_infer": handle_model_infer,
     "apply_policy": handle_apply_policy,
+    "draft_watch_note": handle_watch_note,
+    "stage_prepare_plan": handle_prepare_plan,
+    "list_suppression_steps": handle_suppression_steps,
+    "list_evac_steps": handle_evac_steps,
+    "inspect_checklist": handle_inspect,
+    "notify_ops": handle_notify_ops,
     "build_response_dossier": handle_response,
     "commit_report": handle_commit,
 }

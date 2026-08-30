@@ -39,8 +39,8 @@ def _get_deps():
 
 
 class AskBody(BaseModel):
-    lat: float
-    lng: float
+    lat: float | None = None
+    lng: float | None = None
     q: str = "Is this site at risk?"
     name: str = "ask-mode-site"
     site_id: str | None = None
@@ -91,11 +91,13 @@ def _sse(body: AskBody) -> Any:
     from src.agents.main_agent import Site
 
     q: queue.Queue = queue.Queue()
+    coords_supplied = body.lat is not None and body.lng is not None
     site = Site(
         site_id=body.site_id or f"ask_{uuid.uuid4().hex[:8]}",
         name=body.name,
-        lat=body.lat,
-        lng=body.lng,
+        lat=float(body.lat) if body.lat is not None else 0.0,
+        lng=float(body.lng) if body.lng is not None else 0.0,
+        address=None if coords_supplied else body.q,
     )
 
     def on_event(ev: dict[str, Any]) -> None:
@@ -111,6 +113,7 @@ def _sse(body: AskBody) -> Any:
                 simulate=body.simulate,
                 ignition_lat=body.ignition_lat,
                 ignition_lng=body.ignition_lng,
+                coords_supplied=coords_supplied,
                 on_event=on_event,
             )
             _store_report(report)
@@ -206,8 +209,8 @@ def sites():
                 "action": (card or {}).get("action"),
                 "eta_hours": (card or {}).get("eta_hours"),
                 "eta_sigma_hours": (card or {}).get("eta_sigma_hours"),
-                "y_hat": (card or {}).get("y_hat"),
                 "sigma": (card or {}).get("sigma"),
+                "engine": ((report or {}).get("engine") or {}).get("engine"),
                 "dist_perimeter_m": ((card or {}).get("incident") or {}).get("dist_perimeter_m"),
                 "incident_name": ((card or {}).get("incident") or {}).get("incident_name"),
                 "red_flag": ((card or {}).get("weather") or {}).get("red_flag"),
@@ -243,6 +246,17 @@ def get_incident(irwin_id: str):
     return hit
 
 
+@app.get("/api/showcase")
+def showcase():
+    import yaml
+
+    path = Path(__file__).resolve().parent.parent.parent / "config" / "showcase.yaml"
+    if not path.exists():
+        raise HTTPException(404, "showcase.yaml missing")
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return data
+
+
 @app.get("/api/policy")
 def policy():
     from src.policy.engine import load_policy_config
@@ -271,8 +285,8 @@ def ask(body: AskBody):
 @app.post("/api/simulate")
 def simulate(body: AskBody):
     body.simulate = True
-    if body.ignition_lat is None:
+    if body.ignition_lat is None and body.lat is not None:
         body.ignition_lat = body.lat
-    if body.ignition_lng is None:
+    if body.ignition_lng is None and body.lng is not None:
         body.ignition_lng = body.lng
     return _sse(body)

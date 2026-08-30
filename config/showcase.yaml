@@ -1,0 +1,12 @@
+# Demo case for the agentic copilot. Urban warehouse pins die in FBFM 91
+# (seed-only T=0). This pin is San Jacinto chaparral west of Idyllwild so
+# ELMFIRE can actually leave the seed. Raster is not an official perimeter.
+id: idyllwild_chaparral
+name: Idyllwild
+place: Idyllwild, California
+lat: 33.7435
+lng: -116.7350
+simulate: true
+buffer_km: 6
+q: "Idyllwild sits in the San Jacinto chaparral. If this ignites west of town, is the community in play?"
+honesty: "Showcase pin in burnable shrub, not a live WFIGS ignition. ELMFIRE playback is the engine case unfolding in time, not a satellite loop."
