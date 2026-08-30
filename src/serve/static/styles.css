@@ -71,8 +71,8 @@ button {
 }
 button.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
 button:disabled { opacity: 0.5; cursor: wait; }
-#map { height: 420px; border-radius: 8px; border: 1px solid var(--line); }
-.trace { font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+#map { height: 520px; border-radius: 8px; border: 1px solid var(--line); }
+.trace { font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; max-height: 280px; overflow: auto; }
 .trace .ok { color: #8fbf88; }
 .trace .err { color: #e07a6a; }
 .trace .back { color: var(--amber); }

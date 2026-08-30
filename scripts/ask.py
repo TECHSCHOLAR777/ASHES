@@ -39,7 +39,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--name", type=str, default="ask-mode-site")
     parser.add_argument("--slack-channel", type=str, default="#fire-alerts")
     parser.add_argument("--agentic", action="store_true", help="OpenAI tool-calling loop over live tools")
-    parser.add_argument("--simulate", action="store_true", help="Run ELMFIRE from an ignition at lat/lng")
+    parser.add_argument("--simulate", action="store_true", help="Run ELMFIRE from an ignition pin")
+    parser.add_argument("--ignition-lat", type=float, default=None)
+    parser.add_argument("--ignition-lng", type=float, default=None)
+    parser.add_argument("--buffer-km", type=float, default=None)
     return parser.parse_args()
 
 
@@ -56,8 +59,9 @@ def main() -> None:
             site,
             args.q,
             simulate=args.simulate,
-            ignition_lat=args.lat if args.simulate else None,
-            ignition_lng=args.lng if args.simulate else None,
+            ignition_lat=args.ignition_lat if args.simulate else None,
+            ignition_lng=args.ignition_lng if args.simulate else None,
+            buffer_km=args.buffer_km,
         )
         print(json.dumps(report, indent=2, default=str))
         tool_logger.log_event(

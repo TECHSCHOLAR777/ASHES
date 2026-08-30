@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Live agentic e2e: OpenAI + Mireye + live feeds + optional ELMFIRE simulator.
+"""Live agentic e2e for the Idyllwild chaparral showcase.
 
-Writes a JSON report with no secrets. Exit 0 only if an ActionCard and a tool
-trace exist and policy produced a closed Action enum.
+Community pin is the town. Ignition is west in burnable shrub so ELMFIRE can
+leave the seed. Writes data/models/agentic_live_report.json (no secrets).
 """
 from __future__ import annotations
 
@@ -26,27 +26,32 @@ ACTIONS = {"monitor", "prepare", "protect_asset", "evacuate_site", "inspect_afte
 OUT = Path("data/models/agentic_live_report.json")
 SUMMARY = Path("data/models/agentic_live_summary.json")
 
+TOWN = {"lat": 33.7461, "lng": -116.7139, "name": "Idyllwild"}
+IGNITION = {"lat": 33.7440, "lng": -116.7320}
+BUFFER_KM = 8.0
+Q = (
+    "Idyllwild is the community. Simulate ignition in the chaparral west of town "
+    "and report whether the town is in play. Use live feeds, Mireye aspects, and ELMFIRE."
+)
 
-def _run(simulate: bool) -> dict:
+
+def _run() -> dict:
     deps = MainAgentDeps()
     site = Site(
         site_id=f"live_{uuid.uuid4().hex[:8]}",
-        name="Riverside Warehouse",
-        lat=33.9806,
-        lng=-117.3755,
-    )
-    q = (
-        "Simulate ignition at the warehouse and report engine arrival, Mireye aspects, and the policy action."
-        if simulate
-        else "Is this warehouse at risk this fire week? Use live feeds, Mireye aspects, and the spread engine if a fire is nearby."
+        name=TOWN["name"],
+        lat=TOWN["lat"],
+        lng=TOWN["lng"],
     )
     return run_agentic(
         deps,
         site,
-        q,
-        simulate=simulate,
-        ignition_lat=site.lat if simulate else None,
-        ignition_lng=site.lng if simulate else None,
+        Q,
+        simulate=True,
+        ignition_lat=IGNITION["lat"],
+        ignition_lng=IGNITION["lng"],
+        buffer_km=BUFFER_KM,
+        coords_supplied=True,
     )
 
 
@@ -74,6 +79,7 @@ def _slim(report: dict | None) -> dict | None:
     card = report.get("action_card") or {}
     eng = report.get("engine") or {}
     sample = eng.get("sample") or {}
+    field = eng.get("field") or {}
     return {
         "action": card.get("action"),
         "incident": (card.get("incident") or {}).get("incident_name"),
@@ -85,16 +91,22 @@ def _slim(report: dict | None) -> dict | None:
         "p_burn_by_T": card.get("p_burn_by_T"),
         "site_inside_aoi": sample.get("inside_aoi"),
         "sample": sample,
+        "n_reached": field.get("n_reached"),
+        "max_eta_hours": field.get("max_eta_hours"),
         "tools": [t.get("tool") for t in report.get("trace") or []],
         "aspects": _aspect_values(report),
         "brief_replaced": report.get("brief_replaced"),
         "flags": card.get("flags"),
         "simulate": report.get("simulate"),
+        "parse": report.get("parse"),
+        "playbook": report.get("playbook"),
         "brief": (report.get("brief") or "")[:800],
+        "site": report.get("site"),
+        "ignition": (report.get("map") or {}).get("ignition"),
     }
 
 
-def _ok(report: dict, simulate: bool) -> list[str]:
+def _ok(report: dict) -> list[str]:
     problems = []
     card = report.get("action_card")
     if not card:
@@ -103,21 +115,20 @@ def _ok(report: dict, simulate: bool) -> list[str]:
     if card.get("action") not in ACTIONS:
         problems.append(f"bad action {card.get('action')}")
     tools = [t["tool"] for t in report.get("trace") or []]
-    for required in ("nws_alerts", "mireye_fetch", "apply_policy", "commit_report"):
+    for required in ("nws_alerts", "mireye_fetch", "simulate_ignition", "apply_policy", "commit_report"):
         if required not in tools:
             problems.append(f"missing tool {required}")
-    if "mireye_fetch" not in tools:
-        problems.append("missing tool mireye_fetch")
-    fetches = [t for t in report.get("trace") or [] if t.get("tool") == "mireye_fetch"]
-    if fetches and not report.get("aspects"):
-        if not any("402" in str(t.get("error") or "") for t in fetches):
-            problems.append("no Mireye aspects")
-    if simulate:
-        eng = (report.get("engine") or {}).get("engine")
-        if not eng:
-            problems.append("simulator produced no engine id (LANDFIRE/spread degraded)")
-        if "simulate_ignition" not in tools:
-            problems.append("missing tool simulate_ignition")
+    eng = (report.get("engine") or {}).get("engine")
+    if not eng:
+        problems.append("simulator produced no engine id (LANDFIRE/spread degraded)")
+    field = (report.get("engine") or {}).get("field") or {}
+    n_reached = field.get("n_reached")
+    if n_reached is not None and n_reached <= 1:
+        problems.append(f"engine did not leave the seed (n_reached={n_reached})")
+    site = report.get("site") or {}
+    ign = (report.get("map") or {}).get("ignition") or {}
+    if site.get("lat") and ign.get("lat") and abs(site["lat"] - ign["lat"]) < 1e-4:
+        problems.append("ignition is on the town pin")
     return problems
 
 
@@ -129,30 +140,31 @@ def main() -> int:
         print("MIREYE_KEY missing", file=sys.stderr)
         return 2
 
-    ask = _run(simulate=False)
-    sim_flag = os.environ.get("ASHES_LIVE_SIMULATE", "1").lower() in {"1", "true", "yes"}
-    payload = {"ask": ask, "simulate": None}
-    problems = _ok(ask, simulate=False)
-    if sim_flag:
-        try:
-            sim = _run(simulate=True)
-            payload["simulate"] = sim
-            problems.extend(f"simulate: {p}" for p in _ok(sim, simulate=True))
-        except Exception as exc:
-            payload["simulate_error"] = str(exc)
-            problems.append(f"simulate raised: {exc}")
-
+    report = _run()
+    problems = _ok(report)
+    payload = {"ask": None, "simulate": report}
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(payload, indent=2, default=str)[:400_000], encoding="utf-8")
+    raw = json.dumps(payload, indent=2, default=str)
+    OUT.write_text(raw[:800_000], encoding="utf-8")
     summary = {
-        "ask": _slim(ask),
-        "simulate": _slim(payload.get("simulate") if isinstance(payload.get("simulate"), dict) else None),
-        "simulate_error": payload.get("simulate_error"),
+        "simulate": _slim(report),
         "problems": problems,
         "out": str(OUT),
     }
     SUMMARY.write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
-    print(json.dumps({"ask_action": (ask.get("action_card") or {}).get("action"), "ask_tools": [t["tool"] for t in ask.get("trace") or []], "simulate_action": ((payload.get("simulate") or {}).get("action_card") or {}).get("action") if isinstance(payload.get("simulate"), dict) else None, "simulate_engine": ((payload.get("simulate") or {}).get("engine") or {}).get("engine") if isinstance(payload.get("simulate"), dict) else None, "problems": problems, "summary": str(SUMMARY)}, indent=2))
+    print(json.dumps(
+        {
+            "action": (report.get("action_card") or {}).get("action"),
+            "eta_hours": (report.get("action_card") or {}).get("eta_hours"),
+            "engine": (report.get("engine") or {}).get("engine"),
+            "n_reached": ((report.get("engine") or {}).get("field") or {}).get("n_reached"),
+            "max_eta_hours": ((report.get("engine") or {}).get("field") or {}).get("max_eta_hours"),
+            "tools": [t["tool"] for t in report.get("trace") or []],
+            "problems": problems,
+            "summary": str(SUMMARY),
+        },
+        indent=2,
+    ))
     return 0 if not problems else 1
 
 

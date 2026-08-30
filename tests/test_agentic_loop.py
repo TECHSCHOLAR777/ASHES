@@ -248,6 +248,8 @@ def test_downsample_keeps_nulls():
     assert viz["p_burn_72"][1][0] == 0.9
     assert viz["max_eta_hours"] == 72.0
     assert viz["horizon_hours"] == 72.0
+    assert viz["n_reached"] == 3
+    assert viz["burned_bbox"] is not None
 
 
 def test_health_endpoint():
@@ -365,6 +367,8 @@ def test_ask_body_allows_town_only_and_showcase():
     data = r.json()
     assert data["id"] == "idyllwild_chaparral"
     assert data["simulate"] is True
+    assert data["ignition_lat"] == 33.744
+    assert abs(data["lat"] - 33.7461) < 1e-4
     js = client.get("/assets/app.js")
     assert js.status_code == 200
     assert b"Load Idyllwild case" in js.content

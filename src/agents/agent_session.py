@@ -42,6 +42,7 @@ class AgentSession:
     simulate: bool = False
     ignition_lat: float | None = None
     ignition_lng: float | None = None
+    buffer_km: float | None = None
     on_event: EventCallback | None = None
     started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 

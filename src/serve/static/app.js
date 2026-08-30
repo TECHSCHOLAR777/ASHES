@@ -146,7 +146,7 @@ function renderAsk(simulate) {
       <button type="button" class="ghost" id="showcase">Load Idyllwild case</button>
       <button id="go">${simulate ? "Run simulator" : "Ask"}</button>
     </div>
-    <p class="muted">Leave lat/lng empty to parse the town from the question. Honesty line is required in the playbook.</p>
+    <p class="muted">Leave lat/lng empty to parse the town. Load Idyllwild sets the community pin and a separate west-chaparral ignition. Honesty line is required in the playbook.</p>
     <div class="grid2">
       <div>
         <div id="map"></div>
@@ -155,7 +155,7 @@ function renderAsk(simulate) {
       </div>
       <div id="result"><div class="empty">Submit to run the agent.</div></div>
     </div>`;
-  initMap(33.7435, -116.735);
+  initMap(33.7461, -116.7139);
   $("#go").addEventListener("click", () => startAsk(simulate));
   $("#showcase").addEventListener("click", () => loadShowcase(simulate));
 }
@@ -164,29 +164,54 @@ const SHOWCASE_FALLBACK = {
   id: "idyllwild_chaparral",
   name: "Idyllwild",
   place: "Idyllwild, California",
-  lat: 33.7435,
-  lng: -116.735,
+  lat: 33.7461,
+  lng: -116.7139,
+  ignition_lat: 33.744,
+  ignition_lng: -116.732,
   simulate: true,
-  q: "Idyllwild sits in the San Jacinto chaparral. If this ignites west of town, is the community in play?",
+  buffer_km: 8,
+  q: "Idyllwild is the community. If the chaparral west of town ignites, is the town in play?",
   honesty:
-    "Showcase pin in burnable shrub, not a live WFIGS ignition. ELMFIRE playback is the engine case unfolding in time, not a satellite loop.",
+    "Community pin is Idyllwild (a point, not a town boundary). Ignition is west in San Jacinto chaparral, not on the town pin. ELMFIRE playback is the engine case unfolding in time, not satellite, not an official perimeter.",
 };
+
+let caseIgnition = { lat: SHOWCASE_FALLBACK.ignition_lat, lng: SHOWCASE_FALLBACK.ignition_lng };
+let caseBuffer = 8;
+
+function readCoord(sel) {
+  const raw = ($(sel).value || "").trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  return n;
+}
+
+function usablePoint(lat, lng) {
+  if (lat == null || lng == null) return false;
+  if (Math.abs(lat) < 1e-6 && Math.abs(lng) < 1e-6) return false;
+  return lat >= 24 && lat <= 50 && lng >= -126 && lng <= -66;
+}
 
 async function loadShowcase(simulate) {
   let s = SHOWCASE_FALLBACK;
   try {
     const r = await fetch("/api/showcase");
-    if (r.ok) s = await r.json();
+    if (r.ok) s = Object.assign({}, SHOWCASE_FALLBACK, await r.json());
   } catch (e) {
-    /* keep fallback so the case still loads if the API is proxied away */
+    /* keep fallback */
   }
   $("#lat").value = s.lat;
   $("#lng").value = s.lng;
   $("#name").value = s.name || "Idyllwild";
   const q = String(s.q || SHOWCASE_FALLBACK.q).replace(/^"|"$/g, "");
-  $("#q").value = simulate ? `Simulate ignition west of ${s.place || s.name}. ${q}` : q;
+  $("#q").value = simulate
+    ? `Simulate ignition in the chaparral west of ${s.place || s.name}. ${q}`
+    : q;
+  caseIgnition = { lat: Number(s.ignition_lat), lng: Number(s.ignition_lng) };
+  caseBuffer = Number(s.buffer_km) || 8;
   initMap(s.lat, s.lng);
-  $("#result").innerHTML = `<div class="banner">${s.honesty || SHOWCASE_FALLBACK.honesty}</div>`;
+  $("#result").innerHTML = `<div class="banner">${s.honesty || SHOWCASE_FALLBACK.honesty}</div>
+    <div class="muted">Town ${Number(s.lat).toFixed(4)}, ${Number(s.lng).toFixed(4)} · ignition ${caseIgnition.lat.toFixed(4)}, ${caseIgnition.lng.toFixed(4)} · buffer ${caseBuffer} km</div>`;
 }
 
 function stopPlayback() {
@@ -199,15 +224,24 @@ function stopPlayback() {
 function initMap(lat, lng) {
   stopPlayback();
   playbackOverlay = null;
+  if (!usablePoint(lat, lng)) {
+    lat = SHOWCASE_FALLBACK.lat;
+    lng = SHOWCASE_FALLBACK.lng;
+  }
   if (mapRef) {
     mapRef.remove();
     mapRef = null;
   }
-  mapRef = L.map("map").setView([lat, lng], 10);
+  const el = $("#map");
+  if (!el) return;
+  mapRef = L.map("map").setView([lat, lng], 12);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "&copy; OpenStreetMap",
   }).addTo(mapRef);
-  L.circleMarker([lat, lng], { radius: 6, color: "#111", fillColor: "#111", fillOpacity: 1 }).addTo(mapRef);
+  L.circleMarker([lat, lng], { radius: 7, color: "#111", weight: 2, fillColor: "#f4f0e6", fillOpacity: 1 })
+    .bindTooltip("community")
+    .addTo(mapRef);
+  setTimeout(() => mapRef && mapRef.invalidateSize(), 80);
 }
 
 function rasterAtHour(field, hour) {
@@ -215,12 +249,12 @@ function rasterAtHour(field, hour) {
   if (!grid || !grid.length) return null;
   const h = grid.length;
   const w = grid[0].length;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  const img = ctx.createImageData(w, h);
-  const cap = Math.max(1, Number(field.max_eta_hours) || Number(field.horizon_hours) || 72);
+  const src = document.createElement("canvas");
+  src.width = w;
+  src.height = h;
+  const sctx = src.getContext("2d");
+  const img = sctx.createImageData(w, h);
+  let n = 0;
   for (let r = 0; r < h; r++) {
     for (let c = 0; c < w; c++) {
       const v = grid[r][c];
@@ -229,15 +263,25 @@ function rasterAtHour(field, hour) {
         img.data[i + 3] = 0;
         continue;
       }
-      const t = 1 - Math.max(0, Math.min(1, Number(v) / cap));
-      img.data[i] = Math.round(180 + t * 60);
-      img.data[i + 1] = Math.round(40 + (1 - t) * 140);
-      img.data[i + 2] = Math.round(20 + (1 - t) * 30);
-      img.data[i + 3] = 190;
+      n += 1;
+      const age = hour - Number(v);
+      const front = age <= 3;
+      img.data[i] = front ? 255 : 160;
+      img.data[i + 1] = front ? Math.round(220 - age * 20) : 40;
+      img.data[i + 2] = front ? 40 : 10;
+      img.data[i + 3] = front ? 230 : 200;
     }
   }
-  ctx.putImageData(img, 0, 0);
-  return canvas.toDataURL("image/png");
+  sctx.putImageData(img, 0, 0);
+  const scale = 6;
+  const dst = document.createElement("canvas");
+  dst.width = w * scale;
+  dst.height = h * scale;
+  const dctx = dst.getContext("2d");
+  dctx.imageSmoothingEnabled = false;
+  dctx.drawImage(src, 0, 0, dst.width, dst.height);
+  dst.dataset.reached = String(n);
+  return dst.toDataURL("image/png");
 }
 
 function setPlaybackHour(field, hour) {
@@ -249,14 +293,19 @@ function setPlaybackHour(field, hour) {
   const url = rasterAtHour(field, hour);
   if (!url) return;
   if (playbackOverlay) mapRef.removeLayer(playbackOverlay);
-  playbackOverlay = L.imageOverlay(url, bounds, { opacity: 0.72, pane: "overlayPane" }).addTo(mapRef);
+  playbackOverlay = L.imageOverlay(url, bounds, { opacity: 0.85, pane: "overlayPane" }).addTo(mapRef);
   const label = $("#hourLabel");
   if (label) label.textContent = `${Math.round(hour)} h`;
   const slider = $("#hour");
   if (slider && Number(slider.value) !== Math.round(hour)) slider.value = String(Math.round(hour));
+  const reached = $("#reached");
+  if (reached) {
+    const bb = field.burned_bbox;
+    reached.textContent = `${field.n_reached || "?"} cells reached · max η ${field.max_eta_hours == null ? "n/a" : Number(field.max_eta_hours).toFixed(1)} h`;
+  }
 }
 
-function mountPlayback(field, host) {
+function mountPlayback(field, host, { autoplay = true } = {}) {
   stopPlayback();
   const el = host || $("#playback");
   if (!el || !field || !field.arrival_hours) {
@@ -264,16 +313,17 @@ function mountPlayback(field, host) {
     return;
   }
   const maxH = Math.max(1, Math.ceil(Number(field.max_eta_hours) || Number(field.horizon_hours) || 72));
-  playbackHour = Math.min(maxH, Math.max(0, playbackHour || 0));
+  playbackHour = 0;
   el.innerHTML = `
     <div class="playback">
       <div class="muted">Engine case unfolding in time — not satellite, not an official perimeter.</div>
       <div class="play-row">
-        <button type="button" id="play">Play</button>
-        <input type="range" id="hour" min="0" max="${maxH}" step="1" value="${Math.round(playbackHour)}" />
-        <span id="hourLabel">${Math.round(playbackHour)} h</span>
+        <button type="button" id="play">Pause</button>
+        <input type="range" id="hour" min="0" max="${maxH}" step="1" value="0" />
+        <span id="hourLabel">0 h</span>
         <span class="muted">max ${maxH} h</span>
       </div>
+      <div id="reached" class="muted"></div>
     </div>`;
   const apply = (h) => {
     playbackHour = h;
@@ -288,28 +338,40 @@ function mountPlayback(field, host) {
     }
     $("#play", el).textContent = "Pause";
     playbackTimer = setInterval(() => {
-      let next = playbackHour + Math.max(1, Math.round(maxH / 24));
+      let next = playbackHour + Math.max(1, Math.round(maxH / 36));
       if (next > maxH) next = 0;
       apply(next);
-    }, 400);
+    }, 350);
   });
-  apply(playbackHour);
-  mapRef.fitBounds(
-    [
-      [field.south, field.west],
-      [field.north, field.east],
-    ],
-    { padding: [20, 20] }
-  );
+  apply(0);
+  const fit = field.burned_bbox
+    ? [
+        [field.burned_bbox.south, field.burned_bbox.west],
+        [field.burned_bbox.north, field.burned_bbox.east],
+      ]
+    : [
+        [field.south, field.west],
+        [field.north, field.east],
+      ];
+  mapRef.fitBounds(fit, { padding: [28, 28], maxZoom: 13 });
+  if (autoplay) {
+    playbackTimer = setInterval(() => {
+      let next = playbackHour + Math.max(1, Math.round(maxH / 36));
+      if (next > maxH) next = 0;
+      apply(next);
+    }, 350);
+  }
 }
 
 function drawReportOnMap(report) {
   const site = report.site || {};
-  if (!mapRef) initMap(site.lat || 33.74, site.lng || -116.74);
-  if (site.lat != null) {
-    mapRef.setView([site.lat, site.lng], 11);
-    L.circleMarker([site.lat, site.lng], { radius: 7, color: "#111", weight: 2, fillColor: "#f4f0e6", fillOpacity: 1 })
-      .bindTooltip(site.name || "site")
+  const lat = site.lat;
+  const lng = site.lng;
+  if (!mapRef) initMap(usablePoint(lat, lng) ? lat : SHOWCASE_FALLBACK.lat, usablePoint(lat, lng) ? lng : SHOWCASE_FALLBACK.lng);
+  if (usablePoint(lat, lng)) {
+    mapRef.setView([lat, lng], 12);
+    L.circleMarker([lat, lng], { radius: 7, color: "#111", weight: 2, fillColor: "#f4f0e6", fillOpacity: 1 })
+      .bindTooltip(site.name || "community")
       .addTo(mapRef);
   }
   (report.map?.hotspots || []).forEach((hs) => {
@@ -317,11 +379,11 @@ function drawReportOnMap(report) {
   });
   (report.map?.perimeters || []).forEach((p) => {
     (p.rings || []).forEach((ring) => {
-      const latlngs = ring.map(([lng, lat]) => [lat, lng]);
+      const latlngs = ring.map(([lng0, lat0]) => [lat0, lng0]);
       L.polygon(latlngs, { color: "#c2185b", weight: 2, fill: false }).bindTooltip("operational, unofficial").addTo(mapRef);
     });
   });
-  if (report.map?.ignition) {
+  if (report.map?.ignition && usablePoint(report.map.ignition.lat, report.map.ignition.lng)) {
     L.circleMarker([report.map.ignition.lat, report.map.ignition.lng], {
       radius: 8,
       color: "#e67e22",
@@ -333,23 +395,29 @@ function drawReportOnMap(report) {
   }
   const field = report.engine?.field;
   if (field && field.arrival_hours) {
-    mountPlayback(field, $("#playback") || $("#map")?.parentElement);
+    mountPlayback(field, $("#playback"), { autoplay: true });
   }
+  setTimeout(() => mapRef && mapRef.invalidateSize(), 80);
 }
 
 async function startAsk(simulate) {
-  const latRaw = ($("#lat").value || "").trim();
-  const lngRaw = ($("#lng").value || "").trim();
+  const lat = readCoord("#lat");
+  const lng = readCoord("#lng");
   const name = $("#name").value || "ask-mode-site";
   const q = $("#q").value;
   $("#go").disabled = true;
-  $("#trace").innerHTML = "Connecting…";
-  $("#result").innerHTML = `<div class="muted">Agent is calling tools…</div>`;
+  $("#trace").innerHTML = "Connecting to live tools…";
+  $("#result").innerHTML = `<div class="muted">Live agent: NWS, FIRMS, WFIGS, HRRR, Mireye, then ELMFIRE. Watch the trace.</div>`;
   const payload = { name, q, simulate };
-  if (latRaw && lngRaw) {
-    payload.lat = Number(latRaw);
-    payload.lng = Number(lngRaw);
-    initMap(payload.lat, payload.lng);
+  if (usablePoint(lat, lng)) {
+    payload.lat = lat;
+    payload.lng = lng;
+    initMap(lat, lng);
+  }
+  if (simulate && caseIgnition && usablePoint(caseIgnition.lat, caseIgnition.lng)) {
+    payload.ignition_lat = caseIgnition.lat;
+    payload.ignition_lng = caseIgnition.lng;
+    payload.buffer_km = caseBuffer;
   }
   const url = simulate ? "/api/simulate" : "/api/ask";
   const resp = await fetch(url, {
@@ -357,6 +425,11 @@ async function startAsk(simulate) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+  if (!resp.ok) {
+    $("#result").innerHTML = `<div class="banner warn">HTTP ${resp.status}</div>`;
+    $("#go").disabled = false;
+    return;
+  }
   const reader = resp.body.getReader();
   const dec = new TextDecoder();
   let buf = "";
@@ -377,17 +450,28 @@ async function startAsk(simulate) {
           .map((t) => {
             const cls = t.ok ? "ok" : "err";
             const back = t.backfill ? ' <span class="back">backfill</span>' : "";
-            return `<div><span class="${cls}">${t.ok ? "ok" : "err"}</span> ${t.tool} ${Math.round(t.latency_ms)}ms${back} ${t.error || ""}</div>`;
+            const extra = t.tool === "simulate_ignition" && t.result && t.result.engine ? ` · ${t.result.engine}` : "";
+            return `<div><span class="${cls}">${t.ok ? "ok" : "err"}</span> ${t.tool} ${Math.round(t.latency_ms)}ms${back} ${t.error || ""}${extra}</div>`;
           })
           .join("");
+        $("#trace").scrollTop = $("#trace").scrollHeight;
+      }
+      if (ev.event === "spread" && ev.field) {
+        $("#result").innerHTML = `<div class="banner">ELMFIRE field ${ev.field.spread_field_version || ""} · ${ev.field.n_reached || "?"} reached cells. Playing arrival…</div>`;
+        if (!mapRef) initMap((ev.site && ev.site.lat) || SHOWCASE_FALLBACK.lat, (ev.site && ev.site.lng) || SHOWCASE_FALLBACK.lng);
+        if (ev.ignition && usablePoint(ev.ignition.lat, ev.ignition.lng)) {
+          L.circleMarker([ev.ignition.lat, ev.ignition.lng], { radius: 8, color: "#e67e22", fillColor: "#e67e22", fillOpacity: 0.9 })
+            .bindTooltip("ignition")
+            .addTo(mapRef);
+        }
+        mountPlayback(ev.field, $("#playback"), { autoplay: true });
       }
       if (ev.event === "status") {
         $("#trace").innerHTML += `<div class="muted">${ev.message}</div>`;
       }
       if (ev.event === "complete") {
         lastReport = ev.report;
-        paintResult(ev.report);
-        drawReportOnMap(ev.report);
+        paintLivePanel(ev.report);
       }
       if (ev.event === "error") {
         $("#result").innerHTML = `<div class="banner warn">${ev.message}</div>`;
@@ -397,7 +481,7 @@ async function startAsk(simulate) {
   $("#go").disabled = false;
 }
 
-function paintResult(report) {
+function paintLivePanel(report) {
   lastReport = report;
   const card = report.action_card;
   if (!card) {
@@ -406,7 +490,31 @@ function paintResult(report) {
   }
   window.__CARD_CACHE = window.__CARD_CACHE || {};
   window.__CARD_CACHE[card.card_id] = report;
-  location.hash = `#/card/${card.card_id}`;
+  const honesty = (report.parse && report.parse.honesty) || "";
+  const etaNull = card.eta_hours == null;
+  $("#result").innerHTML = `
+    ${honesty ? `<div class="banner">${honesty}</div>` : ""}
+    ${report.simulate ? `<div class="banner warn">Simulated ignition west of town. Engine raster is not an official perimeter.</div>` : ""}
+    ${pill(card.action)}
+    <div class="action-hero" style="color: var(--${card.action})">${(card.action || "").replaceAll("_", " ").toUpperCase()}</div>
+    <div>${card.site.name} · ${Number(card.site.lat).toFixed(4)}, ${Number(card.site.lng).toFixed(4)}</div>
+    <div class="muted">policy ${card.policy_version} · no hit-model · ${na(card.spread_field_version)}</div>
+    <h2>Engine clock at the community</h2>
+    ${
+      etaNull
+        ? `<p>Field ran. Town cell not reached (ETA null, not zero).</p>`
+        : `<div class="clock">${Number(card.eta_hours).toFixed(0)} h <span class="muted">± ${card.eta_sigma_hours == null ? "n/a" : Number(card.eta_sigma_hours).toFixed(0)} h</span></div>`
+    }
+    ${pburnBars(card.p_burn_by_T)}
+    ${playbookHtml(report)}
+    <h2>Why</h2>
+    <ul class="list">${(card.reasons || []).map((a) => `<li>${a}</li>`).join("")}</ul>
+    <p><a href="#/card/${card.card_id}">Open full card</a></p>`;
+  drawReportOnMap(report);
+}
+
+function paintResult(report) {
+  paintLivePanel(report);
 }
 
 function pburnBars(p) {

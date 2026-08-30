@@ -182,7 +182,8 @@ OPENAI_TOOLS: list[dict[str, Any]] = [
             "name": "simulate_ignition",
             "description": (
                 "ELMFIRE simulator: ignite at a lat/lng (default site), fetch LANDFIRE, run spread_run. "
-                "Not an official perimeter. Use when the user asked to simulate or there is no live WFIGS fire."
+                "Not an official perimeter. Use when the user asked to simulate or there is no live WFIGS fire. "
+                "If an ignition pin is provided (west of the community), ignite there — not on the town pin."
             ),
             "parameters": {
                 "type": "object",
@@ -1025,9 +1026,15 @@ def handle_simulate(session: AgentSession, args: dict[str, Any]) -> dict[str, An
             "error": "live_perimeter_exists",
             "hint": "call run_spread for the WFIGS incident; simulate_ignition is only for --simulate / no live fire",
         }
-    lat = float(args.get("lat") if args.get("lat") is not None else session.site.lat)
-    lng = float(args.get("lng") if args.get("lng") is not None else session.site.lng)
-    buffer_km = float(args.get("buffer_km") or 4)
+    lat = args.get("lat")
+    lng = args.get("lng")
+    if lat is None:
+        lat = session.ignition_lat if session.ignition_lat is not None else session.site.lat
+    if lng is None:
+        lng = session.ignition_lng if session.ignition_lng is not None else session.site.lng
+    lat = float(lat)
+    lng = float(lng)
+    buffer_km = float(args.get("buffer_km") or session.buffer_km or 8)
     session.simulate = True
     session.ignition_lat = lat
     session.ignition_lng = lng
@@ -1291,4 +1298,15 @@ def execute_tool(session: AgentSession, name: str, args: dict[str, Any], *, back
             "result": _clip(result) if isinstance(result, dict) else {"value": str(result)[:500]},
         }
     )
+    if ok and name in {"simulate_ignition", "run_spread"} and session.spread_viz:
+        session.emit(
+            {
+                "event": "spread",
+                "field": session.spread_viz,
+                "site": {"lat": session.site.lat, "lng": session.site.lng, "name": session.site.name},
+                "ignition": {"lat": session.ignition_lat, "lng": session.ignition_lng}
+                if session.ignition_lat is not None
+                else None,
+            }
+        )
     return result if isinstance(result, dict) else {"ok": ok, "result": result}

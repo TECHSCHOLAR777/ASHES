@@ -19,6 +19,18 @@ from src.agents.main_agent import Site
 
 logger = logging.getLogger("fire_copilot.agent_loop")
 
+
+def _valid_us_point(lat: float | None, lng: float | None) -> bool:
+    if lat is None or lng is None:
+        return False
+    try:
+        lat_f, lng_f = float(lat), float(lng)
+    except (TypeError, ValueError):
+        return False
+    if abs(lat_f) < 1e-6 and abs(lng_f) < 1e-6:
+        return False
+    return 24.0 <= lat_f <= 50.0 and -126.0 <= lng_f <= -66.0
+
 SYSTEM_PROMPT = """You are ASHES, an unattended cited wildfire copilot for a book of named US sites.
 
 You actually call tools. You never invent a number, distance, acreage, ETA, or score.
@@ -146,8 +158,6 @@ def _backfill(session: AgentSession) -> None:
     """If the model skipped required live tools, run them. Honest: labeled backfill in the trace."""
     if "parse_place" not in session.called:
         execute_tool(session, "parse_place", {}, backfill=True)
-    if session.simulate and "simulate_ignition" not in session.called:
-        execute_tool(session, "simulate_ignition", {}, backfill=True)
     for name in BACKFILL_ORDER:
         if name in session.called:
             continue
@@ -159,7 +169,14 @@ def _backfill(session: AgentSession) -> None:
         execute_tool(session, name, args, backfill=True)
     if session.simulate:
         if "simulate_ignition" not in session.called:
-            execute_tool(session, "simulate_ignition", {}, backfill=True)
+            sim_args: dict[str, Any] = {}
+            if session.ignition_lat is not None and session.ignition_lng is not None:
+                sim_args = {
+                    "lat": session.ignition_lat,
+                    "lng": session.ignition_lng,
+                    "buffer_km": session.buffer_km or 8,
+                }
+            execute_tool(session, "simulate_ignition", sim_args, backfill=True)
     elif "run_spread" not in session.called:
         execute_tool(session, "run_spread", {}, backfill=True)
     if "apply_policy" not in session.called:
@@ -177,6 +194,7 @@ def run_agentic(
     simulate: bool = False,
     ignition_lat: float | None = None,
     ignition_lng: float | None = None,
+    buffer_km: float | None = None,
     coords_supplied: bool = True,
     on_event=None,
     client=None,
@@ -189,10 +207,21 @@ def run_agentic(
         simulate=simulate,
         ignition_lat=ignition_lat,
         ignition_lng=ignition_lng,
+        buffer_km=buffer_km,
         coords_supplied=coords_supplied,
         on_event=on_event,
     )
     execute_tool(session, "parse_place", {})
+    if not _valid_us_point(session.site.lat, session.site.lng):
+        session.emit(
+            {
+                "event": "error",
+                "message": "Could not resolve a US place (refusing 0,0). Name a town or supply lat/lng.",
+            }
+        )
+        report = serialize_report(session)
+        session.emit({"event": "complete", "report": report})
+        return report
     user_blob = {
         "site": {"site_id": site.site_id, "name": site.name, "lat": site.lat, "lng": site.lng, "address": site.address},
         "question": question,
@@ -200,9 +229,11 @@ def run_agentic(
         "coords_supplied": coords_supplied,
         "parse": session.parse,
         "ignition": {"lat": ignition_lat, "lng": ignition_lng} if ignition_lat is not None else None,
+        "buffer_km": buffer_km or (8 if simulate else None),
         "instruction": (
             "parse_place already ran. Call live E + mireye_fetch + spread, then apply_policy, "
-            "bucket skill, commit_report. Copy parse.honesty. No hit-model."
+            "bucket skill, commit_report. Copy parse.honesty. No hit-model. "
+            "If ignition is set, call simulate_ignition at that pin (chaparral), not at the community site."
         ),
     }
     messages: list[dict[str, Any]] = [

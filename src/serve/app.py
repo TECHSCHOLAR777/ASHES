@@ -47,6 +47,7 @@ class AskBody(BaseModel):
     simulate: bool = False
     ignition_lat: float | None = None
     ignition_lng: float | None = None
+    buffer_km: float | None = None
 
 
 def _store_report(report: dict[str, Any]) -> None:
@@ -69,7 +70,16 @@ def _store_report(report: dict[str, Any]) -> None:
             }
 
 
+def _usable_coords(lat: float | None, lng: float | None) -> bool:
+    if lat is None or lng is None:
+        return False
+    if abs(float(lat)) < 1e-6 and abs(float(lng)) < 1e-6:
+        return False
+    return 24.0 <= float(lat) <= 50.0 and -126.0 <= float(lng) <= -66.0
+
+
 def _hydrate_saved_reports() -> None:
+    """Only hydrate the Idyllwild showcase file, never the old warehouse 0 h seed."""
     path = Path(__file__).resolve().parent.parent.parent / "data" / "models" / "agentic_live_report.json"
     if not path.exists():
         return
@@ -79,8 +89,12 @@ def _hydrate_saved_reports() -> None:
         return
     for key in ("ask", "simulate"):
         report = payload.get(key)
-        if isinstance(report, dict) and report.get("action_card"):
-            _store_report(report)
+        if not isinstance(report, dict) or not report.get("action_card"):
+            continue
+        name = str((report.get("site") or {}).get("name") or "")
+        if "idyllwild" not in name.lower():
+            continue
+        _store_report(report)
 
 
 _hydrate_saved_reports()
@@ -91,12 +105,12 @@ def _sse(body: AskBody) -> Any:
     from src.agents.main_agent import Site
 
     q: queue.Queue = queue.Queue()
-    coords_supplied = body.lat is not None and body.lng is not None
+    coords_supplied = _usable_coords(body.lat, body.lng)
     site = Site(
         site_id=body.site_id or f"ask_{uuid.uuid4().hex[:8]}",
         name=body.name,
-        lat=float(body.lat) if body.lat is not None else 0.0,
-        lng=float(body.lng) if body.lng is not None else 0.0,
+        lat=float(body.lat) if coords_supplied else 0.0,
+        lng=float(body.lng) if coords_supplied else 0.0,
         address=None if coords_supplied else body.q,
     )
 
@@ -113,6 +127,7 @@ def _sse(body: AskBody) -> Any:
                 simulate=body.simulate,
                 ignition_lat=body.ignition_lat,
                 ignition_lng=body.ignition_lng,
+                buffer_km=body.buffer_km,
                 coords_supplied=coords_supplied,
                 on_event=on_event,
             )
@@ -285,8 +300,9 @@ def ask(body: AskBody):
 @app.post("/api/simulate")
 def simulate(body: AskBody):
     body.simulate = True
-    if body.ignition_lat is None and body.lat is not None:
-        body.ignition_lat = body.lat
-    if body.ignition_lng is None and body.lng is not None:
-        body.ignition_lng = body.lng
+    if body.ignition_lat is None and body.lat is not None and _usable_coords(body.lat, body.lng):
+        # Only default ignition to the site when the caller did not send a separate pin.
+        pass
+    if body.buffer_km is None:
+        body.buffer_km = 8
     return _sse(body)
