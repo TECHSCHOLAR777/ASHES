@@ -369,6 +369,7 @@ def test_ask_body_allows_town_only_and_showcase():
     assert js.status_code == 200
     assert b"Load Idyllwild case" in js.content
     assert b"Engine case unfolding" in js.content
+    assert b"SHOWCASE_FALLBACK" in js.content
     assert b"y_hat" not in js.content
     html = client.get("/")
     assert b"engine clock" in html.content

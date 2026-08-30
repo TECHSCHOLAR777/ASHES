@@ -160,15 +160,33 @@ function renderAsk(simulate) {
   $("#showcase").addEventListener("click", () => loadShowcase(simulate));
 }
 
+const SHOWCASE_FALLBACK = {
+  id: "idyllwild_chaparral",
+  name: "Idyllwild",
+  place: "Idyllwild, California",
+  lat: 33.7435,
+  lng: -116.735,
+  simulate: true,
+  q: "Idyllwild sits in the San Jacinto chaparral. If this ignites west of town, is the community in play?",
+  honesty:
+    "Showcase pin in burnable shrub, not a live WFIGS ignition. ELMFIRE playback is the engine case unfolding in time, not a satellite loop.",
+};
+
 async function loadShowcase(simulate) {
-  const s = await (await fetch("/api/showcase")).json();
+  let s = SHOWCASE_FALLBACK;
+  try {
+    const r = await fetch("/api/showcase");
+    if (r.ok) s = await r.json();
+  } catch (e) {
+    /* keep fallback so the case still loads if the API is proxied away */
+  }
   $("#lat").value = s.lat;
   $("#lng").value = s.lng;
   $("#name").value = s.name || "Idyllwild";
-  const q = String(s.q || "").replace(/^"|"$/g, "");
+  const q = String(s.q || SHOWCASE_FALLBACK.q).replace(/^"|"$/g, "");
   $("#q").value = simulate ? `Simulate ignition west of ${s.place || s.name}. ${q}` : q;
   initMap(s.lat, s.lng);
-  $("#result").innerHTML = `<div class="banner">${s.honesty || "Showcase pin in burnable shrub. Playback is the engine case, not satellite."}</div>`;
+  $("#result").innerHTML = `<div class="banner">${s.honesty || SHOWCASE_FALLBACK.honesty}</div>`;
 }
 
 function stopPlayback() {
