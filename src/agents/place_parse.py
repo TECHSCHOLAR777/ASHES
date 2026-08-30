@@ -15,15 +15,17 @@ _PLACEISH = re.compile(
 
 
 def extract_place_heuristic(question: str) -> str | None:
-    """Fallback when OpenAI is off: first Title-Case run that is not a stopword."""
+    """Fallback when OpenAI is off: Title-Case run, dropping leading question words."""
     skip = {
         "Is", "The", "If", "What", "When", "Where", "This", "Simulate", "Ignition",
-        "Ask", "About", "Near", "Forest", "Town", "Community",
+        "Ask", "About", "Near", "Forest", "Town", "Community", "Does", "Will",
+        "Can", "Could", "Should", "Would", "How",
     }
     for match in _PLACEISH.finditer(question or ""):
-        token = match.group(1).strip()
-        if token.split()[0] in skip:
+        parts = [p for p in match.group(1).strip().split() if p not in skip]
+        if not parts:
             continue
+        token = " ".join(parts)
         if len(token) < 3:
             continue
         return token
