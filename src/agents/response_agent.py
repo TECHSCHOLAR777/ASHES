@@ -272,10 +272,11 @@ def _water_sources_from_raw(
     return sources
 
 
-def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, Any], now_iso: str) -> list[WaterSource]:
-    gage_id = raw_w.get("nearest_usgs_gage_id")
-    gage = deps.usgs.get_gage_discharge(gage_id, site_id=site.site_id)
-    return _water_sources_from_raw(raw_w, now_iso, gage_discharge_cfs=gage.discharge_cfs)
+def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, Any], now_iso: str, gage=None) -> list[WaterSource]:
+    if gage is None:
+        gage_id = raw_w.get("nearest_usgs_gage_id")
+        gage = deps.usgs.get_gage_discharge(gage_id, site_id=site.site_id)
+    return _water_sources_from_raw(raw_w, now_iso, gage_discharge_cfs=gage.discharge_cfs, lat=site.lat, lng=site.lng)
 
 
 def _aoi_water_map(deps: "MainAgentDeps", site: "Site", now_iso: str, policy_cfg: dict[str, Any]) -> list[WaterSource]:
@@ -490,7 +491,10 @@ def run_response_agent(deps: "MainAgentDeps", site: "Site", action_card: ActionC
 
     raw_w = _fetch_response_w(deps, site)
 
-    water_sources = _build_water_sources(deps, site, raw_w, now_iso)
+    gage_id = raw_w.get("nearest_usgs_gage_id")
+    gage = deps.usgs.get_gage_discharge(gage_id, site_id=site.site_id)
+
+    water_sources = _build_water_sources(deps, site, raw_w, now_iso, gage=gage)
     aoi_sources = _aoi_water_map(deps, site, now_iso, policy_cfg)
     if aoi_sources:
         seen = {(w.type, w.name) for w in water_sources}
@@ -522,8 +526,6 @@ def run_response_agent(deps: "MainAgentDeps", site: "Site", action_card: ActionC
         footprint_sqm=raw_w.get("primary_building_footprint_sqm"),
         overture_class=raw_w.get("primary_building_overture_class"),
     )
-    gage_id = raw_w.get("nearest_usgs_gage_id")
-    gage = deps.usgs.get_gage_discharge(gage_id, site_id=site.site_id)
     usgs_summary = USGSGaugeSummary(
         gage_name=gage_id, distance_m=None, discharge_cfs=gage.discharge_cfs, discharge_class=gage.discharge_class, fetched_at=gage.fetched_at
     )
@@ -531,7 +533,7 @@ def run_response_agent(deps: "MainAgentDeps", site: "Site", action_card: ActionC
     citations = [
         {"source": "mireye", "url": raw_w.get(f"{k}_source_url"), "fetched_at": now_iso, "field": k}
         for k in raw_w
-        if k.endswith("_source_url") is False and raw_w.get(f"{k}_source_url")
+        if not k.endswith("_source_url") and raw_w.get(f"{k}_source_url")
     ]
     w_sources = [
         {"field": k, "source_url": raw_w.get(f"{k}_source_url", "n/a"), "vintage": raw_w.get(f"{k}_vintage"), "confidence": raw_w.get(f"{k}_confidence")}

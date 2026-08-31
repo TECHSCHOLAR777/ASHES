@@ -136,9 +136,9 @@ class WFIGSClient:
                     name=str(attrs.get("IncidentName") or attrs.get("incident_name") or "unknown"),
                     acres=attrs.get("DailyAcres") or attrs.get("acres"),
                     containment_pct=(
-                        (attrs.get("PercentContained") or attrs.get("containment_pct") or 0) / 100.0
-                        if attrs.get("PercentContained") is not None or attrs.get("containment_pct") is not None
-                        else None
+                        attrs.get("PercentContained") / 100.0
+                        if attrs.get("PercentContained") is not None
+                        else attrs.get("containment_pct")
                     ),
                     discovery_datetime=attrs.get("FireDiscoveryDateTime") or attrs.get("discovery_datetime"),
                     lat=geom.get("y", lat),

@@ -75,7 +75,7 @@ def pack_e(
     containment_pct = (
         wfigs_incident.containment_pct
         if (wfigs_incident and wfigs_incident.containment_pct is not None)
-        else 1.0
+        else 0.0
     )
     hours_since_discovery = _hours_since(wfigs_incident.discovery_datetime) if wfigs_incident else None
     # True whenever any fire signal is present that is not an MTBS-final perimeter: a WFIGS

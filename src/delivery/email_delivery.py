@@ -8,13 +8,14 @@ from __future__ import annotations
 import os
 import smtplib
 from email.message import EmailMessage
+from typing import Any
 
 from src.logging_ import tool_logger
 from src.schemas.action_card import ActionCard
 from src.schemas.response_card import ResponseCard
 
 
-def _smtp_config() -> dict[str, str] | None:
+def _smtp_config() -> dict[str, Any] | None:
     host = os.environ.get("SMTP_HOST")
     user = os.environ.get("SMTP_USER")
     password = os.environ.get("SMTP_PASS")

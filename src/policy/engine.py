@@ -135,13 +135,13 @@ def apply_policy(y_hat: Optional[float], sigma: float, pin: PolicyInput, config:
             and pin.housing_density_per_km2 > cfg["housing_density_evacuate_threshold_per_km2"]
         )
         limited_egress = bool(pin.road_access_limited)
-        if high_density and limited_egress:
+        if eta_imminent and high_density and limited_egress:
+            reasons.append(f"ETA {pin.eta_hours:.1f} h with high housing density and limited egress")
+            action = "evacuate_site"
+        elif high_density and limited_egress:
             reasons.append(
                 f"perimeter {dist_km:.1f} km away or y_hat={y_hat}, high housing density and limited road egress"
             )
-            action = "evacuate_site"
-        elif eta_imminent and high_density and limited_egress:
-            reasons.append(f"ETA {pin.eta_hours:.1f} h with high housing density and limited egress")
             action = "evacuate_site"
         elif eta_imminent:
             reasons.append(f"ETA {pin.eta_hours:.1f} h (arrival estimate with sigma); protecting the asset")
