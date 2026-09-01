@@ -375,8 +375,28 @@ def test_ask_body_allows_town_only_and_showcase():
     assert b"Engine case unfolding" in js.content
     assert b"SHOWCASE_FALLBACK" in js.content
     assert b"y_hat" not in js.content
+    assert b"if (next > maxH) next = 0" not in js.content
+    assert b'id="play">Play</button>' in js.content
     html = client.get("/")
     assert b"engine clock" in html.content
+
+
+def test_idyllwild_card_shows_mireye_aspects():
+    from fastapi.testclient import TestClient
+    from src.serve.app import app
+
+    client = TestClient(app)
+    idy = next(
+        (c for c in client.get("/api/recent").json()["cards"] if (c.get("site") or {}).get("name") == "Idyllwild"),
+        None,
+    )
+    assert idy, "Idyllwild live report should hydrate"
+    report = client.get(f"/api/cards/{idy['card_id']}").json()
+    aspects = report.get("aspects") or {}
+    assert "A" in aspects
+    assert "B" in aspects
+    assert aspects["B"]["fields"]["aspect_cardinal"]["value"] == "W"
+    assert aspects["G"]["fields"]["nearest_major_road_name"]["value"] == "CA 243"
 
 
 def test_watch_book_is_seeded_for_the_board():

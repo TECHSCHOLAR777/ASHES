@@ -305,7 +305,7 @@ function setPlaybackHour(field, hour) {
   }
 }
 
-function mountPlayback(field, host, { autoplay = true } = {}) {
+function mountPlayback(field, host, { autoplay = false } = {}) {
   stopPlayback();
   const el = host || $("#playback");
   if (!el || !field || !field.arrival_hours) {
@@ -318,30 +318,41 @@ function mountPlayback(field, host, { autoplay = true } = {}) {
     <div class="playback">
       <div class="muted">Engine case unfolding in time.</div>
       <div class="play-row">
-        <button type="button" id="play">Pause</button>
+        <button type="button" id="play">Play</button>
         <input type="range" id="hour" min="0" max="${maxH}" step="1" value="0" />
         <span id="hourLabel">0 h</span>
         <span class="muted">max ${maxH} h</span>
       </div>
       <div id="reached" class="muted"></div>
     </div>`;
+  const playBtn = $("#play", el);
   const apply = (h) => {
     playbackHour = h;
     setPlaybackHour(field, h);
   };
-  $("#hour", el).addEventListener("input", (e) => apply(Number(e.target.value)));
-  $("#play", el).addEventListener("click", () => {
-    if (playbackTimer) {
-      stopPlayback();
-      $("#play", el).textContent = "Play";
+  const stopAtEnd = () => {
+    stopPlayback();
+    if (playBtn) playBtn.textContent = "Play";
+  };
+  const tick = () => {
+    const step = Math.max(1, Math.round(maxH / 36));
+    const next = playbackHour + step;
+    if (next >= maxH) {
+      apply(maxH);
+      stopAtEnd();
       return;
     }
-    $("#play", el).textContent = "Pause";
-    playbackTimer = setInterval(() => {
-      let next = playbackHour + Math.max(1, Math.round(maxH / 36));
-      if (next > maxH) next = 0;
-      apply(next);
-    }, 350);
+    apply(next);
+  };
+  $("#hour", el).addEventListener("input", (e) => apply(Number(e.target.value)));
+  playBtn.addEventListener("click", () => {
+    if (playbackTimer) {
+      stopAtEnd();
+      return;
+    }
+    if (playbackHour >= maxH) apply(0);
+    playBtn.textContent = "Pause";
+    playbackTimer = setInterval(tick, 350);
   });
   apply(0);
   const fit = field.burned_bbox
@@ -355,11 +366,8 @@ function mountPlayback(field, host, { autoplay = true } = {}) {
       ];
   mapRef.fitBounds(fit, { padding: [28, 28], maxZoom: 13 });
   if (autoplay) {
-    playbackTimer = setInterval(() => {
-      let next = playbackHour + Math.max(1, Math.round(maxH / 36));
-      if (next > maxH) next = 0;
-      apply(next);
-    }, 350);
+    playBtn.textContent = "Pause";
+    playbackTimer = setInterval(tick, 350);
   }
 }
 
@@ -395,7 +403,7 @@ function drawReportOnMap(report) {
   }
   const field = report.engine?.field;
   if (field && field.arrival_hours) {
-    mountPlayback(field, $("#playback"), { autoplay: true });
+    mountPlayback(field, $("#playback"), { autoplay: false });
   }
   setTimeout(() => mapRef && mapRef.invalidateSize(), 80);
 }
@@ -464,7 +472,7 @@ async function startAsk(simulate) {
             .bindTooltip("ignition")
             .addTo(mapRef);
         }
-        mountPlayback(ev.field, $("#playback"), { autoplay: true });
+        mountPlayback(ev.field, $("#playback"), { autoplay: false });
       }
       if (ev.event === "status") {
         $("#trace").innerHTML += `<div class="muted">${ev.message}</div>`;
