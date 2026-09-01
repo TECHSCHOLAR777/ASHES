@@ -1,8 +1,8 @@
-# ASHES — Wildfire Site-Event Copilot
+# ASHES: Wildfire Site-Event Copilot
 
 ASHES is a safety-bounded decision-support system for organisations that operate a known portfolio of US sites in wildfire-exposed areas. During an active or imminent fire, it turns fragmented live signals, site-specific environmental context, and spread modelling into a cited, auditable **ActionCard** for each site.
 
-It is built for facilities, operations, and risk teams deciding what to do in the next hours—not for public emergency broadcasting. It does not replace incident command, NWS alerts, or evacuation orders. In particular, it never suppresses an official warning and never represents a modelled fire perimeter as official information.
+It is built for facilities, operations, and risk teams deciding what to do in the next hours, not for public emergency broadcasting. It does not replace incident command, NWS alerts, or evacuation orders. In particular, it never suppresses an official warning and never represents a modelled fire perimeter as official information.
 
 ## The idea
 
@@ -26,7 +26,7 @@ ASHES reduces the time between a changing fire picture and a defensible operatio
 - **More grounded decisions.** Live conditions are joined with local fuels, terrain, access, and exposure rather than relying on distance alone.
 - **Clear escalation support.** When a site reaches a protection or evacuation state, a separate structured dossier is produced rather than an ungrounded chat response.
 - **Auditability.** Every external call, policy decision, model invocation, and quoted credit cost is written to append-only JSONL logs. Cards carry versions and source information.
-- **Honest uncertainty.** Missing feeds, stale weather, unofficial perimeters, coarse AOIs, and uncertain arrival estimates are surfaced as flags—not silently filled with plausible values.
+- **Honest uncertainty.** Missing feeds, stale weather, unofficial perimeters, coarse AOIs, and uncertain arrival estimates are surfaced as flags, not silently filled with plausible values.
 
 ## Safety and decision boundaries
 
@@ -108,8 +108,8 @@ For `protect_asset` and `evacuate_site`, a separate Response Support Agent enric
 
 ASHES separates information by provenance and cadence:
 
-- **E — event-time data:** NWS CAP alerts and SPC outlook, FIRMS hotspots, WFIGS incident metadata and operational perimeters, and HRRR weather.
-- **W — site-world data:** a typed Mireye field catalogue grouped into roles A–J: fuel/vegetation, terrain, fire-weather climatology, hazard priors, ignition infrastructure, exposure, access, compounding hazard, water/governance, and response resources.
+- **E, event-time data:** NWS CAP alerts and SPC outlook, FIRMS hotspots, WFIGS incident metadata and operational perimeters, and HRRR weather.
+- **W, site-world data:** a typed Mireye field catalogue grouped into roles A to J: fuel/vegetation, terrain, fire-weather climatology, hazard priors, ignition infrastructure, exposure, access, compounding hazard, water/governance, and response resources.
 - **Spread layer:** an incident-first AOI pulls LANDFIRE fuel, canopy, and terrain rasters. A 7-member wind/moisture ensemble returns a spatial arrival field, arrival-time uncertainty, and probability layers.
 
 W fields are cached with role-dependent freshness windows, type encoded with missing-value masks and confidence features, and tagged with source/vintage information. Join keys and identifiers stay out of the model feature vector. Historic modelling excludes fields that would leak post-event knowledge or use today’s dynamic condition for an older fire.
@@ -133,7 +133,7 @@ Evaluation scripts are falsification gates. If real, suitable labels are absent,
 
 ### Trustworthy output contracts
 
-Pydantic schemas define the closed ActionCard and ResponseCard. They preserve nulls where data is unknown—for example, a missing incident acreage or a Mireye waterbody name without a verified distance. The brief validator permits only numbers already present in the grounded card and rejects impermissible escalation language. These constraints make it harder for a presentation layer to hide uncertainty or invent operational facts.
+Pydantic schemas define the closed ActionCard and ResponseCard. They preserve nulls where data is unknown, for example, a missing incident acreage or a Mireye waterbody name without a verified distance. The brief validator permits only numbers already present in the grounded card and rejects impermissible escalation language. These constraints make it harder for a presentation layer to hide uncertainty or invent operational facts.
 
 ## Repository guide
 
