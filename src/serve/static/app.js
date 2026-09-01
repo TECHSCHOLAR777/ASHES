@@ -86,7 +86,7 @@ async function renderWatch() {
         )
         .join("")}</tbody></table>`
     : "";
-  app.innerHTML = `<h1>Watch board</h1><p class="muted">Policy bucket and engine ETA for the site book.</p>${recentHtml}<div id="board">Loading…</div>`;
+  app.innerHTML = `<h1>Watch board</h1><p class="muted">Policy bucket, engine ETA, and P(burn) at each community pin.</p>${recentHtml}<div id="board">Loading…</div>`;
   const data = await (await fetch("/api/sites")).json();
   const rows = (data.sites || []).sort((a, b) => ACTION_ORDER.indexOf(a.action) - ACTION_ORDER.indexOf(b.action));
   if (!rows.length) {
@@ -94,13 +94,14 @@ async function renderWatch() {
     return;
   }
   $("#board").innerHTML = `<table class="table"><thead><tr>
-    <th>Site</th><th>Action</th><th>ETA (σ)</th><th>Distance</th><th>Engine</th><th>Weather</th>
+    <th>Site</th><th>Action</th><th>ETA (σ)</th><th>P(burn 72)</th><th>Distance</th><th>Engine</th><th>Weather</th>
   </tr></thead><tbody>${rows
     .map(
       (s) => `<tr data-card="${s.last_card_id || ""}" data-site="${s.site_id}">
       <td><strong>${s.name}</strong><div class="muted">${s.site_id}</div></td>
       <td>${pill(s.action)}</td>
       <td>${etaCell(s)}</td>
+      <td>${p72Cell(s)}</td>
       <td>${fmtKm(s.dist_perimeter_m)}<div class="muted">${s.incident_name || "no incident"}</div></td>
       <td class="muted">${s.engine || s.spread_field_version || "no field"}</td>
       <td>${s.red_flag ? "Red Flag" : "RF no"} ${chips(s.flags)}</td>
@@ -119,6 +120,15 @@ async function renderWatch() {
       if (tr.dataset.card) location.hash = `#/card/${tr.dataset.card}`;
     });
   });
+}
+
+function p72Cell(s) {
+  const p = s.p_burn_by_T || {};
+  const v = p["72"] ?? p.t72;
+  if (v === null || v === undefined) return `<span class="na">n/a</span>`;
+  const n = Number(v);
+  const note = n === 0 ? "unreached" : "engine";
+  return `<div><strong>${n.toFixed(2)}</strong></div><div class="muted">${note}</div>`;
 }
 
 function etaCell(s) {
@@ -177,6 +187,7 @@ const SHOWCASE_FALLBACK = {
 
 let caseIgnition = { lat: SHOWCASE_FALLBACK.ignition_lat, lng: SHOWCASE_FALLBACK.ignition_lng };
 let caseBuffer = 8;
+let caseLoaded = false;
 
 function readCoord(sel) {
   const raw = ($(sel).value || "").trim();
@@ -209,6 +220,7 @@ async function loadShowcase(simulate) {
     : q;
   caseIgnition = { lat: Number(s.ignition_lat), lng: Number(s.ignition_lng) };
   caseBuffer = Number(s.buffer_km) || 8;
+  caseLoaded = true;
   initMap(s.lat, s.lng);
   $("#result").innerHTML = `<div class="banner">${s.honesty || SHOWCASE_FALLBACK.honesty}</div>
     <div class="muted">Town ${Number(s.lat).toFixed(4)}, ${Number(s.lng).toFixed(4)} · ignition ${caseIgnition.lat.toFixed(4)}, ${caseIgnition.lng.toFixed(4)} · buffer ${caseBuffer} km</div>`;
@@ -371,7 +383,7 @@ function mountPlayback(field, host, { autoplay = false } = {}) {
   }
 }
 
-function drawReportOnMap(report) {
+function drawReportOnMap(report, opts = {}) {
   const site = report.site || {};
   const lat = site.lat;
   const lng = site.lng;
@@ -403,7 +415,7 @@ function drawReportOnMap(report) {
   }
   const field = report.engine?.field;
   if (field && field.arrival_hours) {
-    mountPlayback(field, $("#playback"), { autoplay: false });
+    mountPlayback(field, $("#playback"), { autoplay: Boolean(opts.autoplay) });
   }
   setTimeout(() => mapRef && mapRef.invalidateSize(), 80);
 }
@@ -422,7 +434,13 @@ async function startAsk(simulate) {
     payload.lng = lng;
     initMap(lat, lng);
   }
-  if (simulate && caseIgnition && usablePoint(caseIgnition.lat, caseIgnition.lng)) {
+  const idyllwildCase =
+    caseLoaded ||
+    /idyllwild/i.test(`${q} ${name}`) ||
+    (usablePoint(lat, lng) &&
+      Math.abs(lat - SHOWCASE_FALLBACK.lat) < 0.02 &&
+      Math.abs(lng - SHOWCASE_FALLBACK.lng) < 0.02);
+  if (idyllwildCase && usablePoint(caseIgnition.lat, caseIgnition.lng)) {
     payload.ignition_lat = caseIgnition.lat;
     payload.ignition_lng = caseIgnition.lng;
     payload.buffer_km = caseBuffer;
@@ -472,7 +490,7 @@ async function startAsk(simulate) {
             .bindTooltip("ignition")
             .addTo(mapRef);
         }
-        mountPlayback(ev.field, $("#playback"), { autoplay: false });
+        mountPlayback(ev.field, $("#playback"), { autoplay: true });
       }
       if (ev.event === "status") {
         $("#trace").innerHTML += `<div class="muted">${ev.message}</div>`;
@@ -513,36 +531,108 @@ function paintLivePanel(report) {
         ? `<p>Field ran. Arrival at the community pin is still outside the reached cells.</p>`
         : `<div class="clock">${Number(card.eta_hours).toFixed(0)} h <span class="muted">± ${card.eta_sigma_hours == null ? "n/a" : Number(card.eta_sigma_hours).toFixed(0)} h</span></div>`
     }
-    ${pburnBars(card.p_burn_by_T)}
+    ${pburnPanel(card, report)}
     ${playbookHtml(report)}
     <h2>Why</h2>
     <ul class="list">${(card.reasons || []).map((a) => `<li>${a}</li>`).join("")}</ul>
     <p><a href="#/card/${card.card_id}">Open full card</a></p>`;
-  drawReportOnMap(report);
+  drawReportOnMap(report, { autoplay: true });
 }
 
 function paintResult(report) {
   paintLivePanel(report);
 }
 
-function pburnBars(p) {
-  if (!p) return "";
-  const rows = [
-    ["24", p["24"] ?? p.t24],
-    ["48", p["48"] ?? p.t48],
-    ["72", p["72"] ?? p.t72],
-  ].filter(([, v]) => v !== null && v !== undefined);
-  if (!rows.length) return "";
-  return rows
-    .map(([h, v]) => {
-      const pct = Math.round(Number(v) * 100);
-      return `<div>P(burn by ${h} h) ${Number(v).toFixed(2)}<div class="bar"><span style="width:${pct}%"></span></div></div>`;
-    })
-    .join("");
+function pAt(p, h) {
+  if (!p) return null;
+  const v = p[h] ?? p[`t${h}`] ?? p[`T${h}`];
+  if (v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
-function aspectsHtml(aspects) {
-  if (!aspects || !Object.keys(aspects).length) return `<div class="na">No Mireye aspects fetched.</div>`;
+function fmtP(v) {
+  if (v === null || v === undefined) return "n/a";
+  return Number(v).toFixed(2);
+}
+
+function nearestFrontFromField(field, lat, lng) {
+  const grid = field && field.arrival_hours;
+  if (!grid || !grid.length || field.west == null || !usablePoint(lat, lng)) return null;
+  const h = grid.length;
+  const w = grid[0].length;
+  let best = null;
+  for (let r = 0; r < h; r++) {
+    for (let c = 0; c < w; c++) {
+      const eta = grid[r][c];
+      if (eta === null || eta === undefined || !Number.isFinite(Number(eta))) continue;
+      const clat = field.north - ((r + 0.5) / h) * (field.north - field.south);
+      const clng = field.west + ((c + 0.5) / w) * (field.east - field.west);
+      const dlat = (clat - lat) * 111320;
+      const dlng = (clng - lng) * 111320 * Math.cos((lat * Math.PI) / 180);
+      const dist = Math.hypot(dlat, dlng);
+      if (best === null || dist < best.dist_m) best = { dist_m: dist, eta_hours: Number(eta), lat: clat, lng: clng };
+    }
+  }
+  return best;
+}
+
+function pburnPanel(card, report) {
+  const p = card.p_burn_by_T;
+  const rows = [
+    ["24", pAt(p, "24")],
+    ["48", pAt(p, "48")],
+    ["72", pAt(p, "72")],
+  ].filter(([, v]) => v !== null);
+  if (!rows.length) return `<div class="pburn"><h2>P(burn) at the community pin</h2><p class="na">Engine did not return P(burn) for this pin.</p></div>`;
+  const eng = report.engine || {};
+  const nMembers = eng.n_members || eng.field?.n_members;
+  const fieldMax = eng.p_burn_field_max || eng.field?.p_burn_field_max || {};
+  const front =
+    eng.front && eng.front.dist_m != null
+      ? eng.front
+      : nearestFrontFromField(eng.field, card.site?.lat, card.site?.lng);
+  const nReached = eng.field?.n_reached;
+  const memberNote =
+    nMembers && Number(nMembers) > 1
+      ? `Ensemble n=${nMembers}: fraction of members whose arrival at this pixel is ≤ T.`
+      : `n=1 run: 1.00 if this pixel arrives by T, else 0.00.`;
+  const bars = rows
+    .map(([h, v]) => {
+      const pct = Math.round(Number(v) * 100);
+      const zero = Number(v) === 0;
+      return `<div class="pburn-row">
+        <div class="muted">by ${h} h</div>
+        <div class="pburn-val">${Number(v).toFixed(2)}</div>
+        <div class="bar"><span style="width:${pct}%"></span></div>
+        <div class="muted">${zero ? "unreached (engine 0)" : `${pct} % of members`}</div>
+      </div>`;
+    })
+    .join("");
+  const max72 = fieldMax["72"] ?? fieldMax.t72;
+  const frontLine =
+    front && front.dist_m != null
+      ? `<p>Nearest reached cell: <strong>${fmtKm(front.dist_m)}</strong> · arrival ${
+          front.eta_hours == null ? "n/a" : `${Number(front.eta_hours).toFixed(1)} h`
+        }${front.p_burn_72 == null ? "" : ` · P72 there ${fmtP(front.p_burn_72)}`}</p>`
+      : "";
+  return `<div class="pburn">
+    <h2>P(burn) at the community pin</h2>
+    <p class="muted">${memberNote} 0.00 is engine output, not a missing value.</p>
+    ${bars}
+    <p class="muted">Field max P(burn by 72 h) ${fmtP(max72)}${
+      nReached == null ? "" : ` · ${nReached} cells reached`
+    }. Sampled at ${Number(card.site.lat).toFixed(4)}, ${Number(card.site.lng).toFixed(4)} — not the ignition cell.</p>
+    ${frontLine}
+  </div>`;
+}
+
+function aspectsHtml(aspects, report) {
+  if (!aspects || !Object.keys(aspects).length) {
+    const mireye = (report && report.trace ? report.trace : []).find((t) => t.tool === "mireye_fetch");
+    const err = mireye && mireye.error ? ` Live call: ${mireye.error}.` : "";
+    return `<div class="na">Live Mireye returned no aspect fields.${err}</div>`;
+  }
   return Object.entries(aspects)
     .map(([role, block]) => {
       const kvs = Object.entries(block.fields || {})
@@ -631,7 +721,7 @@ async function renderCard(cardId) {
               : `<div class="clock">${Number(card.eta_hours).toFixed(0)} h <span class="muted">± ${card.eta_sigma_hours == null ? "n/a" : Number(card.eta_sigma_hours).toFixed(0)} h</span></div>
                  <div class="muted">arrival estimate with sigma</div>`
           }
-          ${pburnBars(card.p_burn_by_T)}
+          ${pburnPanel(card, report)}
           <div class="kv">
             <span>spread_field_version</span><span>${na(card.spread_field_version)}</span>
             <span>engine</span><span>${na(eng.engine)}</span>
@@ -659,8 +749,8 @@ async function renderCard(cardId) {
             <span>RH</span><span>${card.weather.rh_pct == null ? '<span class="na">n/a</span>' : card.weather.rh_pct + " %"}</span>
           </div>
         </div>
-        <h2>Mireye aspects (also in the agent API call)</h2>
-        <div class="panel">${aspectsHtml(report.aspects)}</div>
+        <h2>Mireye aspects (live API)</h2>
+        <div class="panel">${aspectsHtml(report.aspects, report)}</div>
         <h2>Tool trace</h2>
         <div class="panel trace">${(report.trace || [])
           .map((t) => `<div><span class="${t.ok ? "ok" : "err"}">${t.ok ? "ok" : "err"}</span> ${t.tool} ${Math.round(t.latency_ms)}ms ${t.backfill ? '<span class="back">backfill</span>' : ""} ${t.error || ""}</div>`)

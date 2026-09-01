@@ -94,78 +94,7 @@ def _hydrate_saved_reports() -> None:
         name = str((report.get("site") or {}).get("name") or "")
         if "idyllwild" not in name.lower():
             continue
-        if not report.get("aspects"):
-            report = dict(report)
-            report["aspects"] = _idyllwild_aspects()
         _store_report(report)
-
-
-def _aspect(value, confidence="high"):
-    return {"value": value, "confidence": confidence, "vintage": None, "source_url": "https://mireye.com"}
-
-
-def _idyllwild_aspects() -> dict[str, Any]:
-    """Site facts for the Idyllwild card so Mireye aspects render when the live fetch 402s."""
-    return {
-        "A": {
-            "name": "Fuel & vegetation",
-            "fields": {
-                "lcms_class": _aspect("Shrubs"),
-                "land_use_class": _aspect("Forest"),
-                "tree_canopy_pct": _aspect(38.0),
-                "ndvi_current": _aspect(0.41),
-            },
-        },
-        "B": {
-            "name": "Terrain (spread)",
-            "fields": {
-                "elevation": _aspect(1640.0),
-                "slope_degrees": _aspect(18.0),
-                "aspect_degrees": _aspect(248.0),
-                "aspect_cardinal": _aspect("W"),
-            },
-        },
-        "D": {
-            "name": "Fire hazard priors",
-            "fields": {
-                "fire_hazard_severity_zone_class": _aspect("Very High"),
-                "fire_hazard_responsibility_area": _aspect("SRA"),
-                "wildfire_annual_frequency": _aspect(0.12),
-            },
-        },
-        "F": {
-            "name": "Exposure / value",
-            "fields": {
-                "housing_units_within_1km": _aspect(420.0),
-                "housing_units_density_per_km2": _aspect(85.0),
-                "primary_building_overture_class": _aspect("residential"),
-            },
-        },
-        "G": {
-            "name": "Access / egress / response",
-            "fields": {
-                "nearest_road_class": _aspect("secondary"),
-                "nearest_road_surface": _aspect("paved"),
-                "nearest_major_road_name": _aspect("CA 243"),
-                "nearest_fire_station_name": _aspect("Idyllwild Fire Protection District"),
-                "nearest_fire_station_distance_m": _aspect(1100.0),
-            },
-        },
-        "I": {
-            "name": "Firefighting water / governance",
-            "fields": {
-                "surface_management_agency": _aspect("USFS"),
-                "within_water_service_area": _aspect(True),
-            },
-        },
-        "J": {
-            "name": "Response resources",
-            "fields": {
-                "nearest_flowline_name": _aspect("Strawberry Creek"),
-                "nearest_waterbody_name": _aspect("Lake Fulmor"),
-            },
-        },
-    }
 
 
 def _demo_book_report(row: dict[str, Any]) -> dict[str, Any]:
@@ -513,6 +442,7 @@ def sites():
                 "action": (card or {}).get("action"),
                 "eta_hours": (card or {}).get("eta_hours"),
                 "eta_sigma_hours": (card or {}).get("eta_sigma_hours"),
+                "p_burn_by_T": (card or {}).get("p_burn_by_T"),
                 "sigma": (card or {}).get("sigma"),
                 "engine": ((report or {}).get("engine") or {}).get("engine"),
                 "dist_perimeter_m": ((card or {}).get("incident") or {}).get("dist_perimeter_m"),

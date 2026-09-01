@@ -201,7 +201,7 @@ def test_simulate_ignition_uses_engine_sample(tmp_path, monkeypatch, mocker):
         east=-118.03 + 8 * 0.01,
         north=34.03,
     )
-    mocker.patch("src.agents.agent_tools.spread_run", return_value=field)
+    spread = mocker.patch("src.agents.agent_tools.spread_run", return_value=field)
     site = Site(site_id="s_sim", name="Sim", lat=34.0, lng=-118.0)
     client = FakeOpenAI(
         [
@@ -216,6 +216,8 @@ def test_simulate_ignition_uses_engine_sample(tmp_path, monkeypatch, mocker):
     sample = report["engine"]["sample"]
     assert sample is not None
     assert sample["p_burn_72"] == 0.7
+    assert spread.call_args.kwargs["ensemble"]["n_members"] == 7
+    assert report["engine"]["front"]["eta_hours"] == 12.0
     assert report["action_card"]["spread_field_version"] == "elmfire_2025.0212:test"
     assert report["action_card"]["incident"]["irwin_id"] == "SIMULATED"
     assert report["action_card"]["y_hat"] is None
@@ -250,6 +252,39 @@ def test_downsample_keeps_nulls():
     assert viz["horizon_hours"] == 72.0
     assert viz["n_reached"] == 3
     assert viz["burned_bbox"] is not None
+    assert viz["n_members"] == 1
+    assert viz["p_burn_field_max"]["72"] == 0.9
+
+
+def test_zero_p_burn_at_community_is_kept_and_front_is_elsewhere():
+    transform = [0.01, 0.0, -118.0, 0.0, -0.01, 34.0]
+    arrival = np.array([[0.0, np.nan], [np.nan, np.nan]])
+    zeros = np.zeros((2, 2))
+    p72 = np.array([[1.0, 0.0], [0.0, 0.0]])
+    field = SpreadField(
+        incident_id="x",
+        spread_field_version="v",
+        engine="e",
+        n_members=7,
+        arrival_hours=arrival,
+        eta_sigma_hours=zeros,
+        p_burn_24=zeros,
+        p_burn_48=zeros,
+        p_burn_72=p72,
+        transform=transform,
+        west=-118.0,
+        south=33.98,
+        east=-117.98,
+        north=34.0,
+    )
+    unreached = field.sample(33.995, -117.985)
+    assert unreached.eta_hours is None
+    assert unreached.p_burn_72 == 0.0
+    front = field.nearest_reached(33.995, -117.985)
+    assert front["dist_m"] is not None and front["dist_m"] > 0
+    assert front["p_burn_72"] == 1.0
+    assert front["eta_hours"] == 0.0
+    assert field.p_burn_field_max()["72"] == 1.0
 
 
 def test_health_endpoint():
@@ -377,11 +412,17 @@ def test_ask_body_allows_town_only_and_showcase():
     assert b"y_hat" not in js.content
     assert b"if (next > maxH) next = 0" not in js.content
     assert b'id="play">Play</button>' in js.content
+    assert b"idyllwildCase" in js.content
+    assert b"P(burn) at the community pin" in js.content
+    assert b"0.00 is engine output, not a missing value" in js.content
+    assert b"mountPlayback(ev.field, $(\"#playback\"), { autoplay: true })" in js.content
     html = client.get("/")
     assert b"engine clock" in html.content
+    css = client.get("/assets/styles.css")
+    assert b".pburn-val" in css.content
 
 
-def test_idyllwild_card_shows_mireye_aspects():
+def test_idyllwild_p_burn_zeros_are_engine_output():
     from fastapi.testclient import TestClient
     from src.serve.app import app
 
@@ -392,11 +433,15 @@ def test_idyllwild_card_shows_mireye_aspects():
     )
     assert idy, "Idyllwild live report should hydrate"
     report = client.get(f"/api/cards/{idy['card_id']}").json()
-    aspects = report.get("aspects") or {}
-    assert "A" in aspects
-    assert "B" in aspects
-    assert aspects["B"]["fields"]["aspect_cardinal"]["value"] == "W"
-    assert aspects["G"]["fields"]["nearest_major_road_name"]["value"] == "CA 243"
+    card = report["action_card"]
+    p = card["p_burn_by_T"]
+    assert p["24"] == 0.0
+    assert p["48"] == 0.0
+    assert p["72"] == 0.0
+    assert card["eta_hours"] is None
+    field = (report.get("engine") or {}).get("field") or {}
+    assert (field.get("n_reached") or 0) > 0
+    assert not (report.get("aspects") or {}), "hydrate must not invent Mireye aspects"
 
 
 def test_watch_book_is_seeded_for_the_board():
@@ -410,5 +455,6 @@ def test_watch_book_is_seeded_for_the_board():
     assert sites["Flagstaff Timber Yard"]["action"] == "protect_asset"
     assert sites["Bozeman Plant"]["eta_hours"] == 28.0
     assert sites["Boulder Distribution Center"]["incident_name"] == "Left Hand"
+    assert sites["Flagstaff Timber Yard"]["p_burn_by_T"]["72"] == 0.81
     recent_names = [(c.get("site") or {}).get("name") for c in client.get("/api/recent").json()["cards"]]
     assert "Riverside Warehouse" not in recent_names

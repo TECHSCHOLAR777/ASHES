@@ -88,6 +88,8 @@ def downsample_field(field: SpreadField, max_dim: int = 160) -> dict[str, Any]:
         "min_eta_hours": min_eta,
         "n_reached": int(finite.size),
         "n_cells": int(sub_a.size),
+        "n_members": int(field.n_members),
+        "p_burn_field_max": field.p_burn_field_max(),
         "burned_bbox": burned_bbox,
         "arrival_hours": _grid(sub_a),
         "p_burn_72": _grid(sub_p),

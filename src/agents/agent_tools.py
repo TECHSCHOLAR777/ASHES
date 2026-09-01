@@ -502,6 +502,8 @@ def _run_engine(
         "spread_field_version": field.spread_field_version,
         "n_members": field.n_members,
         "site_sample": sample_dict(session.spread_sample),
+        "front": field.nearest_reached(site.lat, site.lng),
+        "p_burn_field_max": field.p_burn_field_max(),
         "aoi_flags": geom.flags,
         "grid": list(field.arrival_hours.shape),
         "bounds": {"west": field.west, "south": field.south, "east": field.east, "north": field.north},
@@ -771,6 +773,11 @@ def serialize_report(session: AgentSession) -> dict[str, Any]:
             "sample": sample_dict(session.spread_sample),
             "field": session.spread_viz,
             "engine": session.spread_field.engine if session.spread_field else None,
+            "n_members": session.spread_field.n_members if session.spread_field else None,
+            "front": session.spread_field.nearest_reached(session.site.lat, session.site.lng)
+            if session.spread_field
+            else None,
+            "p_burn_field_max": session.spread_field.p_burn_field_max() if session.spread_field else None,
         },
         "map": {
             "perimeters": _perimeter_rings_json(session.perimeters),
@@ -1049,6 +1056,7 @@ def handle_simulate(session: AgentSession, args: dict[str, Any]) -> dict[str, An
     )
     session.incidents = [incident]
     session.perimeters = [perimeter]
+    ens_cfg = load_policy_config().get("spread_ensemble") or {}
     try:
         result = _run_engine(
             session,
@@ -1058,7 +1066,7 @@ def handle_simulate(session: AgentSession, args: dict[str, Any]) -> dict[str, An
             downwind_buffer_km=max(buffer_km, 6.0),
             upwind_buffer_km=1.0,
             resample_m=90,
-            n_members=1,
+            n_members=int(ens_cfg.get("n_members", 7)),
         )
         result["simulated"] = True
         result["ignition"] = {"lat": lat, "lng": lng}

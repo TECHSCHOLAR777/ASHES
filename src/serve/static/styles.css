@@ -76,8 +76,12 @@ button:disabled { opacity: 0.5; cursor: wait; }
 .trace .ok { color: #8fbf88; }
 .trace .err { color: #e07a6a; }
 .trace .back { color: var(--amber); }
-.bar { height: 8px; background: #2a2a24; border-radius: 4px; overflow: hidden; margin: 4px 0 8px; }
-.bar > span { display: block; height: 100%; background: var(--protect_asset); }
+.bar { height: 14px; background: #2a2a24; border-radius: 4px; overflow: hidden; margin: 0; }
+.bar > span { display: block; height: 100%; background: var(--protect_asset); min-width: 0; }
+.pburn { margin: 12px 0 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: #161410; }
+.pburn h2 { margin-top: 0; }
+.pburn-row { display: grid; grid-template-columns: 70px 70px 1fr 150px; gap: 8px; align-items: center; margin: 10px 0; }
+.pburn-val { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .banner { background: #3a2410; border: 1px solid #6a4a12; padding: 8px 12px; border-radius: 6px; font-size: 13px; margin: 8px 0; }
 .banner.warn { background: #3a1814; border-color: #6a2a18; }
 .aspect { margin-bottom: 12px; }

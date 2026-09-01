@@ -44,6 +44,25 @@ class SpreadSiteSample:
     raw_eta_hours: float | None = None
 
 
+def _cell_float(val: Any) -> float | None:
+    """0.0 is a real P(burn)/ETA; only non-finite values are missing."""
+    if val is None:
+        return None
+    try:
+        f = float(val)
+    except (TypeError, ValueError):
+        return None
+    if not np.isfinite(f):
+        return None
+    return f
+
+
+def _meters(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    dlat = (lat2 - lat1) * 111_320.0
+    dlng = (lng2 - lng1) * 111_320.0 * float(np.cos(np.radians(lat1)))
+    return float(np.hypot(dlat, dlng))
+
+
 @dataclass
 class SpreadField:
     incident_id: str
@@ -62,24 +81,29 @@ class SpreadField:
     north: float
     stale: bool = False
 
-    def sample(self, lat: float, lng: float) -> SpreadSiteSample:
-        a, b, c, d, e, f = (list(self.transform) + [0, 0, 0, 0, 0, 0])[:6]
+    def _row_col(self, lat: float, lng: float) -> tuple[int, int] | None:
+        a, _b, c, _d, e, f = (list(self.transform) + [0, 0, 0, 0, 0, 0])[:6]
         if a == 0 or e == 0:
-            return SpreadSiteSample(None, None, None, None, None, self.spread_field_version, False)
+            return None
         col = int(round((lng - c) / a - 0.5))
         row = int(round((lat - f) / e - 0.5))
         h, w = self.arrival_hours.shape
         if row < 0 or col < 0 or row >= h or col >= w:
+            return None
+        return row, col
+
+    def _cell_center(self, row: int, col: int) -> tuple[float, float]:
+        a, _b, c, _d, e, f = (list(self.transform) + [0, 0, 0, 0, 0, 0])[:6]
+        return float(f + (row + 0.5) * e), float(c + (col + 0.5) * a)
+
+    def sample(self, lat: float, lng: float) -> SpreadSiteSample:
+        rc = self._row_col(lat, lng)
+        if rc is None:
             return SpreadSiteSample(None, None, None, None, None, self.spread_field_version, False)
+        row, col = rc
 
         def _f(arr: np.ndarray) -> float | None:
-            val = arr[row, col]
-            if val is None or (isinstance(val, float) and not np.isfinite(val)):
-                return None
-            try:
-                return float(val)
-            except (TypeError, ValueError):
-                return None
+            return _cell_float(arr[row, col])
 
         return SpreadSiteSample(
             eta_hours=_f(self.arrival_hours),
@@ -91,6 +115,45 @@ class SpreadField:
             inside_aoi=True,
             raw_eta_hours=_f(self.arrival_hours),
         )
+
+    def p_burn_field_max(self) -> dict[str, float | None]:
+        def _mx(arr: np.ndarray) -> float | None:
+            finite = np.asarray(arr, dtype=np.float64)
+            finite = finite[np.isfinite(finite)]
+            if finite.size == 0:
+                return None
+            return float(np.max(finite))
+
+        return {"24": _mx(self.p_burn_24), "48": _mx(self.p_burn_48), "72": _mx(self.p_burn_72)}
+
+    def nearest_reached(self, lat: float, lng: float) -> dict[str, Any]:
+        """Closest cell with a finite arrival. P there is engine output, not interpolated."""
+        arrival = np.asarray(self.arrival_hours, dtype=np.float64)
+        rows, cols = np.where(np.isfinite(arrival))
+        if rows.size == 0:
+            return {
+                "dist_m": None,
+                "eta_hours": None,
+                "lat": None,
+                "lng": None,
+                "p_burn_24": None,
+                "p_burn_48": None,
+                "p_burn_72": None,
+            }
+        centers = [self._cell_center(int(r), int(c)) for r, c in zip(rows, cols)]
+        dist = np.array([_meters(lat, lng, clat, clng) for clat, clng in centers], dtype=np.float64)
+        i = int(np.argmin(dist))
+        row, col = int(rows[i]), int(cols[i])
+        clat, clng = centers[i]
+        return {
+            "dist_m": float(dist[i]),
+            "eta_hours": _cell_float(arrival[row, col]),
+            "lat": clat,
+            "lng": clng,
+            "p_burn_24": _cell_float(self.p_burn_24[row, col]),
+            "p_burn_48": _cell_float(self.p_burn_48[row, col]),
+            "p_burn_72": _cell_float(self.p_burn_72[row, col]),
+        }
 
 
 class IncidentRegistry:

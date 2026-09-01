@@ -167,7 +167,10 @@ def _backfill(session: AgentSession) -> None:
         if name == "mireye_fetch":
             args = {"roles": ["A", "B", "C", "D", "E", "F", "G", "H", "I"]}
         execute_tool(session, name, args, backfill=True)
-    if session.simulate:
+    want_sim = session.simulate or (
+        session.ignition_lat is not None and session.ignition_lng is not None
+    )
+    if want_sim:
         if "simulate_ignition" not in session.called:
             sim_args: dict[str, Any] = {}
             if session.ignition_lat is not None and session.ignition_lng is not None:
@@ -200,6 +203,8 @@ def run_agentic(
     client=None,
 ) -> dict[str, Any]:
     """Drive tools via OpenAI function calling. Falls back to the deterministic tool order if no key."""
+    if ignition_lat is not None and ignition_lng is not None:
+        simulate = True
     session = AgentSession(
         deps=deps,
         site=site,
