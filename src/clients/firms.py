@@ -17,6 +17,7 @@ import os
 import threading
 import time
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
 import httpx
@@ -136,6 +137,60 @@ class FIRMSClient:
         "E_hist: FIRMS/WFIGS as of t0"). `on_date` is a `datetime.date`."""
         return self._fetch(lat, lng, days=1, on_date=on_date, site_id=site_id)
 
+    def _fetch_one_source(
+        self, source: str, bbox: str, days: int, on_date, site_id: str | None
+    ) -> tuple[list[Hotspot], bool]:
+        url = FIRMS_AREA_URL_TEMPLATE.format(map_key=self._map_key, source=source, bbox=bbox, days=days)
+        if on_date is not None:
+            url = f"{url}/{on_date.isoformat()}"
+        self._throttle()
+        start = time.monotonic()
+        try:
+            resp = self._client.get(url)
+            resp.raise_for_status()
+            text = resp.text
+        except httpx.HTTPError as exc:
+            latency_ms = (time.monotonic() - start) * 1000
+            tool_logger.log_tool_call(
+                f"firms:{source}", {"bbox": bbox, "days": days}, None, site_id, latency_ms, error=str(exc)
+            )
+            return [], True
+
+        latency_ms = (time.monotonic() - start) * 1000
+        if "Invalid" in text[:200] or "quota" in text[:200].lower():
+            tool_logger.log_tool_call(
+                f"firms:{source}",
+                {"bbox": bbox, "days": days},
+                {"body_head": text[:200]},
+                site_id,
+                latency_ms,
+                error="quota_or_invalid_key",
+            )
+            return [], True
+
+        tool_logger.log_tool_call(
+            f"firms:{source}", {"bbox": bbox, "days": days}, {"rows": text.count("\n")}, site_id, latency_ms
+        )
+
+        hotspots: list[Hotspot] = []
+        reader = csv.DictReader(io.StringIO(text))
+        for row in reader:
+            try:
+                hotspots.append(
+                    Hotspot(
+                        lat=float(row["latitude"]),
+                        lng=float(row["longitude"]),
+                        frp=float(row.get("frp", 0.0) or 0.0),
+                        source=source,
+                        acq_date=row.get("acq_date", ""),
+                        acq_time=row.get("acq_time", ""),
+                        confidence=str(row.get("confidence", "")),
+                    )
+                )
+            except (KeyError, ValueError):
+                continue
+        return hotspots, False
+
     def _fetch(
         self, lat: float, lng: float, days: int, on_date, site_id: str | None
     ) -> FIRMSResult:
@@ -147,63 +202,21 @@ class FIRMSClient:
 
         max_radius = max(RADII_KM)
         bbox = _bbox_for_radius(lat, lng, max_radius)
-        all_hotspots: list[Hotspot] = []
-        unavailable = False
         sources = ARCHIVE_SOURCES if on_date is not None else SOURCES
 
-        for source in sources:
-            url = FIRMS_AREA_URL_TEMPLATE.format(
-                map_key=self._map_key, source=source, bbox=bbox, days=days
-            )
-            if on_date is not None:
-                url = f"{url}/{on_date.isoformat()}"
-            self._throttle()
-            start = time.monotonic()
-            try:
-                resp = self._client.get(url)
-                resp.raise_for_status()
-                text = resp.text
-            except httpx.HTTPError as exc:
-                latency_ms = (time.monotonic() - start) * 1000
-                tool_logger.log_tool_call(
-                    f"firms:{source}", {"bbox": bbox, "days": days}, None, site_id, latency_ms, error=str(exc)
-                )
-                unavailable = True
-                continue
-
-            latency_ms = (time.monotonic() - start) * 1000
-            if "Invalid" in text[:200] or "quota" in text[:200].lower():
-                tool_logger.log_tool_call(
-                    f"firms:{source}",
-                    {"bbox": bbox, "days": days},
-                    {"body_head": text[:200]},
-                    site_id,
-                    latency_ms,
-                    error="quota_or_invalid_key",
-                )
-                unavailable = True
-                continue
-
-            tool_logger.log_tool_call(
-                f"firms:{source}", {"bbox": bbox, "days": days}, {"rows": text.count("\n")}, site_id, latency_ms
+        # The 3 sources are independent requests; fetching them concurrently instead of in
+        # a loop cuts this call's wall-clock time to roughly one request instead of three -
+        # meaningful at scale since every training sample makes this call once.
+        with ThreadPoolExecutor(max_workers=len(sources)) as pool:
+            results = list(
+                pool.map(lambda s: self._fetch_one_source(s, bbox, days, on_date, site_id), sources)
             )
 
-            reader = csv.DictReader(io.StringIO(text))
-            for row in reader:
-                try:
-                    all_hotspots.append(
-                        Hotspot(
-                            lat=float(row["latitude"]),
-                            lng=float(row["longitude"]),
-                            frp=float(row.get("frp", 0.0) or 0.0),
-                            source=source,
-                            acq_date=row.get("acq_date", ""),
-                            acq_time=row.get("acq_time", ""),
-                            confidence=str(row.get("confidence", "")),
-                        )
-                    )
-                except (KeyError, ValueError):
-                    continue
+        all_hotspots: list[Hotspot] = []
+        unavailable = False
+        for hotspots, failed in results:
+            all_hotspots.extend(hotspots)
+            unavailable = unavailable or failed
 
         by_radius: dict[int, list[Hotspot]] = {r: [] for r in RADII_KM}
         for h in all_hotspots:

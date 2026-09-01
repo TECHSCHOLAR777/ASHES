@@ -1,0 +1,102 @@
+{
+  "ablation": {
+    "full_model_pr_auc": 0.7413943784053456,
+    "roles": {
+      "A": {
+        "columns": [
+          0,
+          55
+        ],
+        "n_columns": 55,
+        "pr_auc_without_role": 0.7349551146305724,
+        "delta_ap": 0.006439263774773218,
+        "earns_its_keep": true
+      },
+      "B": {
+        "columns": [
+          55,
+          78
+        ],
+        "n_columns": 23,
+        "pr_auc_without_role": 0.7359502671799205,
+        "delta_ap": 0.005444111225425097,
+        "earns_its_keep": true
+      },
+      "C": {
+        "columns": [
+          78,
+          106
+        ],
+        "n_columns": 28,
+        "pr_auc_without_role": 0.7445043746517781,
+        "delta_ap": -0.0031099962464324893,
+        "earns_its_keep": false
+      },
+      "D": {
+        "columns": [
+          106,
+          123
+        ],
+        "n_columns": 17,
+        "pr_auc_without_role": 0.7241671834122128,
+        "delta_ap": 0.017227194993132855,
+        "earns_its_keep": true
+      },
+      "E": {
+        "columns": [
+          123,
+          129
+        ],
+        "n_columns": 6,
+        "pr_auc_without_role": 0.7252896697989714,
+        "delta_ap": 0.01610470860637425,
+        "earns_its_keep": true
+      },
+      "F": {
+        "columns": [
+          129,
+          154
+        ],
+        "n_columns": 25,
+        "pr_auc_without_role": 0.742006652363432,
+        "delta_ap": -0.0006122739580863845,
+        "earns_its_keep": false
+      },
+      "G": {
+        "columns": [
+          154,
+          172
+        ],
+        "n_columns": 18,
+        "pr_auc_without_role": 0.7484564294974891,
+        "delta_ap": -0.007062051092143529,
+        "earns_its_keep": false
+      },
+      "H": {
+        "columns": [
+          172,
+          184
+        ],
+        "n_columns": 12,
+        "pr_auc_without_role": 0.7373961157728456,
+        "delta_ap": 0.003998262632500027,
+        "earns_its_keep": false
+      },
+      "I": {
+        "columns": [
+          184,
+          200
+        ],
+        "n_columns": 16,
+        "pr_auc_without_role": 0.7100326090906016,
+        "delta_ap": 0.03136176931474399,
+        "earns_its_keep": true
+      }
+    }
+  },
+  "gbm_comparison": {
+    "model": "HistGradientBoostingClassifier",
+    "pr_auc": 0.966459732660875,
+    "brier_score": 0.060554275066607384
+  }
+}

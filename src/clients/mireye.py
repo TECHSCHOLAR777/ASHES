@@ -10,6 +10,7 @@ import itertools
 import threading
 import time
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -282,13 +283,32 @@ class MireyeClient:
 
     def quote(self, lat: float, lng: float, fields: list[str], site_id: str | None = None) -> QuoteResult:
         """Quotes a single point. Chunks internally at MAX_FIELDS_PER_REQUEST and sums cost,
-        so a caller never has to know about the live API's 50-field cap."""
-        total_credits = 0.0
-        for chunk in _chunked(fields, MAX_FIELDS_PER_REQUEST):
+        so a caller never has to know about the live API's 50-field cap.
+
+        Chunks are issued concurrently, not sequentially: for the standard ~61-field Fire
+        Intelligence Set that's only 2 chunks (50 + 11), but each chunk was a full round
+        trip against the same backend that legitimately takes seconds under load (see
+        DECISIONS.md), so doing them serially doubled every sample's latency for no reason -
+        the chunks are independent requests to begin with. The client's own round-robin
+        rate limiter is thread-safe, so this is safe at any chunk count.
+        """
+        chunks = _chunked(fields, MAX_FIELDS_PER_REQUEST)
+        if len(chunks) == 1:
             data = self._request(
-                "POST", "/v1/fetch/quote", {"lat": lat, "lng": lng, "fields": chunk}, site_id=site_id
+                "POST", "/v1/fetch/quote", {"lat": lat, "lng": lng, "fields": chunks[0]}, site_id=site_id
             )
-            total_credits += float(data.get("credits_total", 0.0))
+            total_credits = float(data.get("credits_total", 0.0))
+        else:
+            with ThreadPoolExecutor(max_workers=len(chunks)) as pool:
+                results = list(
+                    pool.map(
+                        lambda chunk: self._request(
+                            "POST", "/v1/fetch/quote", {"lat": lat, "lng": lng, "fields": chunk}, site_id=site_id
+                        ),
+                        chunks,
+                    )
+                )
+            total_credits = sum(float(d.get("credits_total", 0.0)) for d in results)
         tool_logger.log_credit_usage(site_id, quoted_credits=total_credits, actual_credits=None, key_index=None)
         return QuoteResult(credits=total_credits, fields=fields, lat=lat, lng=lng)
 
@@ -299,12 +319,28 @@ class MireyeClient:
         field_count`), and does not echo an "actual" cost distinct from the quote in the
         fetch response itself, so the logged actual equals the quote (SRS's "quote for
         reproducibility, not rationing" - there is no drift to reconcile here).
+
+        Field chunks are fetched concurrently for the same reason `quote` does: they are
+        independent requests, so fetching them serially only added latency.
         """
         quote_result = self.quote(lat, lng, fields, site_id=site_id)
+        chunks = _chunked(fields, MAX_FIELDS_PER_REQUEST)
         merged: dict[str, Any] = {}
-        for chunk in _chunked(fields, MAX_FIELDS_PER_REQUEST):
-            data = self._request("POST", "/v1/fetch", {"lat": lat, "lng": lng, "fields": chunk}, site_id=site_id)
+        if len(chunks) == 1:
+            data = self._request("POST", "/v1/fetch", {"lat": lat, "lng": lng, "fields": chunks[0]}, site_id=site_id)
             merged.update(self._flatten_fields(data.get("fields", {}), data.get("fetched_at")))
+        else:
+            with ThreadPoolExecutor(max_workers=len(chunks)) as pool:
+                results = list(
+                    pool.map(
+                        lambda chunk: self._request(
+                            "POST", "/v1/fetch", {"lat": lat, "lng": lng, "fields": chunk}, site_id=site_id
+                        ),
+                        chunks,
+                    )
+                )
+            for data in results:
+                merged.update(self._flatten_fields(data.get("fields", {}), data.get("fetched_at")))
         tool_logger.log_credit_usage(site_id, quote_result.credits, quote_result.credits, key_index=None)
         return merged
 

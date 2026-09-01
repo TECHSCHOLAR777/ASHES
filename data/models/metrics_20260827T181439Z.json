@@ -1,0 +1,12 @@
+{
+  "model_version": "h_fire_v20260827T181439Z",
+  "n_samples": 4300,
+  "n_events": 458,
+  "n_train": 3217,
+  "n_test": 1083,
+  "pr_auc": 0.7413943784053456,
+  "brier_score": 0.16664417599590847,
+  "random_w_shuffled_pr_auc": 0.6382002411936611,
+  "random_w_collapse_delta_ap": 0.10319413721168447,
+  "h1_signal": true
+}

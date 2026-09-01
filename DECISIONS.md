@@ -51,6 +51,29 @@ One line per decision, in build order.
   throughput (17 samples/15min, mostly wasted retries) than at 12 (34 samples in 512s
   cleanly). Reverted to 12 workers, the last concurrency level validated to complete
   requests cleanly rather than mostly retry-and-fail.
+- [2026-08-28] **Finding, not yet acted on: a gradient-boosted-tree model and role-pruning
+  both beat the shipped MLP by a wide margin on the real dataset.** Ran the SRS 6.5 mandatory
+  per-role W ablation (never run before this) and a `HistGradientBoostingClassifier`
+  comparison against the shipped `MLPClassifier`, both on the same 4,300-sample / 458-fire
+  event-held-out split, via `scripts/ablation_study.py`:
+  - Per-role ablation results (delta AP when a role is zeroed out, `data/models/ablation_study.json`):
+    role I (firefighting water/governance) +0.031, role D (fire hazard priors) +0.017, role E
+    (ignition sources) +0.016, role A (fuel/vegetation) +0.006, role B (terrain) +0.005 all
+    earn their keep; roles C (fire-weather climatology), F (exposure/value), G
+    (access/egress), and H (compounding hazard) are at or below the 0.005 AP noise floor -
+    G is actually slightly negative (-0.007).
+  - `HistGradientBoostingClassifier` (same isotonic-calibrated pipeline shape, just a
+    different classifier) scores PR-AUC 0.9665 / Brier 0.0606 versus the shipped MLP's
+    0.7414 / 0.1666 on identical data and split.
+  - Combining both - GBM trained only on roles A, B, D, E, I (132 dims instead of 215,
+    dropping C/F/G/H) - scores PR-AUC 0.9672 / Brier 0.0598, marginally better than
+    unpruned GBM and with meaningfully lower dimensionality.
+  - **Not yet shipped as the default model.** Making this the production `h_fire` would mean
+    changing `train.py`'s classifier away from the SRS 6.4-specified "MLP/logistic" and
+    teaching `h_fire.py`'s `model_infer()` to apply the same column-pruning at serve time
+    (the artifact would need to record which W columns to drop) - a real architecture
+    change, recorded here as a finding pending a decision to act on it, not acted on
+    unilaterally.
 - [2026-08-27] `build_training_set.py`'s first concurrent version shuffled individual
   sample tasks (not just fire order) before submitting them to the thread pool, on the
   theory that interleaving fires kept early progress diverse. In practice this defeated the
@@ -63,6 +86,15 @@ One line per decision, in build order.
   baseline). Fixed by keeping tasks grouped by fire (only the fire order is shuffled) so the
   thread pool naturally assigns several workers to the same fire's samples at once - one
   pays the real HRRR cost, the rest hit the in-memory cache almost immediately.
+- [2026-08-27] `src/model/train.py` globs every `*.jsonl` in `data/training/` - after the
+  real 4,300-sample collection run finished, `data/training/synthetic_001.jsonl` (the
+  random-label bootstrap) was still sitting in the same directory and would have been mixed
+  into the real training run, silently contaminating it with noise. Moved the synthetic file
+  (and a local-only backup copy of the real dataset) out to `data/training_synthetic_archive/`
+  before retraining. **Do not re-run `scripts/generate_synthetic_training_data.py` with its
+  default output path while a real dataset lives in `data/training/`** - it writes there by
+  default. If synthetic data is ever needed again (e.g. for a fast offline smoke test with no
+  live API calls), point its output at a different directory explicitly.
 - [2026-08-27] MTBS's WFS returns geometry in its native projected CRS (meters), not
   lat/lng degrees, unless `srsName=EPSG:4326` is passed explicitly - the scalar
   `burnbndlat`/`burnbndlon` properties are correctly in degrees regardless, which masked
