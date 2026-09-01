@@ -309,7 +309,7 @@ def test_ui_index_served():
     r = client.get("/")
     assert r.status_code == 200
     assert b"ASHES" in r.content
-    assert b"app.js?v=pburn3" in r.content
+    assert b"app.js?v=pburn4" in r.content
     css = client.get("/assets/styles.css")
     assert css.status_code == 200
     ico = client.get("/favicon.ico")

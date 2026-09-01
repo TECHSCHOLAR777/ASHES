@@ -344,7 +344,9 @@ function mountPlayback(field, host, { autoplay = false } = {}) {
   };
   const stopAtEnd = () => {
     stopPlayback();
-    if (playBtn) playBtn.textContent = "Play";
+    const btn = $("#play", el);
+    if (btn) btn.textContent = "Play";
+    else if (playBtn) playBtn.textContent = "Play";
   };
   const tick = () => {
     const step = Math.max(1, Math.round(maxH / 36));
