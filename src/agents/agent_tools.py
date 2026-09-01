@@ -202,7 +202,7 @@ OPENAI_TOOLS: list[dict[str, Any]] = [
             "description": (
                 "REQUIRED. Deterministic policy table picks monitor/prepare/protect_asset/"
                 "evacuate_site/inspect_after/no_action from distance, Red Flag, FIRMS, "
-                "engine ETA, and Mireye guards (density, roads, NDVI, land use). No hit-model. "
+                "engine ETA, and Mireye guards (density, roads, NDVI, land use). "
                 "You never pick the action."
             ),
             "parameters": {"type": "object", "properties": {}},
@@ -635,8 +635,8 @@ def _fallback_playbook(session: AgentSession) -> str:
     step_txt = " ".join(f"{i}. {s}" for i, s in enumerate(steps, 1)) if steps else ""
     eta = "null" if card.eta_hours is None else f"{card.eta_hours}"
     return (
-        f"{honesty} Action: {card.action} (policy {card.policy_version}, not the LLM). "
-        f"Engine clock ETA={eta} h (sigma={card.sigma}); no hit-model y_hat. "
+        f"{honesty} Action: {card.action} (policy {card.policy_version}). "
+        f"Engine clock ETA={eta} h (sigma={card.sigma}). "
         f"Distance to perimeter: {card.incident.dist_perimeter_m} m. "
         f"Reasons: {'; '.join(card.reasons)}. "
         f"Playbook: {step_txt}".strip()
@@ -655,12 +655,11 @@ def _write_grounded_brief(session: AgentSession) -> str:
         "You are the ASHES playbook reasoner. Policy already picked the Action enum; you may "
         "not change it. You receive grounded JSON: parse honesty, ActionCard, Mireye site "
         "aspects, engine sample, bucket playbook steps, copy_these_numbers. "
-        "Write: (1) the parse honesty sentence if present — town name vs a point, not a "
-        "boundary; (2) the action as given; (3) engine ETA and P(burn by T) as the clock, "
-        "never a tabular hit-model; (4) tailored next steps from the playbook and Mireye "
-        "facts (agency, roads, water, terrain). Do not invent hydrants, phone numbers, or "
-        "any number that is not in copy_these_numbers. If notify.log_only, say the alert "
-        "was logged, not posted. If action is evacuate_site, lead with that. Return prose."
+        "Write: (1) the parse honesty sentence if present — community pin for the named place; "
+        "(2) the action as given; (3) engine ETA and P(burn by T) as the clock; "
+        "(4) tailored next steps from the playbook and Mireye facts (agency, roads, water, terrain). "
+        "Copy numbers only from copy_these_numbers. If notify.log_only, say the alert "
+        "was logged. If action is evacuate_site, lead with that. Return prose."
     )
     if not api_key:
         brief = _fallback_playbook(session)

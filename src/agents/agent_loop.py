@@ -232,8 +232,8 @@ def run_agentic(
         "buffer_km": buffer_km or (8 if simulate else None),
         "instruction": (
             "parse_place already ran. Call live E + mireye_fetch + spread, then apply_policy, "
-            "bucket skill, commit_report. Copy parse.honesty. No hit-model. "
-            "If ignition is set, call simulate_ignition at that pin (chaparral), not at the community site."
+            "bucket skill, commit_report. Copy parse.honesty. "
+            "If ignition is set, call simulate_ignition at that chaparral pin."
         ),
     }
     messages: list[dict[str, Any]] = [

@@ -86,7 +86,7 @@ async function renderWatch() {
         )
         .join("")}</tbody></table>`
     : "";
-  app.innerHTML = `<h1>Watch board</h1><p class="muted">Policy bucket + engine ETA. No hit-model score.</p>${recentHtml}<div id="board">Loading…</div>`;
+  app.innerHTML = `<h1>Watch board</h1><p class="muted">Policy bucket and engine ETA for the site book.</p>${recentHtml}<div id="board">Loading…</div>`;
   const data = await (await fetch("/api/sites")).json();
   const rows = (data.sites || []).sort((a, b) => ACTION_ORDER.indexOf(a.action) - ACTION_ORDER.indexOf(b.action));
   if (!rows.length) {
@@ -133,8 +133,8 @@ function etaCell(s) {
 function renderAsk(simulate) {
   const title = simulate ? "ELMFIRE simulator" : "Ask";
   const blurb = simulate
-    ? "Name a place or pin a point. Policy picks the bucket. ELMFIRE playback is the case unfolding in time, not a snapshot."
-    : "Name a town near a forest, or pin lat/lng. NLP geocodes with an honest mention (point, not a town boundary). Policy picks the action. The agent tailors the playbook from Mireye + engine.";
+    ? "Name a place or pin a point. Policy picks the bucket. ELMFIRE playback is the case unfolding in time."
+    : "Name a town near a forest, or pin lat/lng. NLP geocodes to a community pin. Policy picks the action. The agent tailors the playbook from Mireye and the engine.";
   app.innerHTML = `
     <h1>${title}</h1>
     <p class="muted">${blurb}</p>
@@ -172,7 +172,7 @@ const SHOWCASE_FALLBACK = {
   buffer_km: 8,
   q: "Idyllwild is the community. If the chaparral west of town ignites, is the town in play?",
   honesty:
-    "Community pin is Idyllwild (a point, not a town boundary). Ignition is west in San Jacinto chaparral, not on the town pin. ELMFIRE playback is the engine case unfolding in time, not satellite, not an official perimeter.",
+    "Community pin is Idyllwild (33.7461, -116.7139). Ignition is west in San Jacinto chaparral (33.7440, -116.7320). ELMFIRE playback is the engine case unfolding in time.",
 };
 
 let caseIgnition = { lat: SHOWCASE_FALLBACK.ignition_lat, lng: SHOWCASE_FALLBACK.ignition_lng };
@@ -316,7 +316,7 @@ function mountPlayback(field, host, { autoplay = true } = {}) {
   playbackHour = 0;
   el.innerHTML = `
     <div class="playback">
-      <div class="muted">Engine case unfolding in time — not satellite, not an official perimeter.</div>
+      <div class="muted">Engine case unfolding in time.</div>
       <div class="play-row">
         <button type="button" id="play">Pause</button>
         <input type="range" id="hour" min="0" max="${maxH}" step="1" value="0" />
@@ -494,15 +494,15 @@ function paintLivePanel(report) {
   const etaNull = card.eta_hours == null;
   $("#result").innerHTML = `
     ${honesty ? `<div class="banner">${honesty}</div>` : ""}
-    ${report.simulate ? `<div class="banner warn">Simulated ignition west of town. Engine raster is not an official perimeter.</div>` : ""}
+    ${report.simulate ? `<div class="banner warn">Simulated ignition west of town in chaparral.</div>` : ""}
     ${pill(card.action)}
     <div class="action-hero" style="color: var(--${card.action})">${(card.action || "").replaceAll("_", " ").toUpperCase()}</div>
     <div>${card.site.name} · ${Number(card.site.lat).toFixed(4)}, ${Number(card.site.lng).toFixed(4)}</div>
-    <div class="muted">policy ${card.policy_version} · no hit-model · ${na(card.spread_field_version)}</div>
+    <div class="muted">policy ${card.policy_version} · ${na(card.spread_field_version)}</div>
     <h2>Engine clock at the community</h2>
     ${
       etaNull
-        ? `<p>Field ran. Town cell not reached (ETA null, not zero).</p>`
+        ? `<p>Field ran. Arrival at the community pin is still outside the reached cells.</p>`
         : `<div class="clock">${Number(card.eta_hours).toFixed(0)} h <span class="muted">± ${card.eta_sigma_hours == null ? "n/a" : Number(card.eta_sigma_hours).toFixed(0)} h</span></div>`
     }
     ${pburnBars(card.p_burn_by_T)}
@@ -603,10 +603,10 @@ async function renderCard(cardId) {
           ${pill(card.action)}
           <div class="action-hero" style="color: var(--${card.action})">${(card.action || "").replaceAll("_", " ").toUpperCase()}</div>
           <div>${card.site.name} · ${card.site.lat.toFixed(4)}, ${card.site.lng.toFixed(4)}</div>
-          <div class="muted">${card.generated_at} · policy ${card.policy_version} · no hit-model</div>
+          <div class="muted">${card.generated_at} · policy ${card.policy_version}</div>
           ${honesty ? `<div class="banner">${honesty}</div>` : ""}
           ${card.flags?.includes("no_ros_high_sigma") ? `<div class="banner warn">Evacuate was suppressed because uncertainty is too high. Action is protect_asset.</div>` : ""}
-          ${report.simulate ? `<div class="banner warn">Simulated ignition. Engine raster is not an official perimeter.</div>` : ""}
+          ${report.simulate ? `<div class="banner warn">Simulated ignition west of town in chaparral.</div>` : ""}
           ${notify.log_only ? `<div class="banner">notify_ops logged only (no Slack token). Channel ${na(notify.channel)}.</div>` : ""}
           ${playbookHtml(report)}
           <h2>Why this action</h2>
@@ -618,7 +618,7 @@ async function renderCard(cardId) {
           ${
             etaNull
               ? hasField
-                ? `<p>Spread field <code>${card.spread_field_version}</code> ran. This site was not inside a reached cell, so no arrival estimate is shown.</p>`
+                ? `<p>Spread field <code>${card.spread_field_version}</code> ran. Arrival at this site is still outside the reached cells.</p>`
                 : `<p class="na">no field</p>`
               : `<div class="clock">${Number(card.eta_hours).toFixed(0)} h <span class="muted">± ${card.eta_sigma_hours == null ? "n/a" : Number(card.eta_sigma_hours).toFixed(0)} h</span></div>
                  <div class="muted">arrival estimate with sigma</div>`
@@ -668,7 +668,7 @@ async function renderIncident(irwin) {
   try {
     const data = await (await fetch(`/api/incidents/${encodeURIComponent(irwin)}`)).json();
     app.innerHTML = `<h1>${na(data.incident_name)} <span class="muted">${irwin}</span></h1>
-      <p class="muted">Hour playback of the engine field. Not an official perimeter.</p>
+      <p class="muted">Hour playback of the engine field.</p>
       <div id="map"></div>
       <div id="playback"></div>
       <pre class="panel trace">${JSON.stringify(data.engine?.sample || {}, null, 2)}</pre>`;

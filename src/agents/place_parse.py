@@ -83,14 +83,14 @@ def honesty_line(parsed: dict[str, Any]) -> str:
         extra = f" The question also names {parsed['place']}." if parsed.get("place") else ""
         return (
             f"Using the coordinates you supplied ({parsed['lat']:.4f}, {parsed['lng']:.4f})."
-            f"{extra} That is a point, not a town boundary."
+            f"{extra} Community pin at that coordinate."
         )
     if parsed.get("geocoded"):
         acc = parsed.get("confidence") or "n/a"
         return (
             f"No coordinates were supplied. Parsed “{parsed.get('place')}” from the question "
             f"and geocoded via Mireye to {parsed['lat']:.4f}, {parsed['lng']:.4f} "
-            f"(accuracy {acc}). That is a point, not a town or forest boundary."
+            f"(accuracy {acc}). Community pin at that coordinate."
         )
     if parsed.get("error"):
         return f"Could not resolve a place: {parsed['error']}"

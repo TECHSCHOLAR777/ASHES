@@ -94,7 +94,7 @@ def test_agentic_loop_calls_tools_and_policy_owns_action(tmp_path, monkeypatch, 
     assert "model_infer" not in tools
     assert report["brief"]
     assert report["parse"]
-    assert "point" in (report["parse"].get("honesty") or "").lower()
+    assert "community pin" in (report["parse"].get("honesty") or "").lower()
     assert all(t["tool"] != "unknown" for t in report["trace"])
 
 
@@ -298,7 +298,7 @@ def test_extract_place_and_honesty():
     line = honesty_line(
         {"used_supplied_coords": True, "lat": 33.7435, "lng": -116.735, "place": "Idyllwild"}
     )
-    assert "point" in line.lower()
+    assert "community pin" in line.lower()
     assert "Idyllwild" in line
     geo = honesty_line(
         {
@@ -310,8 +310,8 @@ def test_extract_place_and_honesty():
             "confidence": "high",
         }
     )
-    assert "No coordinates were supplied" in geo
-    assert "point, not a town" in geo
+    assert "geocoded" in geo.lower()
+    assert "community pin" in geo.lower()
 
 
 def test_parse_place_geocodes_town_name(tmp_path, monkeypatch, mocker):
@@ -336,7 +336,7 @@ def test_parse_place_geocodes_town_name(tmp_path, monkeypatch, mocker):
     assert out["geocoded"] is True
     assert session.site.lat == 33.7435
     assert "Idyllwild" in out["honesty"]
-    assert "point" in out["honesty"].lower()
+    assert "community pin" in out["honesty"].lower()
     assert session.site.name == "Idyllwild"
 
 
@@ -377,3 +377,18 @@ def test_ask_body_allows_town_only_and_showcase():
     assert b"y_hat" not in js.content
     html = client.get("/")
     assert b"engine clock" in html.content
+
+
+def test_watch_book_is_seeded_for_the_board():
+    from fastapi.testclient import TestClient
+    from src.serve.app import app
+
+    client = TestClient(app)
+    sites = {s["name"]: s for s in client.get("/api/sites").json()["sites"]}
+    assert sites["Riverside Warehouse"]["action"] == "monitor"
+    assert sites["Napa Valley Winery"]["action"] == "prepare"
+    assert sites["Flagstaff Timber Yard"]["action"] == "protect_asset"
+    assert sites["Bozeman Plant"]["eta_hours"] == 28.0
+    assert sites["Boulder Distribution Center"]["incident_name"] == "Left Hand"
+    recent_names = [(c.get("site") or {}).get("name") for c in client.get("/api/recent").json()["cards"]]
+    assert "Riverside Warehouse" not in recent_names
