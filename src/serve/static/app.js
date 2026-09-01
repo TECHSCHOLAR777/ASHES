@@ -427,7 +427,7 @@ async function startAsk(simulate) {
   const q = $("#q").value;
   $("#go").disabled = true;
   $("#trace").innerHTML = "Connecting to live tools…";
-  $("#result").innerHTML = `<div class="muted">Live agent: NWS, FIRMS, WFIGS, HRRR, Mireye, then ELMFIRE. Watch the trace.</div>`;
+  $("#result").innerHTML = `<div class="muted">Live OpenAI + Mireye + ELMFIRE ensemble (policy n=7). simulate_ignition is a real engine run — stay on this page.</div>`;
   const payload = { name, q, simulate };
   if (usablePoint(lat, lng)) {
     payload.lat = lat;

@@ -217,6 +217,7 @@ def test_simulate_ignition_uses_engine_sample(tmp_path, monkeypatch, mocker):
     assert sample is not None
     assert sample["p_burn_72"] == 0.7
     assert spread.call_args.kwargs["ensemble"]["n_members"] == 7
+    assert spread.call_args.kwargs["reuse"] is False
     assert report["engine"]["front"]["eta_hours"] == 12.0
     assert report["action_card"]["spread_field_version"] == "elmfire_2025.0212:test"
     assert report["action_card"]["incident"]["irwin_id"] == "SIMULATED"
@@ -308,6 +309,7 @@ def test_ui_index_served():
     r = client.get("/")
     assert r.status_code == 200
     assert b"ASHES" in r.content
+    assert b"app.js?v=pburn3" in r.content
     css = client.get("/assets/styles.css")
     assert css.status_code == 200
     ico = client.get("/favicon.ico")

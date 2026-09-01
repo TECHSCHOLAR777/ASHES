@@ -436,6 +436,8 @@ def _run_engine(
     upwind_buffer_km: float,
     resample_m: int,
     n_members: int,
+    reuse: bool = True,
+    incident_id: str | None = None,
 ) -> dict[str, Any]:
     site = session.site
     policy_cfg = load_policy_config()
@@ -471,7 +473,7 @@ def _run_engine(
     session.flags.extend(geom.flags)
     rings = [list(ring) for ring in perimeter.geometry_rings]
     field = spread_run(
-        incident_id=incident.irwin_id or incident.name,
+        incident_id=incident_id or incident.irwin_id or incident.name,
         landfire=stack,
         aoi=geom,
         weather={
@@ -490,6 +492,7 @@ def _run_engine(
             "moisture_frac": 0.15,
         },
         site_id=site.site_id,
+        reuse=reuse,
     )
     session.spread_field = field
     session.geom = geom
@@ -1067,6 +1070,8 @@ def handle_simulate(session: AgentSession, args: dict[str, Any]) -> dict[str, An
             upwind_buffer_km=1.0,
             resample_m=90,
             n_members=int(ens_cfg.get("n_members", 7)),
+            reuse=False,
+            incident_id=f"SIMULATED:{uuid.uuid4().hex[:8]}",
         )
         result["simulated"] = True
         result["ignition"] = {"lat": lat, "lng": lng}
