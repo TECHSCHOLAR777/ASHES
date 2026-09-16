@@ -1,0 +1,106 @@
+{
+  "ask": {
+    "action": "monitor",
+    "incident": "MTZ/RRU/WOOD",
+    "irwin_id": "{BC300B17-6FA4-4FB4-BC4B-4D8D3706726C}",
+    "dist_perimeter_m": 54689.589485810095,
+    "spread_field_version": "elmfire_2025.0212:n1:h72:grid346x345",
+    "engine": "elmfire_2025.0212",
+    "eta_hours": null,
+    "p_burn_by_T": null,
+    "site_inside_aoi": false,
+    "sample": {
+      "eta_hours": null,
+      "eta_sigma_hours": null,
+      "p_burn_24": null,
+      "p_burn_48": null,
+      "p_burn_72": null,
+      "spread_field_version": "elmfire_2025.0212:n1:h72:grid346x345",
+      "inside_aoi": false,
+      "raw_eta_hours": null
+    },
+    "tools": [
+      "firms_hotspots",
+      "wfigs_perimeters",
+      "nws_alerts",
+      "wfigs_incidents",
+      "hrrr_weather",
+      "list_mireye_roles",
+      "mireye_fetch",
+      "mireye_quote",
+      "mireye_fetch",
+      "simulate_ignition",
+      "run_spread",
+      "apply_policy",
+      "mireye_fetch",
+      "commit_report"
+    ],
+    "aspects": {},
+    "brief_replaced": true,
+    "flags": [
+      "degraded",
+      "aoi_coarse_advisory",
+      "firms_unavailable",
+      "perimeter_unofficial",
+      "stale_E"
+    ],
+    "simulate": false,
+    "brief": "[BRIEF SUPPRESSED: validator caught invented numbers. See ActionCard for all data.]"
+  },
+  "simulate": {
+    "action": "protect_asset",
+    "incident": "simulated_ignition",
+    "irwin_id": "SIMULATED",
+    "dist_perimeter_m": 212.47395687607465,
+    "spread_field_version": "elmfire_2025.0212:n1:h72:grid159x167",
+    "engine": "elmfire_2025.0212",
+    "eta_hours": 0.0,
+    "p_burn_by_T": {
+      "24": 1.0,
+      "48": 1.0,
+      "72": 1.0
+    },
+    "site_inside_aoi": true,
+    "sample": {
+      "eta_hours": 0.0,
+      "eta_sigma_hours": 0.0,
+      "p_burn_24": 1.0,
+      "p_burn_48": 1.0,
+      "p_burn_72": 1.0,
+      "spread_field_version": "elmfire_2025.0212:n1:h72:grid159x167",
+      "inside_aoi": true,
+      "raw_eta_hours": 0.0
+    },
+    "tools": [
+      "firms_hotspots",
+      "list_mireye_roles",
+      "wfigs_perimeters",
+      "wfigs_incidents",
+      "hrrr_weather",
+      "simulate_ignition",
+      "mireye_quote",
+      "mireye_fetch",
+      "mireye_fetch",
+      "apply_policy",
+      "mireye_fetch",
+      "commit_report",
+      "nws_alerts",
+      "model_infer",
+      "mireye_fetch",
+      "commit_report"
+    ],
+    "aspects": {},
+    "brief_replaced": false,
+    "flags": [
+      "degraded",
+      "firms_unavailable",
+      "perimeter_unofficial",
+      "stale_E"
+    ],
+    "simulate": true,
+    "brief": "The immediate action in response to the simulated ignition at Riverside Warehouse is to protect the asset. With an ETA of 0.0 hours and an associated uncertainty of 0.0 hours, urgent deployment of available fire-suppression resources is critical. The probability of burn by the 24, 48, and 72-hour marks stands at 1.0, indicating an imminent risk that warrants immediate protective measures. The nearest fire station is not specified, but it is structurally important to clear defensible space and confirm water sources under the current conditions.\n\nThe site is located at latitude 33.9806 and longitude -117.3755, with a surrounding terrain critically affected by a wind speed of approximately 1.24 m/s from the SW. Given the humidity percentage at 56.8%, conditions are moderate but pose a risk fo"
+  },
+  "simulate_error": null,
+  "problems": [],
+  "out": "data/models/agentic_live_report.json"
+}

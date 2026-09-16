@@ -1,0 +1,5695 @@
+{
+  "n_requested": 407,
+  "n_ok": 404,
+  "n_empty": 3,
+  "n_cache_hit": 0,
+  "fires": [
+    {
+      "fire_id": "2024-ORUPF-240232",
+      "name": "Fuller Lake",
+      "n_times": 55,
+      "n_snapshots": 55,
+      "span_hours": 4884.666666666667,
+      "max_acres": 6286.842613905328,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2024-03-28T07:30:00+00:00",
+      "last_time": "2024-10-17T20:10:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240260",
+      "name": "Horse Heaven Creek",
+      "n_times": 54,
+      "n_snapshots": 54,
+      "span_hours": 4933.216666666666,
+      "max_acres": 3198.2370522550564,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-03-28T07:30:00+00:00",
+      "last_time": "2024-10-19T20:43:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240282",
+      "name": "No Man",
+      "n_times": 48,
+      "n_snapshots": 48,
+      "span_hours": 4789.716666666666,
+      "max_acres": 2143.6798337273076,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-03-28T07:30:00+00:00",
+      "last_time": "2024-10-13T21:13:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWIF-240208",
+      "name": "208 MF",
+      "n_times": 45,
+      "n_snapshots": 45,
+      "span_hours": 1975.3030555555556,
+      "max_acres": 11201.183203536166,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-23T21:04:49+00:00",
+      "last_time": "2024-10-14T04:23:00+00:00"
+    },
+    {
+      "fire_id": "2024-WASES-000173",
+      "name": "PIONEER",
+      "n_times": 46,
+      "n_snapshots": 46,
+      "span_hours": 1853.35,
+      "max_acres": 38735.18812253668,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-06-09T00:48:00+00:00",
+      "last_time": "2024-08-25T06:09:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDBOF-000683",
+      "name": "WAPITI",
+      "n_times": 44,
+      "n_snapshots": 44,
+      "span_hours": 10831.183333333332,
+      "max_acres": 129059.5979336009,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-16T23:43:00+00:00",
+      "last_time": "2024-10-10T06:54:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWIF-240214",
+      "name": "Moss Mountain",
+      "n_times": 43,
+      "n_snapshots": 43,
+      "span_hours": 2092.383333333333,
+      "max_acres": 2813.5812094165076,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-19T00:00:00+00:00",
+      "last_time": "2024-10-14T04:23:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDBOF-000904",
+      "name": "Goat",
+      "n_times": 44,
+      "n_snapshots": 44,
+      "span_hours": 11112.1,
+      "max_acres": 36723.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-17T06:43:00+00:00",
+      "last_time": "2024-10-22T06:49:00+00:00"
+    },
+    {
+      "fire_id": "2025-WAOWF-000795",
+      "name": "Labor Mountain",
+      "n_times": 43,
+      "n_snapshots": 43,
+      "span_hours": 1094.7772222222222,
+      "max_acres": 42968.47232173818,
+      "map_methods": [
+        "GPS-Walked",
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2025-09-05T12:23:22+00:00",
+      "last_time": "2025-10-21T03:10:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORUMF-000302",
+      "name": "Paradise",
+      "n_times": 43,
+      "n_snapshots": 43,
+      "span_hours": 972.4852777777778,
+      "max_acres": 9405.58496644764,
+      "map_methods": [
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2026-07-18T15:17:53+00:00",
+      "last_time": "2026-08-28T03:47:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORUMF-000324",
+      "name": "Hagen",
+      "n_times": 42,
+      "n_snapshots": 42,
+      "span_hours": 970.6058333333333,
+      "max_acres": 60737.21622786415,
+      "map_methods": [
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2026-07-18T16:48:39+00:00",
+      "last_time": "2026-08-28T03:25:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWIF-240195",
+      "name": "Ore",
+      "n_times": 37,
+      "n_snapshots": 37,
+      "span_hours": 1725.1625,
+      "max_acres": 3484.7636361247896,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-17T21:55:15+00:00",
+      "last_time": "2024-09-27T19:05:00+00:00"
+    },
+    {
+      "fire_id": "2026-NMLNF-000335",
+      "name": "Seven Cabins",
+      "n_times": 38,
+      "n_snapshots": 38,
+      "span_hours": 542.6333333333333,
+      "max_acres": 31870.499823563678,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-05-15T20:07:00+00:00",
+      "last_time": "2026-06-07T10:45:00+00:00"
+    },
+    {
+      "fire_id": "2025-UTFIF-250223",
+      "name": "Monroe Canyon",
+      "n_times": 36,
+      "n_snapshots": 36,
+      "span_hours": 900.4666666666667,
+      "max_acres": 73746.89865715048,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-14T15:00:00+00:00",
+      "last_time": "2025-08-21T03:28:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240254",
+      "name": "Bullpup",
+      "n_times": 35,
+      "n_snapshots": 35,
+      "span_hours": 4933.216666666666,
+      "max_acres": 550.199212809585,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-03-28T07:30:00+00:00",
+      "last_time": "2024-10-19T20:43:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORMHF-000639",
+      "name": "Whisky Creek",
+      "n_times": 36,
+      "n_snapshots": 36,
+      "span_hours": 1556.75,
+      "max_acres": 3239.5,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods",
+        "Other"
+      ],
+      "seed_time": "2024-07-21T20:00:00+00:00",
+      "last_time": "2024-09-24T16:45:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDBOF-000923",
+      "name": "Nellie",
+      "n_times": 34,
+      "n_snapshots": 34,
+      "span_hours": 10762.233333333334,
+      "max_acres": 50072.24728261153,
+      "map_methods": [
+        "Digitized-Other",
+        "GPS-Unknown Travel Method",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-16T16:43:00+00:00",
+      "last_time": "2024-10-07T02:57:00+00:00"
+    },
+    {
+      "fire_id": "2023-AZTNF-001315",
+      "name": "Valentine",
+      "n_times": 34,
+      "n_snapshots": 34,
+      "span_hours": 1074.9391666666668,
+      "max_acres": 9541.43491753919,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-17T05:03:40+00:00",
+      "last_time": "2023-10-01T00:00:01+00:00"
+    },
+    {
+      "fire_id": "2025-AZGCP-000597",
+      "name": "Dragon Bravo",
+      "n_times": 34,
+      "n_snapshots": 34,
+      "span_hours": 903.9052777777778,
+      "max_acres": 145503.78342408023,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2025-07-05T11:26:41+00:00",
+      "last_time": "2025-08-12T03:21:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDBOF-000677",
+      "name": "Boulder",
+      "n_times": 31,
+      "n_snapshots": 31,
+      "span_hours": 4147.311388888889,
+      "max_acres": 93750.86400997726,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-28T17:56:08+00:00",
+      "last_time": "2025-01-17T13:14:49+00:00"
+    },
+    {
+      "fire_id": "2024-IDPAF-005464",
+      "name": "Limepoint",
+      "n_times": 31,
+      "n_snapshots": 31,
+      "span_hours": 1120.9166666666667,
+      "max_acres": 33083.75708719574,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-25T05:21:41+00:00",
+      "last_time": "2024-09-09T22:16:41+00:00"
+    },
+    {
+      "fire_id": "2024-ORDEF-000438",
+      "name": "RED",
+      "n_times": 32,
+      "n_snapshots": 32,
+      "span_hours": 2001.3,
+      "max_acres": 2993.401622843435,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-17T22:35:00+00:00",
+      "last_time": "2024-10-09T07:53:00+00:00"
+    },
+    {
+      "fire_id": "2026-COGMF-000099",
+      "name": "Gold Mountain",
+      "n_times": 32,
+      "n_snapshots": 32,
+      "span_hours": 1420.024381388889,
+      "max_acres": 39734.4689875041,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-28T11:31:32.227000+00:00",
+      "last_time": "2026-08-26T15:33:00+00:00"
+    },
+    {
+      "fire_id": "2026-WAOWF-260406",
+      "name": "Little Giant",
+      "n_times": 32,
+      "n_snapshots": 32,
+      "span_hours": 806.4130555555555,
+      "max_acres": 146042.3034561018,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-19T13:32:13+00:00",
+      "last_time": "2026-08-22T03:57:00+00:00"
+    },
+    {
+      "fire_id": "2026-AZCOF-000781",
+      "name": "Pocket",
+      "n_times": 31,
+      "n_snapshots": 31,
+      "span_hours": 9027.012777777778,
+      "max_acres": 27451.117548695842,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-20T00:52:14+00:00",
+      "last_time": "2027-07-01T03:53:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDBOF-000900",
+      "name": "SNAG",
+      "n_times": 31,
+      "n_snapshots": 31,
+      "span_hours": 1474.5877777777778,
+      "max_acres": 33437.734555919495,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-06T04:22:44+00:00",
+      "last_time": "2024-10-06T14:58:00+00:00"
+    },
+    {
+      "fire_id": "2024-OR771S-000028",
+      "name": "Lane 1",
+      "n_times": 29,
+      "n_snapshots": 29,
+      "span_hours": 1702.4666666666667,
+      "max_acres": 25959.774189798594,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-18T21:10:00+00:00",
+      "last_time": "2024-09-27T19:38:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWIF-240203",
+      "name": "Chalk",
+      "n_times": 29,
+      "n_snapshots": 29,
+      "span_hours": 1650.7027777777778,
+      "max_acres": 6011.35770078593,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-24T03:08:50+00:00",
+      "last_time": "2024-09-30T21:51:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDBOF-000896",
+      "name": "Bulldog",
+      "n_times": 30,
+      "n_snapshots": 30,
+      "span_hours": 9599.55,
+      "max_acres": 47135.700592607835,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-08T07:51:00+00:00",
+      "last_time": "2024-09-11T07:24:00+00:00"
+    },
+    {
+      "fire_id": "2025-WAOWF-000242",
+      "name": "POMAS",
+      "n_times": 29,
+      "n_snapshots": 29,
+      "span_hours": 943.7450438888889,
+      "max_acres": 3530.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-06-15T01:25:17.842000+00:00",
+      "last_time": "2025-07-24T09:10:00+00:00"
+    },
+    {
+      "fire_id": "2024-WYBTF-002416",
+      "name": "Fish Creek",
+      "n_times": 29,
+      "n_snapshots": 29,
+      "span_hours": 1149.3333333333333,
+      "max_acres": 26313.13387983698,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-18T11:00:00+00:00",
+      "last_time": "2024-10-05T08:20:00+00:00"
+    },
+    {
+      "fire_id": "2026-IDIPF-000347",
+      "name": "Upper Smith",
+      "n_times": 30,
+      "n_snapshots": 30,
+      "span_hours": 1121.55,
+      "max_acres": 4576.362804772188,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-10T09:47:00+00:00",
+      "last_time": "2026-08-26T03:20:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDBOF-000910",
+      "name": "DOLLAR",
+      "n_times": 30,
+      "n_snapshots": 30,
+      "span_hours": 950.1922222222222,
+      "max_acres": 4359.712099797236,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-06T05:57:28+00:00",
+      "last_time": "2024-09-14T20:09:00+00:00"
+    },
+    {
+      "fire_id": "2025-WAOLF-000178",
+      "name": "Bear Gulch",
+      "n_times": 28,
+      "n_snapshots": 28,
+      "span_hours": 1854.471405,
+      "max_acres": 20217.52266128999,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-07T23:08:42.942000+00:00",
+      "last_time": "2025-09-23T05:37:00+00:00"
+    },
+    {
+      "fire_id": "2025-WACOF-002257",
+      "name": "KATY CREEK",
+      "n_times": 28,
+      "n_snapshots": 28,
+      "span_hours": 609.8252722222222,
+      "max_acres": 4679.597677128911,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-30T18:27:29.020000+00:00",
+      "last_time": "2025-09-25T04:17:00+00:00"
+    },
+    {
+      "fire_id": "2026-COCUX-001160",
+      "name": "Aspen Acres",
+      "n_times": 28,
+      "n_snapshots": 28,
+      "span_hours": 806.1833333333333,
+      "max_acres": 102003.46033741273,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-29T15:19:00+00:00",
+      "last_time": "2026-08-02T05:30:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORUMF-000222",
+      "name": "Salmon",
+      "n_times": 28,
+      "n_snapshots": 28,
+      "span_hours": 415.46694444444444,
+      "max_acres": 1540.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-09T00:03:59+00:00",
+      "last_time": "2026-07-26T07:32:00+00:00"
+    },
+    {
+      "fire_id": "2025-IDNCF-000495",
+      "name": "Island Creek",
+      "n_times": 26,
+      "n_snapshots": 26,
+      "span_hours": 1307.6577777777777,
+      "max_acres": 14943.156913858531,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-01T16:19:32+00:00",
+      "last_time": "2025-09-25T03:59:00+00:00"
+    },
+    {
+      "fire_id": "2025-WAOWF-000747",
+      "name": "WILDCAT",
+      "n_times": 26,
+      "n_snapshots": 26,
+      "span_hours": 1023.3288888888889,
+      "max_acres": 15523.0,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2025-08-26T01:24:16+00:00",
+      "last_time": "2025-10-07T16:44:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORWWF-000224",
+      "name": "Olive Butte",
+      "n_times": 27,
+      "n_snapshots": 27,
+      "span_hours": 575.8036111111111,
+      "max_acres": 3091.8690466013577,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-10T02:12:47+00:00",
+      "last_time": "2026-08-03T02:01:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORPRD-050265",
+      "name": "Monkey Creek",
+      "n_times": 25,
+      "n_snapshots": 25,
+      "span_hours": 602.2802777777778,
+      "max_acres": 178467.17663713702,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-19T03:13:11+00:00",
+      "last_time": "2024-08-13T05:30:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWIF-240237",
+      "name": "Coffeepot",
+      "n_times": 25,
+      "n_snapshots": 25,
+      "span_hours": 969.9697222222222,
+      "max_acres": 6182.554712735149,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-23T21:04:49+00:00",
+      "last_time": "2024-09-02T07:03:00+00:00"
+    },
+    {
+      "fire_id": "2023-COSJF-000678",
+      "name": "Quartz Ridge",
+      "n_times": 25,
+      "n_snapshots": 25,
+      "span_hours": 1200.5775,
+      "max_acres": 2869.77662306617,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-06T20:10:21+00:00",
+      "last_time": "2023-09-25T20:45:00+00:00"
+    },
+    {
+      "fire_id": "2023-ORRSF-000413",
+      "name": "Anvil",
+      "n_times": 24,
+      "n_snapshots": 24,
+      "span_hours": 799.1847222222223,
+      "max_acres": 22173.6220606718,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2023-08-28T15:29:51+00:00",
+      "last_time": "2023-09-30T22:40:56+00:00"
+    },
+    {
+      "fire_id": "2026-ORMHF-000688",
+      "name": "GRASSHOPPER",
+      "n_times": 25,
+      "n_snapshots": 25,
+      "span_hours": 790.6977777777778,
+      "max_acres": 93885.31977670762,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-26T03:59:08+00:00",
+      "last_time": "2026-08-28T02:41:00+00:00"
+    },
+    {
+      "fire_id": "2025-ORRSF-000389",
+      "name": "Pinnacle",
+      "n_times": 24,
+      "n_snapshots": 24,
+      "span_hours": 894.7166666666667,
+      "max_acres": 19523.76137556452,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-09-06T09:00:00+00:00",
+      "last_time": "2025-10-13T15:43:00+00:00"
+    },
+    {
+      "fire_id": "2025-ORWIF-250322",
+      "name": "322 MF",
+      "n_times": 24,
+      "n_snapshots": 24,
+      "span_hours": 827.3812174999999,
+      "max_acres": 33127.39722794447,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-25T16:04:07.617000+00:00",
+      "last_time": "2025-09-29T03:27:00+00:00"
+    },
+    {
+      "fire_id": "2024-WASES-020209",
+      "name": "Cougar Creek",
+      "n_times": 24,
+      "n_snapshots": 24,
+      "span_hours": 676.3922222222222,
+      "max_acres": 24096.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-16T06:30:00+00:00",
+      "last_time": "2024-08-13T10:53:32+00:00"
+    },
+    {
+      "fire_id": "2024-NMMEA-000382",
+      "name": "South Fork",
+      "n_times": 24,
+      "n_snapshots": 24,
+      "span_hours": 162.43333333333334,
+      "max_acres": 17569.211709227835,
+      "map_methods": [
+        "Digitized-Other",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-06-17T18:57:00+00:00",
+      "last_time": "2024-06-24T13:23:00+00:00"
+    },
+    {
+      "fire_id": "2023-COSJF-000570",
+      "name": "Bear Creek",
+      "n_times": 22,
+      "n_snapshots": 22,
+      "span_hours": 1912.55,
+      "max_acres": 1102.03245326629,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-06T19:27:00+00:00",
+      "last_time": "2023-10-25T12:00:00+00:00"
+    },
+    {
+      "fire_id": "2025-WAOWF-000797",
+      "name": "Lower Sugarloaf",
+      "n_times": 22,
+      "n_snapshots": 22,
+      "span_hours": 738.4166666666666,
+      "max_acres": 42980.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2025-09-03T17:30:00+00:00",
+      "last_time": "2025-10-04T11:55:00+00:00"
+    },
+    {
+      "fire_id": "2026-WAOWF-260420",
+      "name": "Three Queens",
+      "n_times": 23,
+      "n_snapshots": 23,
+      "span_hours": 987.015,
+      "max_acres": 8496.165198999002,
+      "map_methods": [
+        "GPS-Walked",
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-16T17:50:06+00:00",
+      "last_time": "2026-08-26T20:51:00+00:00"
+    },
+    {
+      "fire_id": "2024-WYBHF-000399",
+      "name": "Elk",
+      "n_times": 23,
+      "n_snapshots": 23,
+      "span_hours": 559.2166666666667,
+      "max_acres": 98351.55007818094,
+      "map_methods": [
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2024-09-27T18:49:00+00:00",
+      "last_time": "2024-10-21T02:02:00+00:00"
+    },
+    {
+      "fire_id": "2025-COGRD-250194",
+      "name": "Turner Gulch",
+      "n_times": 21,
+      "n_snapshots": 21,
+      "span_hours": 893.2441666666666,
+      "max_acres": 452828.78638288483,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-10T22:07:21+00:00",
+      "last_time": "2025-08-17T03:22:00+00:00"
+    },
+    {
+      "fire_id": "2025-NMSNF-000230",
+      "name": "Laguna",
+      "n_times": 21,
+      "n_snapshots": 21,
+      "span_hours": 685.0966666666667,
+      "max_acres": 17412.65851714735,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-06-28T16:14:12+00:00",
+      "last_time": "2025-07-27T05:20:00+00:00"
+    },
+    {
+      "fire_id": "2024-MTBRF-024380",
+      "name": "Daly",
+      "n_times": 21,
+      "n_snapshots": 21,
+      "span_hours": 1560.6502777777778,
+      "max_acres": 11386.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-19T01:37:59+00:00",
+      "last_time": "2024-10-23T02:17:00+00:00"
+    },
+    {
+      "fire_id": "2026-MTBDF-266293",
+      "name": "Moose",
+      "n_times": 22,
+      "n_snapshots": 22,
+      "span_hours": 752.2833333333333,
+      "max_acres": 5965.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-27T18:15:00+00:00",
+      "last_time": "2026-08-28T02:32:00+00:00"
+    },
+    {
+      "fire_id": "2026-AZTNF-000839",
+      "name": "Sycamore",
+      "n_times": 22,
+      "n_snapshots": 22,
+      "span_hours": 298.28333333333336,
+      "max_acres": 11938.528496942321,
+      "map_methods": [
+        "GPS-Flight",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-16T17:00:00+00:00",
+      "last_time": "2026-06-29T03:17:00+00:00"
+    },
+    {
+      "fire_id": "2025-WACOA-250166",
+      "name": "Lynx Mountain",
+      "n_times": 20,
+      "n_snapshots": 20,
+      "span_hours": 596.255423611111,
+      "max_acres": 9210.45089914743,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-09-02T23:41:40.475000+00:00",
+      "last_time": "2025-09-27T19:57:00+00:00"
+    },
+    {
+      "fire_id": "2025-WANES-002249",
+      "name": "Crown Creek",
+      "n_times": 20,
+      "n_snapshots": 20,
+      "span_hours": 370.1322222222222,
+      "max_acres": 14191.331582309349,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-30T17:17:00+00:00",
+      "last_time": "2025-09-15T03:24:56+00:00"
+    },
+    {
+      "fire_id": "2025-WACOF-002294",
+      "name": "SNOW PEAK",
+      "n_times": 20,
+      "n_snapshots": 20,
+      "span_hours": 705.3624208333333,
+      "max_acres": 1155.381851406818,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-09-02T00:14:15.285000+00:00",
+      "last_time": "2025-10-01T09:36:00+00:00"
+    },
+    {
+      "fire_id": "2024-MTBRF-024418",
+      "name": "Sharrott Creek",
+      "n_times": 21,
+      "n_snapshots": 21,
+      "span_hours": 961.8575,
+      "max_acres": 3252.9142441655968,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-24T02:47:33+00:00",
+      "last_time": "2024-10-03T04:39:00+00:00"
+    },
+    {
+      "fire_id": "2026-WANES-260149",
+      "name": "Modrite",
+      "n_times": 21,
+      "n_snapshots": 21,
+      "span_hours": 414.35,
+      "max_acres": 57788.175353809755,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2026-07-18T00:04:00+00:00",
+      "last_time": "2026-08-04T06:25:00+00:00"
+    },
+    {
+      "fire_id": "2023-ORWIF-230266",
+      "name": "Bedrock",
+      "n_times": 20,
+      "n_snapshots": 20,
+      "span_hours": 7587.116666666667,
+      "max_acres": 31592.2291264275,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-07T01:15:00+00:00",
+      "last_time": "2024-06-18T04:22:00+00:00"
+    },
+    {
+      "fire_id": "2025-WANES-001650",
+      "name": "Hope",
+      "n_times": 19,
+      "n_snapshots": 19,
+      "span_hours": 376.69944444444445,
+      "max_acres": 8176.866279583354,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-08T04:46:49+00:00",
+      "last_time": "2025-07-23T21:28:47+00:00"
+    },
+    {
+      "fire_id": "2024-MTBRF-024251",
+      "name": "Railroad",
+      "n_times": 19,
+      "n_snapshots": 19,
+      "span_hours": 1954.3855555555556,
+      "max_acres": 1545.5220104269,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-25T19:59:52+00:00",
+      "last_time": "2024-10-15T06:23:00+00:00"
+    },
+    {
+      "fire_id": "2025-COSJF-000763",
+      "name": "Stoner Mesa",
+      "n_times": 19,
+      "n_snapshots": 19,
+      "span_hours": 621.3711111111111,
+      "max_acres": 10248.698798433743,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-06T01:08:44+00:00",
+      "last_time": "2025-08-31T22:31:00+00:00"
+    },
+    {
+      "fire_id": "2026-COGMF-000114",
+      "name": "Elk",
+      "n_times": 20,
+      "n_snapshots": 20,
+      "span_hours": 1010.1333333333333,
+      "max_acres": 7404.82075293541,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-10T14:42:00+00:00",
+      "last_time": "2026-08-21T16:50:00+00:00"
+    },
+    {
+      "fire_id": "2023-ORUPF-000345",
+      "name": "Chilcoot",
+      "n_times": 20,
+      "n_snapshots": 20,
+      "span_hours": 652.3816666666667,
+      "max_acres": 1947.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2023-08-26T18:12:06+00:00",
+      "last_time": "2023-09-22T22:35:00+00:00"
+    },
+    {
+      "fire_id": "2026-COPSF-001153",
+      "name": "Willow",
+      "n_times": 20,
+      "n_snapshots": 20,
+      "span_hours": 531.8,
+      "max_acres": 7195.834825107734,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-28T23:53:00+00:00",
+      "last_time": "2026-07-21T03:41:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORFWF-260286",
+      "name": "Wrights Spring",
+      "n_times": 20,
+      "n_snapshots": 20,
+      "span_hours": 514.1,
+      "max_acres": 55133.85867074794,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-06T12:48:00+00:00",
+      "last_time": "2026-08-27T22:54:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORWWF-000227",
+      "name": "Anthony",
+      "n_times": 20,
+      "n_snapshots": 20,
+      "span_hours": 489.19085333333334,
+      "max_acres": 2583.623901428447,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-09T19:58:32.928000+00:00",
+      "last_time": "2026-07-30T05:10:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORSHR-240269",
+      "name": "Warner Peak",
+      "n_times": 18,
+      "n_snapshots": 18,
+      "span_hours": 8992.068888888889,
+      "max_acres": 65411.324851922225,
+      "map_methods": [
+        "Digitized-Other",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-08T06:40:00+00:00",
+      "last_time": "2024-08-16T22:44:08+00:00"
+    },
+    {
+      "fire_id": "2025-CASRF-000469",
+      "name": "Butler",
+      "n_times": 19,
+      "n_snapshots": 19,
+      "span_hours": 601.4877777777778,
+      "max_acres": 21188.857170635732,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-04T23:20:00+00:00",
+      "last_time": "2025-07-30T00:49:16+00:00"
+    },
+    {
+      "fire_id": "2023-ORRSF-000209",
+      "name": "Flat",
+      "n_times": 17,
+      "n_snapshots": 17,
+      "span_hours": 718.315,
+      "max_acres": 34241.551105555,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-16T05:51:06+00:00",
+      "last_time": "2023-08-15T04:10:00+00:00"
+    },
+    {
+      "fire_id": "2024-WYBTF-002439",
+      "name": "Pack Trail",
+      "n_times": 17,
+      "n_snapshots": 17,
+      "span_hours": 11225.24861111111,
+      "max_acres": 89929.67259840501,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-17T06:43:00+00:00",
+      "last_time": "2024-10-26T23:57:55+00:00"
+    },
+    {
+      "fire_id": "2025-CALPF-002181",
+      "name": "Gifford",
+      "n_times": 17,
+      "n_snapshots": 17,
+      "span_hours": 328.4219444444444,
+      "max_acres": 132604.54915253745,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-01T21:35:36+00:00",
+      "last_time": "2025-08-15T14:00:55+00:00"
+    },
+    {
+      "fire_id": "2025-IDNCF-000647",
+      "name": "Mire",
+      "n_times": 17,
+      "n_snapshots": 17,
+      "span_hours": 761.3833333333333,
+      "max_acres": 1390.3625917228592,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-17T12:00:00+00:00",
+      "last_time": "2025-09-18T05:23:00+00:00"
+    },
+    {
+      "fire_id": "2025-IDNCF-000699",
+      "name": "East",
+      "n_times": 17,
+      "n_snapshots": 17,
+      "span_hours": 665.3833333333333,
+      "max_acres": 2215.621113807556,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "Digitized-Other",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-08-21T12:00:00+00:00",
+      "last_time": "2025-09-18T05:23:00+00:00"
+    },
+    {
+      "fire_id": "2023-ORWIF-230327",
+      "name": "Lookout",
+      "n_times": 18,
+      "n_snapshots": 18,
+      "span_hours": 1150.9166666666667,
+      "max_acres": 25753.8230385005,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-06T05:14:00+00:00",
+      "last_time": "2023-09-23T04:09:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORMAF-002502",
+      "name": "Falls",
+      "n_times": 18,
+      "n_snapshots": 18,
+      "span_hours": 826.65,
+      "max_acres": 151683.10159967467,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-10T19:55:00+00:00",
+      "last_time": "2024-08-14T06:34:00+00:00"
+    },
+    {
+      "fire_id": "2025-ORRSF-000388",
+      "name": "Backbone",
+      "n_times": 18,
+      "n_snapshots": 18,
+      "span_hours": 475.8333333333333,
+      "max_acres": 3352.86757894677,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-09-06T09:00:00+00:00",
+      "last_time": "2025-09-26T04:50:00+00:00"
+    },
+    {
+      "fire_id": "2025-WANES-002250",
+      "name": "Blackhawk Mountain",
+      "n_times": 18,
+      "n_snapshots": 18,
+      "span_hours": 369.9322222222222,
+      "max_acres": 1077.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-30T17:29:00+00:00",
+      "last_time": "2025-09-15T03:24:56+00:00"
+    },
+    {
+      "fire_id": "2026-UTFIF-260198",
+      "name": "Cottonwood",
+      "n_times": 17,
+      "n_snapshots": 17,
+      "span_hours": 17809.15,
+      "max_acres": 97464.28187153598,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2024-07-05T04:31:00+00:00",
+      "last_time": "2026-07-17T05:40:00+00:00"
+    },
+    {
+      "fire_id": "2023-IDIPF-000447",
+      "name": "Ridge Creek",
+      "n_times": 17,
+      "n_snapshots": 17,
+      "span_hours": 3281.267838611111,
+      "max_acres": 4473.502,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-08-04T02:25:18+00:00",
+      "last_time": "2023-12-18T19:41:22.219000+00:00"
+    },
+    {
+      "fire_id": "2025-IDBOF-000991",
+      "name": "Rock",
+      "n_times": 16,
+      "n_snapshots": 16,
+      "span_hours": 399.3183333333333,
+      "max_acres": 2844.264866572342,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-13T13:43:54+00:00",
+      "last_time": "2025-08-30T05:03:00+00:00"
+    },
+    {
+      "fire_id": "2024-COARF-000683",
+      "name": "Alexander Mountain",
+      "n_times": 17,
+      "n_snapshots": 17,
+      "span_hours": 168.75,
+      "max_acres": 9670.851958678586,
+      "map_methods": [
+        "GPS-Flight",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-29T00:00:00+00:00",
+      "last_time": "2024-08-05T00:45:00+00:00"
+    },
+    {
+      "fire_id": "2024-MTBRF-024261",
+      "name": "Johnson",
+      "n_times": 16,
+      "n_snapshots": 16,
+      "span_hours": 9523.9,
+      "max_acres": 8336.623498362465,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-09-15T07:10:00+00:00",
+      "last_time": "2024-10-16T03:04:00+00:00"
+    },
+    {
+      "fire_id": "2025-IDNCF-000772",
+      "name": "White Pine",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 474.3666666666667,
+      "max_acres": 1045.3165437534863,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-09-05T08:19:00+00:00",
+      "last_time": "2025-09-25T02:41:00+00:00"
+    },
+    {
+      "fire_id": "2025-WANES-002284",
+      "name": "TACOMA CREEK",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 493.45502388888883,
+      "max_acres": 3961.156308776557,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-09-01T15:45:41.914000+00:00",
+      "last_time": "2025-09-22T05:13:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240311",
+      "name": "Bullpup",
+      "n_times": 16,
+      "n_snapshots": 16,
+      "span_hours": 2039.1333333333334,
+      "max_acres": 549.4316996786129,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-24T21:02:00+00:00",
+      "last_time": "2024-10-17T20:10:00+00:00"
+    },
+    {
+      "fire_id": "2026-MTBDF-266313",
+      "name": "Bobcat Lakes",
+      "n_times": 16,
+      "n_snapshots": 16,
+      "span_hours": 633.1427777777777,
+      "max_acres": 10523.908115622518,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-01T17:46:26+00:00",
+      "last_time": "2026-08-28T02:55:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORCLP-240223",
+      "name": "Middle Fork",
+      "n_times": 16,
+      "n_snapshots": 16,
+      "span_hours": 604.0833333333334,
+      "max_acres": 5285.541138424206,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2024-07-23T00:00:00+00:00",
+      "last_time": "2024-08-17T04:05:00+00:00"
+    },
+    {
+      "fire_id": "2026-WANES-001791",
+      "name": "Sinlahekin",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 53241.38333333333,
+      "max_acres": 165536.41726188624,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2020-07-31T23:55:00+00:00",
+      "last_time": "2026-08-28T09:18:00+00:00"
+    },
+    {
+      "fire_id": "2024-OR953S-024122",
+      "name": "Courtrock",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 9118.05,
+      "max_acres": 20019.558369615406,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-25T05:31:00+00:00",
+      "last_time": "2024-08-08T03:34:00+00:00"
+    },
+    {
+      "fire_id": "2023-NMGNF-000360",
+      "name": "Divide",
+      "n_times": 14,
+      "n_snapshots": 14,
+      "span_hours": 336.18333333333334,
+      "max_acres": 26512.0715925871,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-19T03:49:00+00:00",
+      "last_time": "2023-08-02T04:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDBOF-001080",
+      "name": "Lava",
+      "n_times": 14,
+      "n_snapshots": 14,
+      "span_hours": 3178.8030555555556,
+      "max_acres": 97979.56412682172,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-07T04:29:00+00:00",
+      "last_time": "2025-01-17T15:17:11+00:00"
+    },
+    {
+      "fire_id": "2025-AZTNF-001042",
+      "name": "Billy",
+      "n_times": 14,
+      "n_snapshots": 14,
+      "span_hours": 961.1410211111111,
+      "max_acres": 27824.543194788497,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-09T23:11:32.324000+00:00",
+      "last_time": "2025-08-19T00:20:00+00:00"
+    },
+    {
+      "fire_id": "2026-WANCP-000266",
+      "name": "Border 2",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 892.2658333333334,
+      "max_acres": 15906.752377923058,
+      "map_methods": [
+        "GPS-Walked",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-21T15:23:03+00:00",
+      "last_time": "2026-08-27T19:39:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000939",
+      "name": "Kelly",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 679.8,
+      "max_acres": 89354.0388599807,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-15T19:19:00+00:00",
+      "last_time": "2023-09-13T03:07:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASTF-001921",
+      "name": "Quarry",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 671.6666666666666,
+      "max_acres": 8645.42438222844,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-09-22T16:50:00+00:00",
+      "last_time": "2023-10-20T16:30:00+00:00"
+    },
+    {
+      "fire_id": "2026-IDNCF-000349",
+      "name": "Moose Mountain",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 631.8902777777778,
+      "max_acres": 5340.735294665189,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-02T03:44:35+00:00",
+      "last_time": "2026-08-28T11:38:00+00:00"
+    },
+    {
+      "fire_id": "2026-MTBDF-266319",
+      "name": "Sand Creek",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 536.05,
+      "max_acres": 33918.119114984,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-05T18:52:00+00:00",
+      "last_time": "2026-08-28T02:55:00+00:00"
+    },
+    {
+      "fire_id": "2025-CASRF-000715",
+      "name": "Dillon",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 484.3327777777778,
+      "max_acres": 11973.306977849941,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-26T06:35:58+00:00",
+      "last_time": "2025-09-15T10:55:56+00:00"
+    },
+    {
+      "fire_id": "2026-ORWSA-000100",
+      "name": "Bench",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 385.0627777777778,
+      "max_acres": 67237.76455482733,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-07-24T03:43:14+00:00",
+      "last_time": "2026-08-09T04:47:00+00:00"
+    },
+    {
+      "fire_id": "2026-UTMLF-005112",
+      "name": "Babylon",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 348.46666666666664,
+      "max_acres": 107189.08589499212,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-27T17:06:00+00:00",
+      "last_time": "2026-07-12T05:34:00+00:00"
+    },
+    {
+      "fire_id": "2026-NVCCD-030683",
+      "name": "Bug",
+      "n_times": 15,
+      "n_snapshots": 15,
+      "span_hours": 211.81666666666666,
+      "max_acres": 93846.72525551132,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-09T06:25:00+00:00",
+      "last_time": "2026-08-18T02:14:00+00:00"
+    },
+    {
+      "fire_id": "2024-CASRF-000729",
+      "name": "Boise",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 295.65,
+      "max_acres": 12841.747456912026,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-09T20:50:00+00:00",
+      "last_time": "2024-08-22T04:29:00+00:00"
+    },
+    {
+      "fire_id": "2023-MTBDF-006210",
+      "name": "Bowles Creek",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 736.3833333333333,
+      "max_acres": 6984.7,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-24T05:29:00+00:00",
+      "last_time": "2023-08-23T21:52:00+00:00"
+    },
+    {
+      "fire_id": "2023-NMGNF-000191",
+      "name": "Pass",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 1014.5,
+      "max_acres": 59903.5631408235,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-05-23T22:00:00+00:00",
+      "last_time": "2023-07-05T04:30:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDSCF-240202",
+      "name": "Red Rock",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 1097.431111111111,
+      "max_acres": 79270.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-04T15:24:06+00:00",
+      "last_time": "2024-10-20T08:49:58+00:00"
+    },
+    {
+      "fire_id": "2024-IDSTF-000331",
+      "name": "Frog",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 709.4833333333333,
+      "max_acres": 3113.965738231825,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-10T18:39:00+00:00",
+      "last_time": "2024-10-10T08:08:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORDEF-000899",
+      "name": "899 NE",
+      "n_times": 14,
+      "n_snapshots": 14,
+      "span_hours": 897.8066666666666,
+      "max_acres": 15521.893439813563,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-08T05:16:31+00:00",
+      "last_time": "2024-10-15T15:04:55+00:00"
+    },
+    {
+      "fire_id": "2026-WANES-001782",
+      "name": "BRADEEN HILL",
+      "n_times": 14,
+      "n_snapshots": 14,
+      "span_hours": 450.4230777777778,
+      "max_acres": 4423.959873862251,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-26T08:14:36.920000+00:00",
+      "last_time": "2026-08-14T02:40:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDSWS-000920",
+      "name": "Flat",
+      "n_times": 14,
+      "n_snapshots": 14,
+      "span_hours": 319.1333333333333,
+      "max_acres": 3734.3445919888354,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-12T08:00:00+00:00",
+      "last_time": "2024-08-25T15:08:00+00:00"
+    },
+    {
+      "fire_id": "2023-COGMF-000176",
+      "name": "Lowline",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 303.15,
+      "max_acres": 1870.95194209907,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-07-26T17:36:00+00:00",
+      "last_time": "2023-08-08T08:45:00+00:00"
+    },
+    {
+      "fire_id": "2025-COWRD-001004",
+      "name": "Lee",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 8958.46611111111,
+      "max_acres": 137758.105679227,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation"
+      ],
+      "seed_time": "2025-08-04T22:11:02+00:00",
+      "last_time": "2026-08-13T04:39:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORPRD-000404",
+      "name": "0404 RV LONE ROCK",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 364.12666666666667,
+      "max_acres": 137221.69156985043,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-14T04:24:24+00:00",
+      "last_time": "2024-07-29T08:32:00+00:00"
+    },
+    {
+      "fire_id": "2025-CASHF-000560",
+      "name": "GREEN",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 389.93944444444446,
+      "max_acres": 19021.274374529377,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2025-07-03T22:16:38+00:00",
+      "last_time": "2025-07-20T04:13:00+00:00"
+    },
+    {
+      "fire_id": "2023-IDPAF-002673",
+      "name": "Elk Horn",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 494.6333333333333,
+      "max_acres": 25979.6822285007,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-25T13:30:00+00:00",
+      "last_time": "2023-08-15T04:08:00+00:00"
+    },
+    {
+      "fire_id": "2025-CAKNF-004693",
+      "name": "Summit",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 1675.756388888889,
+      "max_acres": 1169.6886689523992,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-04T09:27:00+00:00",
+      "last_time": "2025-09-12T05:12:23+00:00"
+    },
+    {
+      "fire_id": "2025-MTSWS-256444",
+      "name": "Windy Rock",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 788.5833333333334,
+      "max_acres": 6040.257132605534,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-16T08:30:00+00:00",
+      "last_time": "2025-09-18T05:05:00+00:00"
+    },
+    {
+      "fire_id": "2025-AZTNF-001276",
+      "name": "Washington",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 115.1825,
+      "max_acres": 574.4005464808304,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-14T01:00:00+00:00",
+      "last_time": "2025-08-18T20:10:57+00:00"
+    },
+    {
+      "fire_id": "2023-COSJF-001184",
+      "name": "Trail Springs",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 624.6166666666667,
+      "max_acres": 1269.28820397127,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-10-05T01:14:00+00:00",
+      "last_time": "2023-10-31T01:51:00+00:00"
+    },
+    {
+      "fire_id": "2024-WAGPF-000813",
+      "name": "WILLIAMS MINE",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 955.1,
+      "max_acres": 13180.48732244068,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-07T00:30:00+00:00",
+      "last_time": "2024-09-15T19:36:00+00:00"
+    },
+    {
+      "fire_id": "2026-WAGPF-000684",
+      "name": "HIGH LAVA",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 711.1338205555556,
+      "max_acres": 2775.6599771331807,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-28T20:15:58.246000+00:00",
+      "last_time": "2026-08-27T11:24:00+00:00"
+    },
+    {
+      "fire_id": "2024-WACOA-240089",
+      "name": "Swawilla I",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 424.8586111111111,
+      "max_acres": 53791.8,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-21T22:00:00+00:00",
+      "last_time": "2024-08-08T14:51:31+00:00"
+    },
+    {
+      "fire_id": "2026-ORMHF-000863",
+      "name": "Clackamas Fire",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 416.9485211111111,
+      "max_acres": 10044.79556298168,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2026-08-10T16:09:05.324000+00:00",
+      "last_time": "2026-08-28T01:06:00+00:00"
+    },
+    {
+      "fire_id": "2023-WAGPF-001297",
+      "name": "POTHOLE",
+      "n_times": 13,
+      "n_snapshots": 13,
+      "span_hours": 399.9725,
+      "max_acres": 17307.1955485701,
+      "map_methods": [
+        "Auto-generated",
+        "GPS-Walked",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-25T23:47:58+00:00",
+      "last_time": "2023-09-11T15:46:19+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240402",
+      "name": "Devils Knob",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 8876.033333333333,
+      "max_acres": 4456.052023765783,
+      "map_methods": [
+        "Auto-generated",
+        "Hand Sketch",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-09-07T07:12:00+00:00",
+      "last_time": "2024-09-11T03:14:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWIF-240362",
+      "name": "Young Grasshopper",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 802.9,
+      "max_acres": 5227.772343876917,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-10T16:03:00+00:00",
+      "last_time": "2024-10-14T02:57:00+00:00"
+    },
+    {
+      "fire_id": "2024-UTUWF-200810",
+      "name": "Yellow Lake",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 9280.2,
+      "max_acres": 33045.04063893118,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-10-05T09:25:00+00:00",
+      "last_time": "2024-10-26T01:37:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWWF-000431",
+      "name": "Town Gulch",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 9022.683333333332,
+      "max_acres": 20335.81477472734,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-08T07:00:00+00:00",
+      "last_time": "2024-08-18T05:41:00+00:00"
+    },
+    {
+      "fire_id": "2026-OR955S-000494",
+      "name": "Akawa Butte",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 8735.653333333334,
+      "max_acres": 27490.651469777044,
+      "map_methods": [
+        "Hand Sketch",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-28T06:03:00+00:00",
+      "last_time": "2026-07-27T05:42:12+00:00"
+    },
+    {
+      "fire_id": "2026-ORWWF-000342",
+      "name": "Burnt Creek",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 8731.883333333333,
+      "max_acres": 4168.619899882307,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-21T09:27:00+00:00",
+      "last_time": "2027-07-20T05:20:00+00:00"
+    },
+    {
+      "fire_id": "2025-WYBTF-002501",
+      "name": "Horse",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 390.25,
+      "max_acres": 2795.0,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-06-14T18:00:00+00:00",
+      "last_time": "2025-07-01T00:15:00+00:00"
+    },
+    {
+      "fire_id": "2025-WYBTF-002533",
+      "name": "Dollar Lake",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 678.7833333333333,
+      "max_acres": 19744.0,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-22T00:13:00+00:00",
+      "last_time": "2025-09-19T07:00:00+00:00"
+    },
+    {
+      "fire_id": "2025-COWRF-250367",
+      "name": "Derby",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 477.28333333333336,
+      "max_acres": 5474.847155321532,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-19T01:43:00+00:00",
+      "last_time": "2025-09-07T23:00:00+00:00"
+    },
+    {
+      "fire_id": "2023-ORUPF-000359",
+      "name": "Brice Creek",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 472.8563888888889,
+      "max_acres": 588.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-26T02:37:37+00:00",
+      "last_time": "2023-09-14T19:29:00+00:00"
+    },
+    {
+      "fire_id": "2025-CASNF-001684",
+      "name": "Garnet",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 259.5833333333333,
+      "max_acres": 49109.48372396919,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-28T07:15:00+00:00",
+      "last_time": "2025-09-08T02:50:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240227",
+      "name": "Pine Bench",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 739.2588888888889,
+      "max_acres": 3989.7420284708674,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-17T08:48:28+00:00",
+      "last_time": "2024-08-17T04:04:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000954",
+      "name": "Mosquito",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 1223.7877777777778,
+      "max_acres": 34188.2553935185,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-16T00:12:44+00:00",
+      "last_time": "2023-10-06T00:00:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000998",
+      "name": "Hurdy Gurdy",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 679.8,
+      "max_acres": 2720.8523162352,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-15T19:19:00+00:00",
+      "last_time": "2023-09-13T03:07:00+00:00"
+    },
+    {
+      "fire_id": "2024-NMLNF-000227",
+      "name": "Blue 2",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 401.1558333333333,
+      "max_acres": 7531.553578958678,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-05-17T10:45:39+00:00",
+      "last_time": "2024-06-03T03:55:00+00:00"
+    },
+    {
+      "fire_id": "2024-WASES-000477",
+      "name": "Retreat",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 325.78333333333336,
+      "max_acres": 45601.19232153556,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2024-07-24T15:10:00+00:00",
+      "last_time": "2024-08-07T04:57:00+00:00"
+    },
+    {
+      "fire_id": "2026-COSJF-000536",
+      "name": "McCloud ",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 294.2,
+      "max_acres": 64881.15533520143,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-29T00:00:00+00:00",
+      "last_time": "2026-07-11T06:12:00+00:00"
+    },
+    {
+      "fire_id": "2024-CASRF-000586",
+      "name": "Hill",
+      "n_times": 12,
+      "n_snapshots": 12,
+      "span_hours": 220.7252777777778,
+      "max_acres": 7224.246720239794,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-16T18:47:29+00:00",
+      "last_time": "2024-07-25T23:31:00+00:00"
+    },
+    {
+      "fire_id": "2023-COGFX-230097",
+      "name": "Spring Creek",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 331.76666666666665,
+      "max_acres": 3286.35325829163,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-06-25T01:27:00+00:00",
+      "last_time": "2023-07-08T21:13:00+00:00"
+    },
+    {
+      "fire_id": "2023-AZCOF-000272",
+      "name": "Wilbur",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 568.7333333333333,
+      "max_acres": 9047.87070270828,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-05-25T03:16:00+00:00",
+      "last_time": "2023-06-17T20:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-WYSHF-000225",
+      "name": "CLEARWATER",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 495.46666666666664,
+      "max_acres": 1896.3039570141825,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-20T20:00:00+00:00",
+      "last_time": "2024-08-10T11:28:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASHF-000973",
+      "name": "DEEP",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 381.7138888888889,
+      "max_acres": 4903.32223726981,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-15T19:37:10+00:00",
+      "last_time": "2023-08-31T17:20:00+00:00"
+    },
+    {
+      "fire_id": "2025-WACOA-250164",
+      "name": "Rattlesnake",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 266.48457277777777,
+      "max_acres": 21845.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-09-01T16:58:55.538000+00:00",
+      "last_time": "2025-09-12T19:28:00+00:00"
+    },
+    {
+      "fire_id": "2025-NMGNF-000384",
+      "name": "Trout",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 309.85,
+      "max_acres": 47294.75341614478,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-06-14T06:42:00+00:00",
+      "last_time": "2025-06-27T04:33:00+00:00"
+    },
+    {
+      "fire_id": "2023-MTSWS-200549",
+      "name": "Colt",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 393.1,
+      "max_acres": 7200.42152221081,
+      "map_methods": [
+        "Auto-generated",
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-18T17:59:00+00:00",
+      "last_time": "2023-08-04T03:05:00+00:00"
+    },
+    {
+      "fire_id": "2025-UTSES-005185",
+      "name": "Deer Creek",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 263.55,
+      "max_acres": 17725.915321225213,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-07-12T01:18:00+00:00",
+      "last_time": "2025-07-23T00:51:00+00:00"
+    },
+    {
+      "fire_id": "2026-NENBF-260147",
+      "name": "Road 203",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 135.1211111111111,
+      "max_acres": 37468.93034675839,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-03-12T22:14:33+00:00",
+      "last_time": "2026-03-18T13:21:49+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000983",
+      "name": "Pearch",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 851.2666666666667,
+      "max_acres": 12131.0465976619,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-23T08:00:00+00:00",
+      "last_time": "2023-09-27T19:16:00+00:00"
+    },
+    {
+      "fire_id": "2026-MNSUF-002417",
+      "name": "Wolfpack",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 701.0194444444444,
+      "max_acres": 6906.542189873518,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-14T17:58:50+00:00",
+      "last_time": "2026-08-12T23:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240303",
+      "name": "New 12",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 535.5,
+      "max_acres": 2519.806698002502,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-23T22:00:00+00:00",
+      "last_time": "2024-08-15T05:30:00+00:00"
+    },
+    {
+      "fire_id": "2024-OROCF-000501",
+      "name": "CRAZY CREEK",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 430.24333333333334,
+      "max_acres": 86963.12325111085,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-22T23:07:24+00:00",
+      "last_time": "2024-08-09T21:22:00+00:00"
+    },
+    {
+      "fire_id": "2024-CABTU-013761",
+      "name": "PARK",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 392.1,
+      "max_acres": 429602.8509153725,
+      "map_methods": [
+        "Infrared Image",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-26T18:45:00+00:00",
+      "last_time": "2024-08-12T02:51:00+00:00"
+    },
+    {
+      "fire_id": "2026-WANES-001860",
+      "name": "HUDSPETH",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 288.5964247222222,
+      "max_acres": 6725.956729088255,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-02T03:04:12.871000+00:00",
+      "last_time": "2026-08-14T03:40:00+00:00"
+    },
+    {
+      "fire_id": "2025-UTUWF-200626",
+      "name": "Beulah",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 286.0833333333333,
+      "max_acres": 5719.159538963204,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-08-10T23:14:00+00:00",
+      "last_time": "2025-08-22T21:19:00+00:00"
+    },
+    {
+      "fire_id": "2024-UTFIF-240206",
+      "name": "Silver King",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 267.95,
+      "max_acres": 18222.293190293858,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-08T03:52:00+00:00",
+      "last_time": "2024-07-19T07:49:00+00:00"
+    },
+    {
+      "fire_id": "2026-OR951S-000433",
+      "name": "Brewer",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 255.23111111111112,
+      "max_acres": 70821.0912165346,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-17T04:53:08+00:00",
+      "last_time": "2026-07-27T20:07:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240226",
+      "name": "Potter",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 739.3388888888888,
+      "max_acres": 3427.6590852699087,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-17T08:44:40+00:00",
+      "last_time": "2024-08-17T04:05:00+00:00"
+    },
+    {
+      "fire_id": "2025-CAKNF-005712",
+      "name": "Big Cliff",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 8853.630277777778,
+      "max_acres": 969.5759859867223,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-31T08:02:11+00:00",
+      "last_time": "2026-08-04T05:40:00+00:00"
+    },
+    {
+      "fire_id": "2025-CASHF-000942",
+      "name": "PEAK",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 246.1161111111111,
+      "max_acres": 507.708775352543,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-26T15:23:02+00:00",
+      "last_time": "2025-09-05T21:30:00+00:00"
+    },
+    {
+      "fire_id": "2025-CAKNF-006679",
+      "name": "Blue",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 435.7,
+      "max_acres": 3737.007080287967,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-30T17:48:00+00:00",
+      "last_time": "2025-09-17T21:30:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORVAD-240141",
+      "name": "Durkee",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 264.13722222222225,
+      "max_acres": 292320.0,
+      "map_methods": [
+        "Hand Sketch",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-17T20:57:17+00:00",
+      "last_time": "2024-07-28T21:05:31+00:00"
+    },
+    {
+      "fire_id": "2024-CAKNF-005159",
+      "name": "SHELLY",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 4399.848814722222,
+      "max_acres": 15519.74,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-03T15:00:00+00:00",
+      "last_time": "2025-01-02T22:50:55.733000+00:00"
+    },
+    {
+      "fire_id": "2023-CAKNP-000061",
+      "name": "Redwood",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 782.0333333333333,
+      "max_acres": 2248.4490372778,
+      "map_methods": [
+        "GPS-Flight",
+        "GPS-Walked",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-27T00:00:00+00:00",
+      "last_time": "2023-09-28T14:02:00+00:00"
+    },
+    {
+      "fire_id": "2024-AZTNF-001130",
+      "name": "Black",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 131.98333333333332,
+      "max_acres": 11161.498933021201,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-13T16:55:00+00:00",
+      "last_time": "2024-07-19T04:54:00+00:00"
+    },
+    {
+      "fire_id": "2023-UTGRD-023296",
+      "name": "Light House Canyon",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 818.1405555555556,
+      "max_acres": 1957.23918867513,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-22T15:47:34+00:00",
+      "last_time": "2023-09-25T17:56:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240310",
+      "name": "Trep",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 674.2438888888889,
+      "max_acres": 545.892914822846,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-20T01:50:22+00:00",
+      "last_time": "2024-08-17T04:05:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240270",
+      "name": "Adam Mountain",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 2462.485995277778,
+      "max_acres": 12645.065708562974,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-17T23:52:00+00:00",
+      "last_time": "2024-10-28T14:21:09.583000+00:00"
+    },
+    {
+      "fire_id": "2023-IDNCF-000321",
+      "name": "Little Bear",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 918.4333333333333,
+      "max_acres": 1221.48468807129,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-07-08T23:00:00+00:00",
+      "last_time": "2023-08-16T05:26:00+00:00"
+    },
+    {
+      "fire_id": "2023-WAOWF-000374",
+      "name": "AIRPLANE LAKE",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 1823.6802777777777,
+      "max_acres": 6955.87584136,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-07-08T01:56:11+00:00",
+      "last_time": "2023-09-22T01:37:00+00:00"
+    },
+    {
+      "fire_id": "2025-WYWBD-000254",
+      "name": "Red Canyon",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 186.25,
+      "max_acres": 124708.52126123296,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-14T12:00:00+00:00",
+      "last_time": "2025-08-22T06:15:00+00:00"
+    },
+    {
+      "fire_id": "2026-WANCP-000179",
+      "name": "Luna",
+      "n_times": 11,
+      "n_snapshots": 11,
+      "span_hours": 1201.0833333333333,
+      "max_acres": 5470.403081295288,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-09T19:20:00+00:00",
+      "last_time": "2026-08-28T20:25:00+00:00"
+    },
+    {
+      "fire_id": "2024-MTBDF-246327",
+      "name": "Grouse",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 1009.7691666666667,
+      "max_acres": 6228.486301151452,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Other"
+      ],
+      "seed_time": "2024-07-26T04:10:51+00:00",
+      "last_time": "2024-09-06T05:57:00+00:00"
+    },
+    {
+      "fire_id": "2024-CAKNP-000088",
+      "name": "Coffee Pot",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 883.8333333333334,
+      "max_acres": 14103.917906118386,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-08-12T10:32:00+00:00",
+      "last_time": "2024-09-18T06:22:00+00:00"
+    },
+    {
+      "fire_id": "2026-MNSUF-002411",
+      "name": "Sioux",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 795.1847325,
+      "max_acres": 7093.804732762874,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-11T23:03:54.963000+00:00",
+      "last_time": "2026-08-14T02:15:00+00:00"
+    },
+    {
+      "fire_id": "2023-MTFNF-000495",
+      "name": "Sullivan",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 776.6166666666667,
+      "max_acres": 4380.33402771478,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-01T13:00:00+00:00",
+      "last_time": "2023-09-02T21:37:00+00:00"
+    },
+    {
+      "fire_id": "2024-AZTNF-001594",
+      "name": "West",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 649.5,
+      "max_acres": 15073.613104686767,
+      "map_methods": [
+        "Hand Sketch",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-31T15:30:00+00:00",
+      "last_time": "2024-09-27T17:00:00+00:00"
+    },
+    {
+      "fire_id": "2026-MNSUF-002396",
+      "name": "Thumb",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 612.0141666666667,
+      "max_acres": 25014.743169190144,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-11T13:29:09+00:00",
+      "last_time": "2026-08-06T01:30:00+00:00"
+    },
+    {
+      "fire_id": "2023-ORWIF-230409",
+      "name": "Petes Lake",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 555.0758333333333,
+      "max_acres": 3143.53948904883,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-28T04:05:27+00:00",
+      "last_time": "2023-09-20T07:10:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORUMF-000315",
+      "name": "Horse Ridge",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 348.72583333333336,
+      "max_acres": 859.9279618180159,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-17T06:39:27+00:00",
+      "last_time": "2026-07-31T19:23:00+00:00"
+    },
+    {
+      "fire_id": "2024-CASNF-000731",
+      "name": "Basin",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 265.6825,
+      "max_acres": 14020.149264521864,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Infrared Image",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-06-27T22:49:03+00:00",
+      "last_time": "2024-07-09T00:30:00+00:00"
+    },
+    {
+      "fire_id": "2026-OR711S-000039",
+      "name": "East Evans Creek",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 248.46666666666667,
+      "max_acres": 15705.0,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "Digitized-Other",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-11T00:13:00+00:00",
+      "last_time": "2026-07-21T08:41:00+00:00"
+    },
+    {
+      "fire_id": "2024-CASHF-000996",
+      "name": "SHOE",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 235.85555555555555,
+      "max_acres": 154928.35197476498,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Infrared Image"
+      ],
+      "seed_time": "2024-10-10T01:18:46+00:00",
+      "last_time": "2024-10-19T21:10:06+00:00"
+    },
+    {
+      "fire_id": "2024-NMMEA-000385",
+      "name": "Salt",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 145.33166666666668,
+      "max_acres": 7938.661637471595,
+      "map_methods": [
+        "Digitized-Other",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-06-18T00:34:00+00:00",
+      "last_time": "2024-06-24T01:53:54+00:00"
+    },
+    {
+      "fire_id": "2026-NENBF-260530",
+      "name": "South Fork",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 138.25,
+      "max_acres": 39057.49425821175,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-10T09:35:00+00:00",
+      "last_time": "2026-06-16T03:50:00+00:00"
+    },
+    {
+      "fire_id": "2025-NMMEA-000314",
+      "name": "Seven Springs",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 74.2,
+      "max_acres": 805.2139396278503,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-06-19T01:02:00+00:00",
+      "last_time": "2025-06-22T03:14:00+00:00"
+    },
+    {
+      "fire_id": "2024-AZTNF-001989",
+      "name": "Horton",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 408.3097222222222,
+      "max_acres": 1179.6915019165306,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-12-15T23:30:25+00:00",
+      "last_time": "2025-01-01T23:49:00+00:00"
+    },
+    {
+      "fire_id": "2025-CORBX-000995",
+      "name": "Elk RBX",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 224.69666666666666,
+      "max_acres": 14635.230399525171,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "Digitized-Other",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-04T18:14:12+00:00",
+      "last_time": "2025-08-14T02:56:00+00:00"
+    },
+    {
+      "fire_id": "2025-AZASD-000294",
+      "name": "White Sage",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 265.5833333333333,
+      "max_acres": 58979.77036842413,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-13T06:19:00+00:00",
+      "last_time": "2025-07-24T07:54:00+00:00"
+    },
+    {
+      "fire_id": "2024-CABDF-009908",
+      "name": "VISTA",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 129.73333333333332,
+      "max_acres": 2935.7719888709084,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-07T11:45:00+00:00",
+      "last_time": "2024-07-12T21:29:00+00:00"
+    },
+    {
+      "fire_id": "2025-UTDIF-000237",
+      "name": "Forsyth",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 606.2333333333333,
+      "max_acres": 15682.220368496215,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-06-20T21:36:00+00:00",
+      "last_time": "2025-07-16T03:50:00+00:00"
+    },
+    {
+      "fire_id": "2025-COBCP-000068",
+      "name": "South Rim",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 222.26666666666668,
+      "max_acres": 4252.440604834246,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-10T19:30:00+00:00",
+      "last_time": "2025-07-20T01:46:00+00:00"
+    },
+    {
+      "fire_id": "2023-MTKNF-000262",
+      "name": "East Fork",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 457.275,
+      "max_acres": 4992.99541833901,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-30T21:59:30+00:00",
+      "last_time": "2023-08-18T23:16:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240258",
+      "name": "Lemolo",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 650.4194444444445,
+      "max_acres": 1247.2536563331457,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-18T02:46:50+00:00",
+      "last_time": "2024-08-14T05:12:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDSCF-240221",
+      "name": "Garden",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 986.2272222222222,
+      "max_acres": 13036.0,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-09T06:36:37+00:00",
+      "last_time": "2024-10-20T08:50:15+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000961",
+      "name": "Blue Creek 2",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 783.75,
+      "max_acres": 13995.8233149442,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-20T05:04:00+00:00",
+      "last_time": "2023-09-21T20:49:00+00:00"
+    },
+    {
+      "fire_id": "2023-MTFNF-000498",
+      "name": "Bruce",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 771.1883333333334,
+      "max_acres": 3710.16491970941,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-30T18:26:42+00:00",
+      "last_time": "2023-08-31T21:38:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORDEF-000851",
+      "name": "FIRESTONE",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 621.3194444444445,
+      "max_acres": 9481.612592278168,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-07T07:23:50+00:00",
+      "last_time": "2024-10-03T04:43:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORUMF-000298",
+      "name": "Bologna",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 618.3944444444444,
+      "max_acres": 4771.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2026-07-18T03:06:20+00:00",
+      "last_time": "2026-08-12T21:30:00+00:00"
+    },
+    {
+      "fire_id": "2026-MTFNF-000280",
+      "name": "Silvertip",
+      "n_times": 10,
+      "n_snapshots": 10,
+      "span_hours": 694.05,
+      "max_acres": 7144.126271587089,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-31T00:00:00+00:00",
+      "last_time": "2026-08-28T22:03:00+00:00"
+    },
+    {
+      "fire_id": "2024-CABDF-012520",
+      "name": "LINE",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 589.5777777777778,
+      "max_acres": 43978.33684661091,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Infrared Image",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-07T00:00:00+00:00",
+      "last_time": "2024-10-01T13:34:40+00:00"
+    },
+    {
+      "fire_id": "2026-WAOWF-260448",
+      "name": "PTARMIGAN",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 531.5705555555555,
+      "max_acres": 24720.593266394455,
+      "map_methods": [
+        "Digitized-Other",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-22T20:25:46+00:00",
+      "last_time": "2026-08-14T00:00:00+00:00"
+    },
+    {
+      "fire_id": "2023-NMGNF-000357",
+      "name": "Dark",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 449.96666666666664,
+      "max_acres": 4246.02264995256,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-19T03:32:00+00:00",
+      "last_time": "2023-08-06T21:30:00+00:00"
+    },
+    {
+      "fire_id": "2026-IDBOD-265460",
+      "name": "Tartar",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 372.63416666666666,
+      "max_acres": 158026.6904337258,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-25T15:33:57+00:00",
+      "last_time": "2026-08-10T04:12:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORVAD-260204",
+      "name": "FOX",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 348.51166666666666,
+      "max_acres": 79008.09379672928,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-25T02:59:18+00:00",
+      "last_time": "2026-08-08T15:30:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDEIS-000311",
+      "name": "Chimney",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 286.7138888888889,
+      "max_acres": 6518.778930418085,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-03T02:12:10+00:00",
+      "last_time": "2024-09-15T00:55:00+00:00"
+    },
+    {
+      "fire_id": "2023-NMGNF-000428",
+      "name": "Pasture",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 264.6,
+      "max_acres": 10985.7636293364,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-25T03:50:00+00:00",
+      "last_time": "2023-08-05T04:26:00+00:00"
+    },
+    {
+      "fire_id": "2026-NMGNF-000354",
+      "name": "Sacaton",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 241.4661111111111,
+      "max_acres": 9861.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-01T18:00:02+00:00",
+      "last_time": "2026-07-11T19:28:00+00:00"
+    },
+    {
+      "fire_id": "2026-COSJF-000806",
+      "name": "Rio Blanco",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 240.0,
+      "max_acres": 1387.7401447448178,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-07-29T00:00:00+00:00",
+      "last_time": "2026-08-08T00:00:00+00:00"
+    },
+    {
+      "fire_id": "2026-NMGNF-000307",
+      "name": "Bear",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 141.01666666666668,
+      "max_acres": 7769.224659204163,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-06-09T20:11:00+00:00",
+      "last_time": "2026-06-15T17:12:00+00:00"
+    },
+    {
+      "fire_id": "2024-NVTMFX-031010",
+      "name": "Davis",
+      "n_times": 9,
+      "n_snapshots": 9,
+      "span_hours": 134.0,
+      "max_acres": 5824.0,
+      "map_methods": [
+        "Digitized-Other",
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2024-09-08T01:00:00+00:00",
+      "last_time": "2024-09-13T15:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWIF-240371",
+      "name": "Linton Creek",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 203.48055555555555,
+      "max_acres": 1309.437836060624,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-07T15:15:10+00:00",
+      "last_time": "2024-09-16T02:44:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWIF-240373",
+      "name": "Boulder Creek",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 393.04277777777776,
+      "max_acres": 522.7857840922454,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-09-07T23:02:24+00:00",
+      "last_time": "2024-09-24T08:04:58+00:00"
+    },
+    {
+      "fire_id": "2023-NMGNF-000382",
+      "name": "Davis",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 144.73333333333332,
+      "max_acres": 6072.43867041797,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-19T03:21:00+00:00",
+      "last_time": "2023-07-25T04:05:00+00:00"
+    },
+    {
+      "fire_id": "2024-CAINF-000911",
+      "name": "Pizona",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 106.89805555555556,
+      "max_acres": 2160.636301727711,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-06-27T18:15:07+00:00",
+      "last_time": "2024-07-02T05:09:00+00:00"
+    },
+    {
+      "fire_id": "2023-WANCP-000262",
+      "name": "Sourdough",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 909.0,
+      "max_acres": 6729.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-09T03:00:00+00:00",
+      "last_time": "2023-09-16T00:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-WAOWF-000435",
+      "name": "EASY",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 373.1166666666667,
+      "max_acres": 2130.379920082084,
+      "map_methods": [
+        "Digitized-Image",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-22T06:21:00+00:00",
+      "last_time": "2024-08-06T19:28:00+00:00"
+    },
+    {
+      "fire_id": "2025-NVEKD-010319",
+      "name": "Cottonwood Peak",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 102.56666666666666,
+      "max_acres": 131917.81514441577,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-18T21:40:00+00:00",
+      "last_time": "2025-08-23T04:14:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240220",
+      "name": "Trail",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 694.2544444444444,
+      "max_acres": 843.734888421326,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2024-07-17T07:39:44+00:00",
+      "last_time": "2024-08-15T05:55:00+00:00"
+    },
+    {
+      "fire_id": "2023-NCNCF-230262",
+      "name": "Collett Ridge",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 394.54277777777776,
+      "max_acres": 5447.078292704,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-10-23T20:57:26+00:00",
+      "last_time": "2023-11-09T07:30:00+00:00"
+    },
+    {
+      "fire_id": "2025-IDNCF-000716",
+      "name": "Rhoda Creek",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 546.775,
+      "max_acres": 2627.9166779057114,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-25T00:51:30+00:00",
+      "last_time": "2025-09-16T19:38:00+00:00"
+    },
+    {
+      "fire_id": "2025-IDNCF-000667",
+      "name": "Good Friday",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 655.6333333333333,
+      "max_acres": 615.5230772769969,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-20T12:00:00+00:00",
+      "last_time": "2025-09-16T19:38:00+00:00"
+    },
+    {
+      "fire_id": "2023-CAKNF-007029",
+      "name": "UFISH",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 746.3436111111112,
+      "max_acres": 7850.57954723298,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-08-17T02:21:23+00:00",
+      "last_time": "2023-09-17T04:42:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDPAF-005791",
+      "name": "Logan",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 737.7166666666667,
+      "max_acres": 15672.644886161192,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-09-09T10:07:00+00:00",
+      "last_time": "2024-10-10T03:50:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDSTF-000180",
+      "name": "Bench Lake",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 702.7508333333334,
+      "max_acres": 2595.377481566194,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-12T01:59:57+00:00",
+      "last_time": "2024-08-10T08:45:00+00:00"
+    },
+    {
+      "fire_id": "2026-OR953S-000587",
+      "name": "Shingle",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 665.3,
+      "max_acres": 73183.44278264341,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-24T04:25:43+00:00",
+      "last_time": "2026-08-20T21:43:43+00:00"
+    },
+    {
+      "fire_id": "2024-IDPAF-005467",
+      "name": "Wolf Creek",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 543.1341666666667,
+      "max_acres": 1276.4703136710639,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-25T05:51:57+00:00",
+      "last_time": "2024-08-16T21:00:00+00:00"
+    },
+    {
+      "fire_id": "2026-UTMLF-005244",
+      "name": "Black Canyon",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 430.6430555555556,
+      "max_acres": 3549.299080468515,
+      "map_methods": [
+        "Hand Sketch",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-02T00:00:00+00:00",
+      "last_time": "2026-08-19T22:38:35+00:00"
+    },
+    {
+      "fire_id": "2024-ORFWF-240332",
+      "name": "Buck Creek",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 297.8333333333333,
+      "max_acres": 5737.65,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-09T09:02:00+00:00",
+      "last_time": "2024-09-21T18:52:00+00:00"
+    },
+    {
+      "fire_id": "2026-NVELD-040107",
+      "name": "Kane Springs",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 216.83333333333334,
+      "max_acres": 17042.495324974985,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-06-19T05:36:00+00:00",
+      "last_time": "2026-06-28T06:26:00+00:00"
+    },
+    {
+      "fire_id": "2026-MTLNF-260296",
+      "name": "Elder 1",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 207.01666666666668,
+      "max_acres": 1235.2369764812215,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-25T12:00:00+00:00",
+      "last_time": "2026-08-03T03:01:00+00:00"
+    },
+    {
+      "fire_id": "2026-UTFIF-260220",
+      "name": "Wild Goose",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 203.95,
+      "max_acres": 12665.204929838019,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-27T16:15:00+00:00",
+      "last_time": "2026-07-06T04:12:00+00:00"
+    },
+    {
+      "fire_id": "2026-UTDRD-005113",
+      "name": "Snyder",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 184.5427777777778,
+      "max_acres": 30215.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-28T13:02:26+00:00",
+      "last_time": "2026-07-06T05:35:00+00:00"
+    },
+    {
+      "fire_id": "2024-OR981S-240314",
+      "name": "Copperfield",
+      "n_times": 8,
+      "n_snapshots": 8,
+      "span_hours": 81.52944444444445,
+      "max_acres": 3822.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-02T02:53:00+00:00",
+      "last_time": "2024-09-05T12:24:46+00:00"
+    },
+    {
+      "fire_id": "2023-AZKNF-000337",
+      "name": "Ridge",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 668.0,
+      "max_acres": 9809.2602118751,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-06-14T23:00:00+00:00",
+      "last_time": "2023-07-12T19:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-CAFKU-019190",
+      "name": "Boone",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 8767.016666666666,
+      "max_acres": 17631.266662138987,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-04T20:14:00+00:00",
+      "last_time": "2025-09-05T03:15:00+00:00"
+    },
+    {
+      "fire_id": "2025-AZSCA-001219",
+      "name": "Bronco",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 235.9336111111111,
+      "max_acres": 18155.794234436766,
+      "map_methods": [
+        "Hand Sketch",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-04T21:48:59+00:00",
+      "last_time": "2025-08-14T17:45:00+00:00"
+    },
+    {
+      "fire_id": "2025-WASPD-000339",
+      "name": "APPLE ACRES",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 131.5981288888889,
+      "max_acres": 3410.214185718879,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-03T03:14:06.736000+00:00",
+      "last_time": "2025-07-08T14:50:00+00:00"
+    },
+    {
+      "fire_id": "2023-MTLNF-200730",
+      "name": "River Road East",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 355.78333333333336,
+      "max_acres": 17314.0711792921,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-08-19T07:00:00+00:00",
+      "last_time": "2023-09-03T02:47:00+00:00"
+    },
+    {
+      "fire_id": "2025-WANES-001666",
+      "name": "Western Pines",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 65.27638888888889,
+      "max_acres": 5866.892925237743,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-09T22:02:00+00:00",
+      "last_time": "2025-07-12T15:18:35+00:00"
+    },
+    {
+      "fire_id": "2025-WANES-001776",
+      "name": "Lake Spokane",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 147.79583333333332,
+      "max_acres": 2579.1528952309686,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-20T04:00:15+00:00",
+      "last_time": "2025-07-26T07:48:00+00:00"
+    },
+    {
+      "fire_id": "2023-IDSCF-023084",
+      "name": "Hayden",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 623.3386111111112,
+      "max_acres": 24498.1786969827,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-19T22:28:00+00:00",
+      "last_time": "2023-08-14T21:48:19+00:00"
+    },
+    {
+      "fire_id": "2025-NVEKD-010268",
+      "name": "Jakes",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 94.18333333333334,
+      "max_acres": 82196.55086868988,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-04T20:02:00+00:00",
+      "last_time": "2025-08-08T18:13:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUMF-000830",
+      "name": "Tiger Creek",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 220.13333333333333,
+      "max_acres": 628.6916614016847,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-10-02T00:00:00+00:00",
+      "last_time": "2024-10-11T04:08:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWIF-240210",
+      "name": "Pyramid",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 1442.1,
+      "max_acres": 1330.7278948520766,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-18T00:26:00+00:00",
+      "last_time": "2024-09-16T02:32:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDNCF-000460",
+      "name": "Wye",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 1010.1455555555556,
+      "max_acres": 12857.38451615796,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-03T18:05:46+00:00",
+      "last_time": "2024-09-14T20:14:30+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000957",
+      "name": "Bluff #1",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 785.6,
+      "max_acres": 4763.52982125253,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-20T05:06:00+00:00",
+      "last_time": "2023-09-21T22:42:00+00:00"
+    },
+    {
+      "fire_id": "2023-CAKNF-006944",
+      "name": "ELLIOT",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 776.5586111111111,
+      "max_acres": 13875.2540298079,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-15T20:08:29+00:00",
+      "last_time": "2023-09-17T04:42:00+00:00"
+    },
+    {
+      "fire_id": "2023-IDNCF-000414",
+      "name": "West Fork",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 700.2719444444444,
+      "max_acres": 721.117657038168,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-26T22:26:41+00:00",
+      "last_time": "2023-08-25T02:43:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORMAF-002523",
+      "name": "Telephone",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 557.6513888888888,
+      "max_acres": 54033.67667404562,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-23T00:19:55+00:00",
+      "last_time": "2024-08-15T05:59:00+00:00"
+    },
+    {
+      "fire_id": "2026-MNSUF-002393",
+      "name": "Camp",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 417.85593361111114,
+      "max_acres": 4753.8319241609615,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-08T14:09:38.639000+00:00",
+      "last_time": "2026-07-26T00:01:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORBUD-002687",
+      "name": "Bald Mountain",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 375.5963888888889,
+      "max_acres": 308721.1972699391,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-24T04:24:13+00:00",
+      "last_time": "2026-08-08T20:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-OR951S-000766",
+      "name": "Shoefly",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 264.1166666666667,
+      "max_acres": 26817.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-03T08:03:00+00:00",
+      "last_time": "2024-09-14T08:10:00+00:00"
+    },
+    {
+      "fire_id": "2024-CASQF-001362",
+      "name": "BOREL",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 223.07472222222222,
+      "max_acres": 59389.55433011228,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-25T00:59:59+00:00",
+      "last_time": "2024-08-03T08:04:28+00:00"
+    },
+    {
+      "fire_id": "2026-WAOWF-260664",
+      "name": "SISI",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 187.78222222222223,
+      "max_acres": 1503.9855121874616,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-08-14T19:36:04+00:00",
+      "last_time": "2026-08-22T15:23:00+00:00"
+    },
+    {
+      "fire_id": "2026-NENES-260153",
+      "name": "Anderson Bridge",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 166.3947222222222,
+      "max_acres": 18111.217914902016,
+      "map_methods": [
+        "Hand Sketch",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-03-13T23:12:19+00:00",
+      "last_time": "2026-03-20T21:36:00+00:00"
+    },
+    {
+      "fire_id": "2026-UTFIF-260341",
+      "name": "Widemouth 2",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 122.95,
+      "max_acres": 68354.13754657705,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-07-29T15:17:00+00:00",
+      "last_time": "2026-08-03T18:14:00+00:00"
+    },
+    {
+      "fire_id": "2024-OR953S-024112",
+      "name": "Boneyard",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 111.34143277777778,
+      "max_acres": 52528.307724973885,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-19T05:59:30.842000+00:00",
+      "last_time": "2024-07-23T21:20:00+00:00"
+    },
+    {
+      "fire_id": "2026-COFCQ-000296",
+      "name": "24",
+      "n_times": 7,
+      "n_snapshots": 7,
+      "span_hours": 73.91666666666667,
+      "max_acres": 7404.857154207141,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-03-19T23:00:00+00:00",
+      "last_time": "2026-03-23T00:55:00+00:00"
+    },
+    {
+      "fire_id": "2024-OKWMR-002793",
+      "name": "RUSH",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 134.58638888888888,
+      "max_acres": 12494.79972695524,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-10-25T12:09:49+00:00",
+      "last_time": "2024-10-31T02:45:00+00:00"
+    },
+    {
+      "fire_id": "2025-IDPOS-000630",
+      "name": "Sunset",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 209.05,
+      "max_acres": 3236.647799759423,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-17T21:57:00+00:00",
+      "last_time": "2025-08-26T15:00:00+00:00"
+    },
+    {
+      "fire_id": "2025-WAOLF-000461",
+      "name": "Tunnel Creek",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 444.4352022222222,
+      "max_acres": 596.5435043291217,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-09-06T20:18:53.272000+00:00",
+      "last_time": "2025-09-25T08:45:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000962",
+      "name": "Marlow",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 606.0,
+      "max_acres": 1988.30191627076,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-17T18:00:00+00:00",
+      "last_time": "2023-09-12T00:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORVAD-240129",
+      "name": "COW VALLEY",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 161.82777777777778,
+      "max_acres": 133490.0,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-11T18:10:20+00:00",
+      "last_time": "2024-07-18T12:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-OR953S-024274",
+      "name": "Service",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 171.61111111111111,
+      "max_acres": 23917.0,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-09-07T04:49:20+00:00",
+      "last_time": "2024-09-14T08:26:00+00:00"
+    },
+    {
+      "fire_id": "2024-AZASF-000264",
+      "name": "Foote",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 130.36666666666667,
+      "max_acres": 4558.42749788349,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-06-18T16:44:00+00:00",
+      "last_time": "2024-06-24T03:06:00+00:00"
+    },
+    {
+      "fire_id": "2024-WYCMX-240438",
+      "name": "Constitution",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 80.595,
+      "max_acres": 24605.2630925203,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-22T04:41:18+00:00",
+      "last_time": "2024-08-25T13:17:00+00:00"
+    },
+    {
+      "fire_id": "2025-MTNWS-250543",
+      "name": "Knowles",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 224.76117944444445,
+      "max_acres": 3821.639596833742,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-17T12:39:50.754000+00:00",
+      "last_time": "2025-08-26T21:25:31+00:00"
+    },
+    {
+      "fire_id": "2024-COSJF-000178",
+      "name": "Spruce Creek",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 152.81666666666666,
+      "max_acres": 5706.82993450991,
+      "map_methods": [
+        "Digitized-Topo",
+        "GPS-Walked",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-05-16T12:00:00+00:00",
+      "last_time": "2024-05-22T20:49:00+00:00"
+    },
+    {
+      "fire_id": "2024-WYHPD-240536",
+      "name": "Labonte ",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 158.76194444444445,
+      "max_acres": 3485.0027607989314,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-14T10:44:17+00:00",
+      "last_time": "2024-09-21T01:30:00+00:00"
+    },
+    {
+      "fire_id": "2025-WYMRF-001111",
+      "name": "Crosho",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 228.9,
+      "max_acres": 2073.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-12T09:56:00+00:00",
+      "last_time": "2025-08-21T22:50:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORWWF-000338",
+      "name": "Cliff Mountain",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 2486.5995022222223,
+      "max_acres": 28115.75344821698,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-26T00:12:00+00:00",
+      "last_time": "2024-11-06T14:47:58.208000+00:00"
+    },
+    {
+      "fire_id": "2024-IDCTF-000176",
+      "name": "Commissary",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 193.43333333333334,
+      "max_acres": 6880.9,
+      "map_methods": [
+        "GPS-Flight",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-10-02T00:34:00+00:00",
+      "last_time": "2024-10-10T02:00:00+00:00"
+    },
+    {
+      "fire_id": "2023-MTFNF-000506",
+      "name": "Kah Mountain",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 300.51722222222224,
+      "max_acres": 927.742835030986,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-30T16:25:58+00:00",
+      "last_time": "2023-08-12T04:57:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORDEF-000845",
+      "name": "0845 NE",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 573.3811111111111,
+      "max_acres": 36471.74406265917,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-07T06:57:08+00:00",
+      "last_time": "2024-10-01T04:20:00+00:00"
+    },
+    {
+      "fire_id": "2024-AZTNF-001688",
+      "name": "Point",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 33.5,
+      "max_acres": 5174.064117654502,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-11T15:00:00+00:00",
+      "last_time": "2024-09-13T00:30:00+00:00"
+    },
+    {
+      "fire_id": "2023-WAOLP-000424",
+      "name": "Delabarre",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 510.2688888888889,
+      "max_acres": 4168.10119008745,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-09-02T02:13:52+00:00",
+      "last_time": "2023-09-23T08:30:00+00:00"
+    },
+    {
+      "fire_id": "2026-UTWDD-200417",
+      "name": "Stookey",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 381.67277777777775,
+      "max_acres": 12781.68149425323,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-11T17:25:38+00:00",
+      "last_time": "2026-07-27T15:06:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000966",
+      "name": "Coon",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 335.26944444444445,
+      "max_acres": 1589.9316350251,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-16T04:58:50+00:00",
+      "last_time": "2023-08-30T04:15:00+00:00"
+    },
+    {
+      "fire_id": "2025-WASES-000447",
+      "name": "Burdoin",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 219.35694444444445,
+      "max_acres": 11289.0,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-19T01:25:35+00:00",
+      "last_time": "2025-07-28T04:47:00+00:00"
+    },
+    {
+      "fire_id": "2026-NVTMFX-030698",
+      "name": "Stallion",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 172.4636111111111,
+      "max_acres": 40690.65817063921,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-08-10T22:02:11+00:00",
+      "last_time": "2026-08-18T02:30:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORVAD-240159",
+      "name": "THOMPSON",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 169.95805555555555,
+      "max_acres": 31557.402405316654,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-23T05:02:31+00:00",
+      "last_time": "2024-07-30T07:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORMHF-000818",
+      "name": "SANDSTONE",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 152.3,
+      "max_acres": 702.0,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-08-08T00:09:00+00:00",
+      "last_time": "2024-08-14T08:27:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORMED-009002",
+      "name": "Salt Creek",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 146.57805555555555,
+      "max_acres": 4102.571175781561,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-08T05:13:19+00:00",
+      "last_time": "2024-07-14T07:48:00+00:00"
+    },
+    {
+      "fire_id": "2026-MTFNF-000393",
+      "name": "Camp Creek",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 136.56666666666666,
+      "max_acres": 8403.83849211605,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods",
+        "Other"
+      ],
+      "seed_time": "2026-08-22T02:30:00+00:00",
+      "last_time": "2026-08-27T19:04:00+00:00"
+    },
+    {
+      "fire_id": "2026-COLSX-000467",
+      "name": "Schwachheim",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 127.95,
+      "max_acres": 1582.4145198563406,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-04-13T16:20:00+00:00",
+      "last_time": "2026-04-19T00:17:00+00:00"
+    },
+    {
+      "fire_id": "2026-WASPA-001868",
+      "name": "Mitre Rock",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 120.9575,
+      "max_acres": 4518.492734370413,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-02T04:14:33+00:00",
+      "last_time": "2026-08-07T05:12:00+00:00"
+    },
+    {
+      "fire_id": "2026-CACNP-001159",
+      "name": "Santa Rosa Island",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 119.91666666666667,
+      "max_acres": 18378.718851401776,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-05-17T00:00:00+00:00",
+      "last_time": "2026-05-21T23:55:00+00:00"
+    },
+    {
+      "fire_id": "2026-MTNWS-000387",
+      "name": "Deer Creek",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 112.08333333333333,
+      "max_acres": 1099.0533429577442,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-21T12:55:00+00:00",
+      "last_time": "2026-08-26T05:00:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORWWF-000531",
+      "name": "McCulley",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 107.94200333333333,
+      "max_acres": 8872.133165641535,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-23T15:14:28.788000+00:00",
+      "last_time": "2026-08-28T03:11:00+00:00"
+    },
+    {
+      "fire_id": "2026-OR973S-000206",
+      "name": "North Cayuse",
+      "n_times": 6,
+      "n_snapshots": 6,
+      "span_hours": 85.2804625,
+      "max_acres": 4887.367823220937,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-05T04:16:12.335000+00:00",
+      "last_time": "2026-07-08T17:33:02+00:00"
+    },
+    {
+      "fire_id": "2023-ORMHF-001199",
+      "name": "CAMP CREEK",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 496.43805555555554,
+      "max_acres": 2047.11769621982,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-08-25T14:03:43+00:00",
+      "last_time": "2023-09-15T06:30:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000972",
+      "name": "3-9",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 415.6297222222222,
+      "max_acres": 2854.79698811242,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-16T14:22:13+00:00",
+      "last_time": "2023-09-02T22:00:00+00:00"
+    },
+    {
+      "fire_id": "2026-ID1AX-000618",
+      "name": "Claremont",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 8807.766666666666,
+      "max_acres": 6817.360648335557,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-07-12T07:39:00+00:00",
+      "last_time": "2027-07-14T07:25:00+00:00"
+    },
+    {
+      "fire_id": "2025-CABDF-011350",
+      "name": "Gold",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 4558.2781372222225,
+      "max_acres": 1080.19531119986,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-05T20:52:00+00:00",
+      "last_time": "2026-02-11T19:08:41.294000+00:00"
+    },
+    {
+      "fire_id": "2025-CAKNF-006643",
+      "name": "Log",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 156.5288888888889,
+      "max_acres": 1169.6746033777895,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-09-05T16:40:39+00:00",
+      "last_time": "2025-09-12T05:12:23+00:00"
+    },
+    {
+      "fire_id": "2024-IDPAF-005567",
+      "name": "Farrow",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 1579.7427777777777,
+      "max_acres": 3324.758834412171,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-06T07:00:26+00:00",
+      "last_time": "2024-10-11T02:45:00+00:00"
+    },
+    {
+      "fire_id": "2025-IDIPF-000746",
+      "name": "Ulm Creek",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 75.86666666666666,
+      "max_acres": 2528.821713568261,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-09-02T23:59:00+00:00",
+      "last_time": "2025-09-06T03:51:00+00:00"
+    },
+    {
+      "fire_id": "2025-IDSCF-250112",
+      "name": "Cedar",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 374.77444444444444,
+      "max_acres": 853.8508523101472,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation"
+      ],
+      "seed_time": "2025-07-31T20:55:32+00:00",
+      "last_time": "2025-08-16T11:42:00+00:00"
+    },
+    {
+      "fire_id": "2025-MTBDF-256403",
+      "name": "Cloudrest",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 447.82472222222225,
+      "max_acres": 3478.5763124134915,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-15T23:46:31+00:00",
+      "last_time": "2025-09-03T15:36:00+00:00"
+    },
+    {
+      "fire_id": "2025-MN2QS-001729",
+      "name": "Camp House",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 4122.417353333333,
+      "max_acres": 14804.865192815849,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-05-11T23:38:46+00:00",
+      "last_time": "2025-10-30T18:03:48.472000+00:00"
+    },
+    {
+      "fire_id": "2025-WANCP-000415",
+      "name": "Perry",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 283.6388888888889,
+      "max_acres": 1768.9910351926221,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-30T02:21:40+00:00",
+      "last_time": "2025-09-10T22:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDBOF-000891",
+      "name": "Anderson",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 3936.1247222222223,
+      "max_acres": 1877.03,
+      "map_methods": [
+        "Digitized-Other",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-06T14:22:22+00:00",
+      "last_time": "2025-01-17T14:29:51+00:00"
+    },
+    {
+      "fire_id": "2023-LAKIF-000258",
+      "name": "Ida",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 179.68333333333334,
+      "max_acres": 3937.90871173874,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Image Interpretation"
+      ],
+      "seed_time": "2023-08-25T02:19:00+00:00",
+      "last_time": "2023-09-01T14:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-WYSHX-240442",
+      "name": "Remington",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 576.2200794444444,
+      "max_acres": 196459.2262777783,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-08-23T14:05:00+00:00",
+      "last_time": "2024-09-16T14:18:12.286000+00:00"
+    },
+    {
+      "fire_id": "2024-IDSCF-240125",
+      "name": "Black Eagle",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 97.17166666666667,
+      "max_acres": 8318.0,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-09-07T05:01:42+00:00",
+      "last_time": "2024-09-11T06:12:00+00:00"
+    },
+    {
+      "fire_id": "2023-MTFNF-000518",
+      "name": "Ridge",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 560.5,
+      "max_acres": 3661.76919929792,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-01T15:30:00+00:00",
+      "last_time": "2023-08-25T00:00:00+00:00"
+    },
+    {
+      "fire_id": "2023-IDBOF-000740",
+      "name": "East",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 239.55,
+      "max_acres": 3342.1067858544,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-08-19T03:44:00+00:00",
+      "last_time": "2023-08-29T03:17:00+00:00"
+    },
+    {
+      "fire_id": "2023-WANES-001974",
+      "name": "GRAY",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 132.4138888888889,
+      "max_acres": 10107.0482210636,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-19T00:27:00+00:00",
+      "last_time": "2023-08-24T12:51:50+00:00"
+    },
+    {
+      "fire_id": "2025-WANES-002148",
+      "name": "Crescent Road",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 82.66583333333334,
+      "max_acres": 891.9889862119486,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-14T05:12:28+00:00",
+      "last_time": "2025-08-17T15:52:25+00:00"
+    },
+    {
+      "fire_id": "2023-AZASF-000447",
+      "name": "Campbell",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 108.61666666666666,
+      "max_acres": 1416.41252100408,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-07-11T16:32:00+00:00",
+      "last_time": "2023-07-16T05:09:00+00:00"
+    },
+    {
+      "fire_id": "2025-AZASF-000213",
+      "name": "Greer",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 143.35,
+      "max_acres": 20832.742176003907,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-05-14T03:39:00+00:00",
+      "last_time": "2025-05-20T03:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240301",
+      "name": "Quartz",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 175.37083333333334,
+      "max_acres": 974.5046646108717,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-19T01:29:45+00:00",
+      "last_time": "2024-07-26T08:52:00+00:00"
+    },
+    {
+      "fire_id": "2025-COUPD-000073",
+      "name": "Boyce",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 152.63611111111112,
+      "max_acres": 2273.9255657976305,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-07-11T01:56:50+00:00",
+      "last_time": "2025-07-17T10:35:00+00:00"
+    },
+    {
+      "fire_id": "2025-LAKIF-000258",
+      "name": "Backbone",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 173.1,
+      "max_acres": 2360.281766271043,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-08T08:44:00+00:00",
+      "last_time": "2025-08-15T13:50:00+00:00"
+    },
+    {
+      "fire_id": "2025-IDIPF-000493",
+      "name": "Lightning Creek",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 97.8,
+      "max_acres": 2522.548826555866,
+      "map_methods": [
+        "Digitized-Image",
+        "IR Image Interpretation",
+        "Remote Sensing Derived"
+      ],
+      "seed_time": "2025-08-01T12:00:00+00:00",
+      "last_time": "2025-08-05T13:48:00+00:00"
+    },
+    {
+      "fire_id": "2023-NMGNF-000419",
+      "name": "Turkey",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 1218.798888888889,
+      "max_acres": 5211.04678314011,
+      "map_methods": [
+        "GPS-Flight",
+        "Hand Sketch",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-23T03:55:04+00:00",
+      "last_time": "2023-09-11T22:43:00+00:00"
+    },
+    {
+      "fire_id": "2025-WYWBD-000204",
+      "name": "VEES",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 76.0,
+      "max_acres": 5257.607336535214,
+      "map_methods": [
+        "GPS-Flight",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-27T14:00:00+00:00",
+      "last_time": "2025-07-30T18:00:00+00:00"
+    },
+    {
+      "fire_id": "2023-AZTNF-001046",
+      "name": "Diamond",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 83.41,
+      "max_acres": 4634.66977011252,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-23T16:18:24+00:00",
+      "last_time": "2023-07-27T03:43:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDNCF-000412",
+      "name": "Ace Butte",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 1093.3669444444445,
+      "max_acres": 1861.7860466359757,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-25T05:44:27+00:00",
+      "last_time": "2024-09-08T19:06:28+00:00"
+    },
+    {
+      "fire_id": "2024-IDNCF-000515",
+      "name": "Anchor",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 1003.2827777777778,
+      "max_acres": 1810.5933451107314,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-28T23:49:26+00:00",
+      "last_time": "2024-09-08T19:06:24+00:00"
+    },
+    {
+      "fire_id": "2026-AZA4S-260407",
+      "name": "AFM PVT - Hazen Rd",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 67.74095333333334,
+      "max_acres": 1137.7720805833799,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-05-03T04:25:32.568000+00:00",
+      "last_time": "2026-05-06T00:10:00+00:00"
+    },
+    {
+      "fire_id": "2025-ORRSF-000392",
+      "name": "Tate",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 547.0333333333333,
+      "max_acres": 18290.025958201484,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-09-06T09:00:00+00:00",
+      "last_time": "2025-09-29T04:02:00+00:00"
+    },
+    {
+      "fire_id": "2026-MTFNF-000306",
+      "name": "Skillet",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 459.00666666666666,
+      "max_acres": 3384.341425537982,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-01T03:57:00+00:00",
+      "last_time": "2026-08-20T06:57:24+00:00"
+    },
+    {
+      "fire_id": "2024-IDNCF-000781",
+      "name": "Halfway",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 375.11333333333334,
+      "max_acres": 1364.5340489773087,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-08-30T05:07:42+00:00",
+      "last_time": "2024-09-14T20:14:30+00:00"
+    },
+    {
+      "fire_id": "2023-LALAS-000252",
+      "name": "Tiger Island",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 328.7997222222222,
+      "max_acres": 33294.7978534712,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-25T00:00:00+00:00",
+      "last_time": "2023-09-07T16:47:59+00:00"
+    },
+    {
+      "fire_id": "2026-CATNF-001154",
+      "name": "ELEPHANT",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 243.4311111111111,
+      "max_acres": 15526.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-12T19:11:08+00:00",
+      "last_time": "2026-07-22T22:37:00+00:00"
+    },
+    {
+      "fire_id": "2026-NVELD-040106",
+      "name": "Grapevine",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 230.78333333333333,
+      "max_acres": 26463.742312267743,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-19T06:25:00+00:00",
+      "last_time": "2026-06-28T21:12:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDNPT-000415",
+      "name": "Gwen",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 182.56666666666666,
+      "max_acres": 35401.95421724348,
+      "map_methods": [
+        "Hand Sketch",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-25T06:02:00+00:00",
+      "last_time": "2024-08-01T20:36:00+00:00"
+    },
+    {
+      "fire_id": "2026-ORBUD-002696",
+      "name": "Coleman Creek",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 151.28205416666668,
+      "max_acres": 309828.6681538017,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-26T22:53:04.605000+00:00",
+      "last_time": "2026-08-02T06:10:00+00:00"
+    },
+    {
+      "fire_id": "2024-OR954S-000661",
+      "name": "Microwave Tower Fire",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 125.5,
+      "max_acres": 1314.1008534935754,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-23T04:00:00+00:00",
+      "last_time": "2024-07-28T09:30:00+00:00"
+    },
+    {
+      "fire_id": "2026-WAOWF-260699",
+      "name": "King",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 122.56666666666666,
+      "max_acres": 2133.363152885982,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-23T04:26:00+00:00",
+      "last_time": "2026-08-28T07:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-AZTNF-001300",
+      "name": "Sand Stone",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 114.80583333333334,
+      "max_acres": 27389.668850183964,
+      "map_methods": [
+        "GPS-Flight"
+      ],
+      "seed_time": "2024-07-26T15:51:39+00:00",
+      "last_time": "2024-07-31T10:40:00+00:00"
+    },
+    {
+      "fire_id": "2026-OR951S-000512",
+      "name": "Box Springs",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 107.43333333333334,
+      "max_acres": 21422.75202052602,
+      "map_methods": [
+        "Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-19T06:34:00+00:00",
+      "last_time": "2026-07-23T18:00:00+00:00"
+    },
+    {
+      "fire_id": "2026-WANES-001857",
+      "name": "AUTUMN LANE",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 102.91666666666667,
+      "max_acres": 5878.450885962074,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-01T19:50:00+00:00",
+      "last_time": "2026-08-06T02:45:00+00:00"
+    },
+    {
+      "fire_id": "2024-WYBTF-002407",
+      "name": "Leeds Creek",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 96.0,
+      "max_acres": 1230.2834861935125,
+      "map_methods": [
+        "GPS-Flight",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-02T19:30:00+00:00",
+      "last_time": "2024-08-06T19:30:00+00:00"
+    },
+    {
+      "fire_id": "2026-MTBRF-000340",
+      "name": "Nature Grove",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 95.26833333333333,
+      "max_acres": 855.4044376068194,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-24T03:24:54+00:00",
+      "last_time": "2026-08-28T02:41:00+00:00"
+    },
+    {
+      "fire_id": "2025-OR954S-000327",
+      "name": "Rowena",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 91.42111111111112,
+      "max_acres": 3858.0,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-06-12T03:18:44+00:00",
+      "last_time": "2025-06-15T22:44:00+00:00"
+    },
+    {
+      "fire_id": "2023-ORWIF-230392",
+      "name": "Horse Creek",
+      "n_times": 5,
+      "n_snapshots": 5,
+      "span_hours": 82.13694444444444,
+      "max_acres": 765.261361254493,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-08-25T10:47:00+00:00",
+      "last_time": "2023-08-28T20:55:13+00:00"
+    },
+    {
+      "fire_id": "2024-NMGNF-000318",
+      "name": "Ridge",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 8616.183333333332,
+      "max_acres": 4123.067324497378,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-17T06:43:00+00:00",
+      "last_time": "2024-07-10T06:54:00+00:00"
+    },
+    {
+      "fire_id": "2023-AZFTA-000410",
+      "name": "Flying V",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 49.97833333333333,
+      "max_acres": 862.541492303505,
+      "map_methods": [
+        "GPS-Unknown Travel Method",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-06T02:17:18+00:00",
+      "last_time": "2023-07-08T04:16:00+00:00"
+    },
+    {
+      "fire_id": "2025-CALPF-001817",
+      "name": "Madre",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 55.761944444444445,
+      "max_acres": 79518.67055221193,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-02T15:51:40+00:00",
+      "last_time": "2025-07-04T23:37:23+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000931",
+      "name": "Lone Pine",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 248.85,
+      "max_acres": 1684.31916685386,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-15T12:07:00+00:00",
+      "last_time": "2023-08-25T20:58:00+00:00"
+    },
+    {
+      "fire_id": "2024-COMRX-000086",
+      "name": "Bucktail",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 19.9,
+      "max_acres": 4206.362818372316,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-01T20:10:00+00:00",
+      "last_time": "2024-08-02T16:04:00+00:00"
+    },
+    {
+      "fire_id": "2025-MTNWS-250207",
+      "name": "Banana Lake",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 64.43583333333333,
+      "max_acres": 929.4678733193952,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-06-01T14:17:51+00:00",
+      "last_time": "2025-06-04T06:44:00+00:00"
+    },
+    {
+      "fire_id": "2024-UTSWS-000369",
+      "name": "Graff Point",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 90.3625,
+      "max_acres": 544.3436895739555,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-13T09:00:00+00:00",
+      "last_time": "2024-07-17T03:21:45+00:00"
+    },
+    {
+      "fire_id": "2025-OR973S-000460",
+      "name": "Juniper Canyon",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 16.56044111111111,
+      "max_acres": 3828.45,
+      "map_methods": [
+        "Hand Sketch"
+      ],
+      "seed_time": "2025-08-30T00:00:25+00:00",
+      "last_time": "2025-08-30T16:34:02.588000+00:00"
+    },
+    {
+      "fire_id": "2024-COPSF-000779",
+      "name": "Oak Ridge",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 18.595833333333335,
+      "max_acres": 1239.8617723174882,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-06-24T18:41:15+00:00",
+      "last_time": "2024-06-25T13:17:00+00:00"
+    },
+    {
+      "fire_id": "2025-COGRD-250195",
+      "name": "Wright Draw",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 102.74833333333333,
+      "max_acres": 48590.979825498805,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-07-10T00:00:06+00:00",
+      "last_time": "2025-07-14T06:45:00+00:00"
+    },
+    {
+      "fire_id": "2023-CAYNP-000050",
+      "name": "Pika",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 157.48305555555555,
+      "max_acres": 827.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-07-11T12:16:01+00:00",
+      "last_time": "2023-07-18T01:45:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000945",
+      "name": "Diamond",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 200.83527777777778,
+      "max_acres": 550.055847547215,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-15T21:24:53+00:00",
+      "last_time": "2023-08-24T06:15:00+00:00"
+    },
+    {
+      "fire_id": "2025-NMSCD-000304",
+      "name": "Buck",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 23.566666666666666,
+      "max_acres": 35190.6312819584,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-06-14T00:17:00+00:00",
+      "last_time": "2025-06-14T23:51:00+00:00"
+    },
+    {
+      "fire_id": "2023-WANES-001979",
+      "name": "OREGON",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 88.45,
+      "max_acres": 11063.1176144497,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-21T19:50:00+00:00",
+      "last_time": "2023-08-25T12:17:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORDEF-000892",
+      "name": "LUCKY BUTTE",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 818.8880555555555,
+      "max_acres": 530.2643542413864,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-08T01:13:43+00:00",
+      "last_time": "2024-10-12T04:07:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORNOD-771031",
+      "name": "Clark 900",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 28.866666666666667,
+      "max_acres": 1515.7575333673462,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-25T04:00:00+00:00",
+      "last_time": "2024-07-26T08:52:00+00:00"
+    },
+    {
+      "fire_id": "2025-WYBTF-002534",
+      "name": "Willow Creek",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 802.5166666666667,
+      "max_acres": 4355.8293187573245,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Other"
+      ],
+      "seed_time": "2025-08-23T19:40:00+00:00",
+      "last_time": "2025-09-26T06:11:00+00:00"
+    },
+    {
+      "fire_id": "2025-NVCCD-030312",
+      "name": "Conner",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 46.61666666666667,
+      "max_acres": 17713.426132453875,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation"
+      ],
+      "seed_time": "2025-06-20T18:52:00+00:00",
+      "last_time": "2025-06-22T17:29:00+00:00"
+    },
+    {
+      "fire_id": "2023-WANES-001759",
+      "name": "EAGLE BLUFF",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 85.31666666666666,
+      "max_acres": 16427.6708497079,
+      "map_methods": [
+        "Digitized-Other",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-07-30T02:03:00+00:00",
+      "last_time": "2023-08-02T15:22:00+00:00"
+    },
+    {
+      "fire_id": "2025-AZFTA-000728",
+      "name": "Indian Creek",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 58.55,
+      "max_acres": 2513.0962965952763,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-08-08T23:00:00+00:00",
+      "last_time": "2025-08-11T09:33:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240351",
+      "name": "Dog",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 368.8575,
+      "max_acres": 543.5568228273297,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-08-01T19:13:33+00:00",
+      "last_time": "2024-08-17T04:05:00+00:00"
+    },
+    {
+      "fire_id": "2023-ORFWF-230307",
+      "name": "Morgan",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 96.91666666666667,
+      "max_acres": 2304.28453027051,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-09-19T02:44:00+00:00",
+      "last_time": "2023-09-23T03:39:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDNCF-000740",
+      "name": "Monument",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 268.3433333333333,
+      "max_acres": 735.7597960974032,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-08-30T05:07:45+00:00",
+      "last_time": "2024-09-10T09:28:21+00:00"
+    },
+    {
+      "fire_id": "2025-COUPD-000121",
+      "name": "Leroux",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 74.28166666666667,
+      "max_acres": 666.0081551050544,
+      "map_methods": [
+        "Auto-generated for InFORM",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-08-04T17:10:06+00:00",
+      "last_time": "2025-08-07T19:27:00+00:00"
+    },
+    {
+      "fire_id": "2025-NMCIF-000432",
+      "name": "Vereda Blanca",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 50.583333333333336,
+      "max_acres": 1307.4640653238623,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Image Interpretation"
+      ],
+      "seed_time": "2025-08-11T17:25:00+00:00",
+      "last_time": "2025-08-13T20:00:00+00:00"
+    },
+    {
+      "fire_id": "2023-CARWP-000959",
+      "name": "Lost",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 213.56666666666666,
+      "max_acres": 721.622453487927,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-08-16T01:21:00+00:00",
+      "last_time": "2023-08-24T22:55:00+00:00"
+    },
+    {
+      "fire_id": "2026-TNCNF-000220",
+      "name": "Appalachia",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 47.71529972222222,
+      "max_acres": 633.9834302811788,
+      "map_methods": [
+        "Auto-generated for InFORM"
+      ],
+      "seed_time": "2026-04-15T21:08:04.921000+00:00",
+      "last_time": "2026-04-17T20:51:00+00:00"
+    },
+    {
+      "fire_id": "2025-WYPAX-000256",
+      "name": "SLEEPER RANCH",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 23.59861111111111,
+      "max_acres": 18298.114556234006,
+      "map_methods": [
+        "GPS-Flight",
+        "IR Image Interpretation",
+        "Image Interpretation"
+      ],
+      "seed_time": "2025-08-14T12:00:00+00:00",
+      "last_time": "2025-08-15T11:35:55+00:00"
+    },
+    {
+      "fire_id": "2025-ORMAF-025245",
+      "name": "BRIDGE",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 47.88916666666667,
+      "max_acres": 502.61958407632176,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-09-05T03:11:39+00:00",
+      "last_time": "2025-09-07T03:05:00+00:00"
+    },
+    {
+      "fire_id": "2025-WYWAX-000252",
+      "name": "Spring Creek",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 32.7325,
+      "max_acres": 3574.5634337978,
+      "map_methods": [
+        "GPS-Unknown Travel Method",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2025-08-15T03:02:03+00:00",
+      "last_time": "2025-08-16T11:46:00+00:00"
+    },
+    {
+      "fire_id": "2025-ORRSF-000391",
+      "name": "Brushy",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 894.7166666666667,
+      "max_acres": 19494.143107869895,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-09-06T09:00:00+00:00",
+      "last_time": "2025-10-13T15:43:00+00:00"
+    },
+    {
+      "fire_id": "2024-AZTNF-001687",
+      "name": "Siphon",
+      "n_times": 3,
+      "n_snapshots": 3,
+      "span_hours": 56.5,
+      "max_acres": 15875.932141009704,
+      "map_methods": [
+        "GPS-Flight"
+      ],
+      "seed_time": "2024-09-12T12:30:00+00:00",
+      "last_time": "2024-09-14T21:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-CASQF-001240",
+      "name": "TROUT",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 464.38138888888886,
+      "max_acres": 23822.113465091985,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-15T15:37:07+00:00",
+      "last_time": "2024-08-04T00:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-WANCP-000285",
+      "name": "Red Mountain",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 348.62333333333333,
+      "max_acres": 1336.411021192723,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-04T11:22:36+00:00",
+      "last_time": "2024-09-19T00:00:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-001075",
+      "name": "Copper",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 336.3288888888889,
+      "max_acres": 2183.64899649816,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-08-28T23:40:16+00:00",
+      "last_time": "2023-09-12T00:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-MTBRF-024390",
+      "name": "Magruder Ridge",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 311.46666666666664,
+      "max_acres": 3585.573103360527,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-29T06:06:00+00:00",
+      "last_time": "2024-09-11T05:34:00+00:00"
+    },
+    {
+      "fire_id": "2023-CASRF-000989",
+      "name": "Prescott",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 298.25,
+      "max_acres": 599.34474577002,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-17T18:00:00+00:00",
+      "last_time": "2023-08-30T04:15:00+00:00"
+    },
+    {
+      "fire_id": "2023-OR731S-000328",
+      "name": "Lighthouse Rd #3",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 258.55,
+      "max_acres": 1108.42371894281,
+      "map_methods": [
+        "Auto-generated",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2023-08-25T23:59:00+00:00",
+      "last_time": "2023-09-05T18:32:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240235",
+      "name": "Jack Saddle",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 220.99166666666667,
+      "max_acres": 1248.398947059697,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-17T19:50:30+00:00",
+      "last_time": "2024-07-27T00:50:00+00:00"
+    },
+    {
+      "fire_id": "2024-VAVAF-240140",
+      "name": "Big Levels",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 191.00944444444445,
+      "max_acres": 1971.3773096273649,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-12-05T18:44:26+00:00",
+      "last_time": "2024-12-13T17:45:00+00:00"
+    },
+    {
+      "fire_id": "2024-ORUPF-240286",
+      "name": "Mineral",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 179.87972222222223,
+      "max_acres": 1201.594941893339,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-18T20:59:13+00:00",
+      "last_time": "2024-07-26T08:52:00+00:00"
+    },
+    {
+      "fire_id": "2026-UTUOA-100254",
+      "name": "Slough Canyon",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 175.76666666666668,
+      "max_acres": 4668.315415489865,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-08-20T12:00:00+00:00",
+      "last_time": "2026-08-27T19:46:00+00:00"
+    },
+    {
+      "fire_id": "2024-MTLNF-240427",
+      "name": "Miller Peak",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 174.23333333333332,
+      "max_acres": 2757.3621977497673,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-17T02:30:00+00:00",
+      "last_time": "2024-07-24T08:44:00+00:00"
+    },
+    {
+      "fire_id": "2024-CALPF-001542",
+      "name": "Lake",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 157.2736111111111,
+      "max_acres": 38879.246622557526,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2024-07-06T01:00:00+00:00",
+      "last_time": "2024-07-12T14:16:25+00:00"
+    },
+    {
+      "fire_id": "2026-ORVAD-260173",
+      "name": "POWDER RIVER",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 153.81143111111112,
+      "max_acres": 21923.275559344056,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-07-17T19:40:38.848000+00:00",
+      "last_time": "2026-07-24T05:29:20+00:00"
+    },
+    {
+      "fire_id": "2024-IDSWS-001367",
+      "name": "VALLEY",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 134.35,
+      "max_acres": 9904.142741404945,
+      "map_methods": [
+        "Hand Sketch",
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-10-04T14:29:00+00:00",
+      "last_time": "2024-10-10T04:50:00+00:00"
+    },
+    {
+      "fire_id": "2025-OR981S-250337",
+      "name": "Hagelstein",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 122.98925638888888,
+      "max_acres": 672.0,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2025-07-15T16:30:38.677000+00:00",
+      "last_time": "2025-07-20T19:30:00+00:00"
+    },
+    {
+      "fire_id": "2026-FLFNF-001013",
+      "name": "Sargent",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 120.70166666666667,
+      "max_acres": 2712.184972904557,
+      "map_methods": [
+        "Digitized-Other",
+        "GPS-Flight",
+        "Image Interpretation"
+      ],
+      "seed_time": "2026-04-02T23:52:54+00:00",
+      "last_time": "2026-04-08T00:35:00+00:00"
+    },
+    {
+      "fire_id": "2024-IDBOF-001073",
+      "name": "SHEEP",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 114.74222222222222,
+      "max_acres": 762.9933012932739,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-09-03T07:15:28+00:00",
+      "last_time": "2024-09-08T02:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-CALAC-205253",
+      "name": "POST",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 113.29861111111111,
+      "max_acres": 15606.7703620393,
+      "map_methods": [
+        "Auto-generated",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-06-16T01:47:05+00:00",
+      "last_time": "2024-06-20T19:05:00+00:00"
+    },
+    {
+      "fire_id": "2026-WANES-001845",
+      "name": "OLD TRAILS",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 107.18333333333334,
+      "max_acres": 3620.5418509788587,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-08-01T15:34:00+00:00",
+      "last_time": "2026-08-06T02:45:00+00:00"
+    },
+    {
+      "fire_id": "2026-WANES-001852",
+      "name": "FAIRVIEW",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 103.83333333333333,
+      "max_acres": 1056.3563448023474,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2026-08-01T18:55:00+00:00",
+      "last_time": "2026-08-06T02:45:00+00:00"
+    },
+    {
+      "fire_id": "2024-UTASF-100141",
+      "name": "Speirs",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 99.05,
+      "max_acres": 764.1240768807381,
+      "map_methods": [
+        "GPS-Flight",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-14T14:57:00+00:00",
+      "last_time": "2024-07-18T18:00:00+00:00"
+    },
+    {
+      "fire_id": "2024-OR954S-000514",
+      "name": "Larch Creek",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 97.01833333333333,
+      "max_acres": 18521.995981509393,
+      "map_methods": [
+        "IR Image Interpretation",
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-07-10T00:32:54+00:00",
+      "last_time": "2024-07-14T01:34:00+00:00"
+    },
+    {
+      "fire_id": "2026-WYBTF-002606",
+      "name": "Kinky Creek",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 95.65444444444445,
+      "max_acres": 890.384689625396,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2026-06-23T19:30:00+00:00",
+      "last_time": "2026-06-27T19:09:16+00:00"
+    },
+    {
+      "fire_id": "2023-VAVAF-230128",
+      "name": "Matts Creek",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 87.30944444444444,
+      "max_acres": 11016.0760792914,
+      "map_methods": [
+        "IR Image Interpretation"
+      ],
+      "seed_time": "2023-11-16T15:03:26+00:00",
+      "last_time": "2023-11-20T06:22:00+00:00"
+    },
+    {
+      "fire_id": "2024-WYCMX-240440",
+      "name": "Flat Rock",
+      "n_times": 4,
+      "n_snapshots": 4,
+      "span_hours": 74.36666666666666,
+      "max_acres": 52767.458787956864,
+      "map_methods": [
+        "Mixed Methods"
+      ],
+      "seed_time": "2024-08-22T10:49:00+00:00",
+      "last_time": "2024-08-25T13:11:00+00:00"
+    }
+  ]
+}

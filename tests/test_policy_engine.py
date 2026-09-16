@@ -94,7 +94,60 @@ def test_contained_and_previously_in_play_gives_inspect_after():
     assert result.action == "inspect_after"
 
 
-def test_high_yhat_alone_triggers_protect_even_at_long_distance():
+def test_eta_24_to_72_hours_gives_prepare():
+    result = apply_policy(
+        y_hat=0.2,
+        sigma=0.1,
+        pin=_pin(dist_perim_m=20_000.0, eta_hours=36.0, eta_sigma_hours=2.0),
+        config=CFG,
+    )
+    assert result.action == "prepare"
+
+
+def test_imminent_eta_low_density_gives_protect_asset():
+    result = apply_policy(
+        y_hat=0.2,
+        sigma=0.1,
+        pin=_pin(dist_perim_m=20_000.0, eta_hours=3.0, eta_sigma_hours=1.0, housing_density_per_km2=10.0),
+        config=CFG,
+    )
+    assert result.action == "protect_asset"
+
+
+def test_imminent_eta_high_density_gives_evacuate():
+    result = apply_policy(
+        y_hat=0.2,
+        sigma=0.1,
+        pin=_pin(
+            dist_perim_m=20_000.0,
+            eta_hours=3.0,
+            eta_sigma_hours=1.0,
+            housing_density_per_km2=2000.0,
+            road_access_limited=True,
+        ),
+        config=CFG,
+    )
+    assert result.action == "evacuate_site"
+
+
+def test_high_eta_sigma_suppresses_evacuate():
+    result = apply_policy(
+        y_hat=0.2,
+        sigma=0.1,
+        pin=_pin(
+            dist_perim_m=20_000.0,
+            eta_hours=3.0,
+            eta_sigma_hours=20.0,
+            housing_density_per_km2=2000.0,
+            road_access_limited=True,
+        ),
+        config=CFG,
+    )
+    assert result.action == "protect_asset"
+    assert "no_ros_high_sigma" in result.flags
+
+
+def test_high_yhat_far_distance_gives_protect_asset():
     result = apply_policy(
         y_hat=0.85,
         sigma=0.1,

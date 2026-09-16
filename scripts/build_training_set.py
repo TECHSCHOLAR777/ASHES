@@ -42,6 +42,7 @@ from src.clients.hrrr import HRRRClient  # noqa: E402
 from src.clients.mireye import MireyeClient  # noqa: E402
 from src.clients.mtbs import MTBSClient  # noqa: E402
 from src.model.training_data import (  # noqa: E402
+    attach_spread_vector,
     build_sample,
     sample_easy_negative_points,
     sample_hard_negative_points,
@@ -140,6 +141,13 @@ def parse_args() -> argparse.Namespace:
         "--resume", action="store_true",
         help="If --output already has samples, skip site_ids already present in it and "
              "append rather than overwrite, instead of starting over from scratch.",
+    )
+    parser.add_argument(
+        "--with-spread",
+        action="store_true",
+        help="Fetch LANDFIRE once per fire and run the out-of-process spread engine so "
+             "each sample carries a spread_vector for the H2 calibration head. Historic "
+             "NIFC final perimeters are not used as t0 dist_perim_m (that would leak).",
     )
     return parser.parse_args()
 
@@ -252,6 +260,26 @@ def main() -> None:
     write_lock = threading.Lock()
     stop_event = threading.Event()
     limiter = AdaptiveLimiter(initial=args.workers, minimum=args.min_workers, maximum=args.workers)
+    spread_fields: dict[str, object] = {}
+    spread_lock = threading.Lock()
+    landfire = None
+    if args.with_spread:
+        from src.clients.landfire import LANDFIREClient  # noqa: E402
+        from src.spread.historic import spread_field_for_fire as _spread_field_for_fire  # noqa: E402
+
+        landfire = LANDFIREClient()
+
+        def field_for_fire(fire):
+            with spread_lock:
+                if fire.event_id in spread_fields:
+                    return spread_fields[fire.event_id]
+            field = _spread_field_for_fire(fire, landfire)
+            with spread_lock:
+                spread_fields[fire.event_id] = field
+            return field
+    else:
+        def field_for_fire(fire):
+            return None
 
     def worker(task: tuple):
         fire, lat, lng, label, sample_id = task
@@ -260,6 +288,10 @@ def main() -> None:
         limiter.acquire()
         try:
             sample = build_sample(mireye, firms, hrrr, fire, lat, lng, label, sample_id)
+            if sample is not None and args.with_spread:
+                field = field_for_fire(fire)
+                if field is not None:
+                    sample = attach_spread_vector(sample, field.sample(lat, lng))
         except Exception:
             limiter.release()
             limiter.report(False)
@@ -301,6 +333,8 @@ def main() -> None:
                                 "w_mask": sample.w_mask,
                                 "e_vector": sample.e_vector,
                                 "y": sample.y,
+                                "dist_source": sample.dist_source,
+                                "spread_vector": sample.spread_vector,
                             }
                         )
                         + "\n"

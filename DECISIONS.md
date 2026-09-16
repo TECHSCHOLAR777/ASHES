@@ -170,3 +170,209 @@ One line per decision, in build order.
   `overture_class`) are fixed, finite category lists taken from the source catalogs' published
   class lists, with an explicit `other` bucket for anything unseen, so the feature vector length
   never depends on what W happens to return in a given call.
+- [2026-08-27] V2 LANDFIRE is not the old ArcGIS GPServer `submitJob`. A live probe of
+  `https://lfps.usgs.gov/arcgis/rest/services/LandfireProductService/GPServer/.../submitJob`
+  returned the Next.js HTML form. The machine API is `GET /api/healthCheck`,
+  `GET /api/products`, `POST /api/job/submit` (JSON: `Email`, `Layer_List`,
+  `Area_of_Interest` as `W S E N` EPSG:4326, `Resample_Resolution`, `Output_Projection`),
+  `GET /api/job/status?JobId=`. Submit returns a UUID `jobId`. Status `outputFile` is a zip
+  of a multi-band GeoTIFF, dtype int16, nodata -9999, band descriptions like
+  `LF2024_FBFM40_CONUS`. Default CRS is a local Albers centered on the AOI; we pass
+  `Output_Projection: "4326"`. CH/CBH are stored as m*10, CBD as kg/m3*100. Layer picker
+  prefers newest `geoAreas == "All"` (LF2024 fuels, LF2020 Elev/SlpD/Asp). LF2025 FBFM40
+  is only SW/NW; seasonal `LF2025_FBFM40_SP26` must not win. Non-burnable FBFM40 codes
+  used for AOI clipping: {0, 91, 92, 93, 98, 99}.
+- [2026-08-27] ELMFIRE Fortran was not compiled in this environment (no Docker, no
+  pre-built `elmfire` binary). Cell2Fire (GPL-3.0) is not used. The licensing seam is
+  still real: `spread_service/` is a separate HTTP process; `src/` talks to it only via
+  `POST /spread_run` and never imports it (enforced by `tests/test_licensing_seam.py`).
+  The process currently runs an original Rothermel-rate + Huygens elliptical raster
+  solver using published Scott & Burgan FBFM40 characteristic ROS (not a copy of ELMFIRE
+  or Cell2Fire). If `SPREAD_ENGINE_BIN` points at a binary that speaks
+  `bin inputs.json outputs.json` with the same output keys, the server execs it instead
+  and falls back to the internal solver on failure. Ensemble member 0 is unperturbed;
+  members 1..N-1 perturb wind speed/direction and RH.
+- [2026-08-27] NIFC Interagency Fire Perimeter History
+  (`InterAgencyFirePerimeterHistory_All_Years_View`) is live and queryable, but it is a
+  *final* mapped perimeter layer (`FEATURE_CA` typically "Wildfire Final Fire Perimeter";
+  `DATE_CUR` is the map date, e.g. `20061102000000`). Native coordinates are not WGS84;
+  `outSR=4326` is required (verified: first vertex `-123.23, 47.86`). These polygons are
+  not t0 operational snapshots. Using them as E-side `dist_perim_m` at ignition would leak
+  the outcome (SRS 6.1). Training still uses the ignition-centroid proxy for t0 distance
+  and attaches a delegated `spread_vector` via `--with-spread` instead. IRWINID is often
+  null on older historic records.
+- [2026-08-27] This V2 run was issued two Mireye keys (not three) and no FIRMS MAP_KEY,
+  Slack, or SMTP. Existing degraded paths apply: FIRMS sets `firms_unavailable`; delivery
+  is log-only. Two keys round-robin at 300 rpm each on the Growth plan.
+- [2026-08-27] H2 (W-conditioned calibration beats raw delegated field on event/HUC/state
+  held-out fires) is implemented as `scripts/evaluate_h2.py`.
+- [2026-08-28] Path B (`scripts/enrich_spread_vectors.py`) attached `spread_vector` to the
+  existing V1 jsonl (4300 samples, 458 events) using LANDFIRE + `spread_run` only — no extra
+  Mireye credits. Historic jobs **ignite at the MTBS centroid**; they do **not** seed the
+  gold final perimeter (SRS 6.1 leakage). A first 20-row sidecar that did seed the final
+  polygon was discarded. LANDFIRE historic tiles are clamped to 0.35° around the centroid
+  (live ask/watch still uses the full wind-projected incident AOI). Rasters move over npz,
+  not giant JSON, with a 900s HTTP timeout.
+- [2026-08-28] Historic Path B weather is a documented Scott & Burgan reference wind
+  (2.2 m/s, u-component) so the 7-member ensemble is not degenerate. It is **not**
+  HRRR-at-t0. Live V2 still uses HRRR.
+- [2026-08-28] H2 on those labels: **validated**. Calibrated PR-AUC 0.865 vs raw engine
+  p72 0.637 (ΔAP +0.228); random-W collapse ΔAP +0.079. The comparison is against
+  `rothermel_huygens_v1` behind the `spread_run` seam, not a compiled ELMFIRE binary.
+  Target remains V1 `y` (in final MTBS perimeter), not a perimeter-time-series arrival
+  label (SRS 6.1 V2 gold). Arrival MAE vs a true t0 front is still unevaluable.
+- [2026-08-28] A V2 pickle is 5 dims wider than V1. `model_infer` always concatenates the
+  spread block when `v2_calibration` is set, using the outside-AOI placeholders
+  `[72, 24, 0, 0, 0]` when no incident field exists, so a far-away ask site does not crash.
+- [2026-08-28] **R0 timed-perimeter labels.** GeoMAC 2015–2019 + NIFC WFIGS Daily 2020+
+  (`WFIGS_Daily_Perimeters_Public`). t0 = first snapshot. Already-inside-seed excluded.
+  Never-hit points are negatives only if the series lasts ≥ T hours. On the 4300-row /
+  458-event book: 35 events have ≥2 timestamps; **246 rows / 32 events** are evaluable at
+  72 h (**27 pos / 219 neg**, 11 events carry every positive). 325 rows were already
+  burned at seed. y_24 has 9 pos, y_48 24, y_72 27. Most of the book is n_times=0 (149
+  events) or 1 (274). WFIGS Daily contributed 2305 rows but almost all are single-snapshot;
+  the multi-time series that actually label arrival are GeoMAC 2019 (34 fires) and one
+  GeoMAC 2017 fire. Map methods include Infrared Image and IR Image Interpretation, not
+  only sketches. We do **not** fall back to MTBS in/out to inflate N.
+- [2026-08-28] **R1 HRRR-seeded operational spread.** `spread_field_for_timed_seed` ignites
+  the first operational/IR ring (not the MTBS final scar, not the ignition centroid) and
+  drives `spread_run` with HRRR-at-seed. 35 fires got a field, **hrrr_fail=0**, weather
+  source `hrrr_at_seed` on every field fire, 20/35 series contain an IR method. All 246
+  evaluable_72 rows received `spread_vector_hrrr`. Engine identity remains
+  `rothermel_huygens_v1` (7 members, 72 h); `SPREAD_ENGINE_BIN` unset — not compiled
+  ELMFIRE. LANDFIRE tiles still clamped to 0.35° around the MTBS centroid.
+- [2026-08-28] **R2/R4 full-W GBM on those labels** (`src/model/arrival_eval.py`,
+  `data/models/arrival_head_report.json`). X = 200-D W roles A–I (including
+  `nearest_fire_perimeter_distance_m`) + E without `dist_perim_m` /
+  `wind_ros_ellipse_dist_m` + 5 engine floats. Primary protocol: leave-one-event-out
+  pooled PR-AUC (32 folds). Secondary: 20× GroupShuffleSplit (noisy; 3 positives in the
+  seed-42 test fold).
+
+  | Estimator | LOGO PR-AUC |
+  |---|---|
+  | Rank by `-eta_hours` (no model) | **0.422** |
+  | Rank by engine p72 | 0.221 |
+  | Rank by `-dist_perim_m` (withheld from X) | 0.331 |
+  | Rank by `-nearest_fire_perimeter_distance_m` (in W) | 0.110 (chance) |
+  | GBM engine-only | 0.262 |
+  | GBM W-only | 0.151 |
+  | GBM E-nogeom | 0.098 |
+  | GBM full W+E+engine | 0.282 |
+  | GBM shuffled-W | 0.165 |
+  | Prevalence | 0.110 |
+
+  Letter-of-protocol kill test vs p72 **passes** (0.282 > 0.221+0.01 and 0.282−0.165 >
+  0.01). Kill test vs the actual engine ranker (`-eta_hours`) **fails** (0.282 < 0.422).
+  A GBM on this N is worse than sorting by the engine's ETA. Retrain-ablating all 79
+  field groups: **2 help** by >0.01 (`lightning_annual_flash_days` +0.077,
+  `near_surface_wind_speed_annual_mean_ms` +0.027), **30 unused** (delta 0, including
+  `nearest_fire_perimeter_distance_m`), **36 hurt** (joint GBM overfit; largest:
+  `E:wind_speed_ms` −0.107, snow-cover days −0.089, `ENG:eta_hours` −0.083, elevation
+  −0.082). Role D is the only role with a clearly positive retrain delta (+0.063); roles
+  B/H/G *improve* when dropped. Grouped permutation on the 3-positive GSS test is too
+  noisy (eta ±0.14) to override LOGO. The V1 0.96 `-dist_perim_m` scar-ranker does **not**
+  transfer to timed arrival (0.331). H2-on-MTBS-y remains a scar classifier, not this
+  result.
+- [2026-08-28] **Job C / 2023+ Daily tapes / compiled ELMFIRE.** WFIGS Daily 2023–2026
+  attribute inventory: 52,393 rows / 24,192 UniqueFireIdentifier fires; **407 usable**
+  after CONUS + Daily≥3 + n_times≥4 + span≥72 h + acres 500–2e6 (one 282-million-acre
+  GIS explode dropped). Join is exact `attr_UniqueFireIdentifier`, not the 25 km bbox
+  nearest-vertex picker that glued MTBS events to 0.1 ac neighbors. ELMFIRE 2025.0212
+  was compiled outside the tree (`/home/ubuntu/elmfire`, EPL-2.0, never imported).
+  `spread_service/elmfire_bin.py` maps `spread_run` JSON/npz → GeoTIFF + `elmfire.data`
+  → TOA. `SPREAD_ENGINE_REQUIRED=1` refuses Huygens fallback. Job C head is a small
+  logistic calibrator on `(eta, σ, p_T, W_allowed)`, not a 218-D GBM. W_allowed drops
+  NDVI, current LCMS/canopy, burn year, drought, and `nearest_fire_perimeter_distance_m`.
+  y is R0 on Daily rings (already-in-seed out; censored if tape < 72 h).
+- [2026-08-28] Job C LANDFIRE AOI is the **72 h Daily envelope ∪ seed**, not the
+  months-later final ring. Boxing on the last tape ring then capping 0.90° around that
+  centroid dropped the seed off-grid (empty PHI → adapter 500). Adapter now writes TOA
+  grids as an npz sidecar; nested-list JSON of a 90 m LANDFIRE tile was OOM-adjacent.
+  Failed ELMFIRE fires are not written into the book so `--resume` retries them. W
+  encoding skips rows without an `elmfire_*` field. Huygens still refused.
+- [2026-08-29] Job C W encoder died on HTTP 429 after a `--resume` bursted ~100
+  cached-nearby rows in seconds. The in-process limiter is empty after a restart,
+  so it cannot see the previous process's rpm. `_pick_key_index` now waits when
+  every key is at cap instead of firing a request that will 429. `_request` retries
+  429 up to 8 times with 20s–90s backoff (Retry-After honored). `encode_job_c_w.py`
+  adds `--startup-pause` / `--batch-pause` and retries rate-limited batches.
+- [2026-08-29] First Job C LOGO cut at **25 events / 888 evaluable rows**
+  (`elmfire_2025.0212`, Huygens 0). Missing ETA (733 rows never burned in the
+  72 h TOA) is imputed to 72 h; missing p72 to 0. Brier: isotonic(eta) 0.180,
+  logistic engine 0.180, raw p72 0.223, engine+W_allowed 0.244, shuffled-W 0.201.
+  Kill test **failed**. 171-D W_allowed overfits 25 leave-one-event folds;
+  this is not a 218-D GBM and not MTBS in/out. Collection continues.
+- [2026-08-29] Second Job C LOGO cut at **67 events / 2398 rows** (same
+  protocol, still only `elmfire_2025.0212`). Brier: isotonic(eta) 0.164,
+  logistic engine 0.164, shuffled-W 0.170, engine+W_allowed 0.192, raw p72
+  0.216. Kill still **failed**. Overfit shrank (ΔBrier −0.027 vs −0.064) but
+  W_allowed still loses to engine-only and to shuffled W.
+- [2026-08-29] Third Job C LOGO cut at **111 events / 3688 rows**. Brier:
+  isotonic(eta) 0.160, logistic engine 0.160, shuffled-W 0.166,
+  engine+W_allowed 0.179, raw p72 0.217. Kill still **failed**. Overfit
+  continues to shrink (ΔBrier −0.019) but W_allowed still loses. W encoder
+  HTTP timeout lowered to 60s after a 29 min silent hang on a dead socket.
+- [2026-08-29] Fourth Job C LOGO cut at **131 events / 4276 rows**. Brier:
+  logistic engine 0.161, isotonic(eta) 0.161, shuffled-W 0.166,
+  engine+W_allowed 0.177, raw p72 0.231. Kill still **failed**. ΔBrier
+  engine−W is −0.016 (still shrinking, still the wrong sign).
+- [2026-08-29] Fifth Job C LOGO cut at **152 events / 4834 rows**. Brier:
+  logistic engine 0.160, isotonic(eta) 0.160, shuffled-W 0.164,
+  engine+W_allowed 0.175, raw p72 0.231. Kill still **failed**. ΔBrier
+  −0.015.
+- [2026-08-29] Sixth Job C LOGO cut at **173 events / 5336 rows**. Brier:
+  logistic engine 0.160, isotonic(eta) 0.160, shuffled-W 0.164,
+  engine+W_allowed 0.173, raw p72 0.237. Kill still **failed**. ΔBrier
+  −0.013.
+- [2026-08-29] Seventh Job C LOGO cut at **190 events / 5744 rows**. Brier:
+  logistic engine 0.160, isotonic(eta) 0.160, shuffled-W 0.163,
+  engine+W_allowed 0.173, raw p72 0.238. Kill still **failed**. ΔBrier
+  −0.013.
+- [2026-08-29] Eighth Job C LOGO cut at **221 events / 6402 rows**. Brier:
+  isotonic(eta) 0.161, logistic engine 0.161, shuffled-W 0.165,
+  engine+W_allowed 0.171, raw p72 0.239. Kill still **failed**. ΔBrier
+  −0.010.
+- [2026-08-29] Ninth Job C LOGO cut at **247 events / 6978 rows**. Brier:
+  logistic engine 0.165, isotonic(eta) 0.165, shuffled-W 0.168,
+  engine+W_allowed 0.174, raw p72 0.246. Kill still **failed**. ΔBrier
+  −0.009. First pass of the 283-event book finished at 265 successes;
+  `--resume` retries the 18 remaining misses (square-cell adapter should
+  fix the XDIM≠YDIM ids). Not a validated claim.
+- [2026-08-29] Job C is **not** a GBM, so 171-D logistic has no native top-k.
+  Added within-fire residual Spearman (p-values shuffle residual inside each
+  fire) plus an in-sample GBM ranking diagnostic. FDR selected **zero**
+  fields. Exploratory top-8 (gage discharge, gas pipeline, UST, water
+  service, fire station, surface management, OSM transmission, soil AWC)
+  re-ran the same LOGO logistic on the finished **283 events / 7947 rows**.
+  Kill still **failed** (ΔBrier −0.005; shuffled W still better). Within-fire
+  perm p≈1: those |ρ|≤0.06 are not parcel effects. Huygens 0. Not a 218-D
+  ranking GBM. Not MTBS.
+- [2026-08-29] Job C GBM calibrator on the same 283-event book: HistGradientBoosting
+  predict_proba, LOGO Brier/log-loss/shuffle-W, OOS permute-each-W-field
+  ablation. Engine-only Brier 0.164; engine+W 0.166; shuffled W 0.164; isotonic(eta)
+  0.163 still best. Kill **failed**. Ablation keep list **empty** (best field
+  surface_management_agency ΔBrier +0.0005 < 0.001). Trees did not find a
+  hidden Mireye subset. Not ranking-PR-AUC. Not MTBS.
+- [2026-08-29] ELMFIRE Fortran `Error opening ./scratch/ws.hdr because XDIM is
+  not equal to YDIM` on wide tiles (`2024-CABTU-013761` 539×800, `2024-ORVAD-240141`
+  578×800). Coarsen fitted `max_dim` per axis then `from_bounds`, so pixels
+  were rectangles. Adapter now always builds a square UTM cell (`square_utm_transform`).
+- [2026-08-28] ELMFIRE adapter coarsen used `from_bounds(lon, lat)` on a UTM
+  grid, so any LANDFIRE tile wider than 800 cells wrote PHI in degree-space and
+  the seed never burned (`no seed cells in phi`). Coarsen now `transform_bounds`
+  to UTM metres. Confirmed: `2024-WASES-000173` (previous 500) runs
+  `elmfire_2025.0212` after the 72 h AOI + this fix.
+- [2026-08-29] Agentic UI: OpenAI tool-calling loop (`src/agents/agent_loop.py`)
+  actually invokes NWS/FIRMS/WFIGS/HRRR/Mireye/`spread_run`/`simulate_ignition`.
+  The policy table still owns the Action enum (`apply_policy` tool). Mireye W is
+  shown as cited site aspects, not a 72 h pixel-hit head (Job C kill failed).
+  Brief validator accepts a grounded payload so the prose may copy aspect and
+  engine numbers. FastAPI UI in `src/serve`.
+- [2026-08-29] ELMFIRE pin-ignition (warehouse simulator) completed 24.5 ac then
+  died (`LIST_TAGGED <= 2`), which skips `time_of_arrival.tif` (`IDUMPCOUNT` jumped
+  past `NDUMPS`). Adapter now sets `DUMP_BINARY_OUTPUTS` and rebuilds the arrival
+  grid from `toa_*.bin`. T=0 ignition cells are 0 h, not null. Pin-ignition AOIs
+  no longer refine below LANDFIRE 30 m (was ~1 m × 800 cells). Urban warehouse
+  pins never leave the phi seed (FBFM 91); `toa_*.bin` IX/IY stay 0, so the
+  adapter sets 0 h on `phi < 0` cells instead of inventing spread.
+

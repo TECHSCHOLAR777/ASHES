@@ -4,17 +4,19 @@ This is genuine historical data collection, not synthetic bootstrap: MTBS gives 
 label (site inside the final perimeter), and each sample's W/E is reconstructed from real
 Mireye/FIRMS-archive/HRRR-archive calls at the fire's own vintage where possible.
 
-HONEST LIMITATION (read before trusting these labels for a real H1 claim - see
+HONEST LIMITATION (read before trusting these labels for a real H1/H2 claim - see
 DECISIONS.md and README "Known limitations"): MTBS only publishes the fire's ignition
 DATE and FINAL perimeter, not a perimeter time series. `dist_perim_m` here is computed to
-the fire's ignition centroid, not to "the perimeter as it existed at t0" (SRS 6.3's actual
-E-feature definition) - a real WFIGS/NIFC historical perimeter-snapshot archive would be
-needed to remove this proxy. Using the *final* perimeter's distance at t0 would leak the
-outcome (SRS 6.1's leakage rule); the ignition-centroid proxy avoids that specific leak at
-the cost of a weaker distance signal. `acres`/`containment_pct` are left null (masked), not
-backfilled from the final MTBS acreage, for the same leakage reason. Vintage-dynamic W
-fields (`ndvi_current`, `ndvi_change_5y`, `drought_category`) are stripped before encoding
-per SRS 6.2 ("never use 2026 NDVI on a 2018 fire") since Mireye only serves current values.
+the fire's ignition centroid (`dist_source=ignition_centroid_proxy`), not to "the perimeter
+as it existed at t0" (SRS 6.3's actual E-feature definition). NIFC Interagency Fire
+Perimeter History is a *final* mapped perimeter (`FEATURE_CA` typically "Wildfire Final
+Fire Perimeter", live-verified 2026-08-27); using it as t0 distance would leak the
+outcome (SRS 6.1). V2's `--with-spread` path attaches a delegated arrival-field sample
+instead of trying to fake a t0 perimeter. `acres`/`containment_pct` are left null
+(masked), not backfilled from the final MTBS acreage, for the same leakage reason.
+Vintage-dynamic W fields (`ndvi_current`, `ndvi_change_5y`, `drought_category`) are
+stripped before encoding per SRS 6.2 ("never use 2026 NDVI on a 2018 fire") since Mireye
+only serves current values.
 """
 from __future__ import annotations
 
@@ -140,6 +142,8 @@ class SampleBuildResult:
     w_mask: list[float]
     e_vector: list[float]
     y: int
+    dist_source: str = "ignition_centroid_proxy"
+    spread_vector: list[float] | None = None
 
 
 def build_sample(
@@ -189,6 +193,7 @@ def build_sample(
         hrrr_weather = None
 
     dist_m = dist_to_ignition_centroid_m(site_lat, site_lng, fire)
+    dist_source = "ignition_centroid_proxy"
     ros_dist = compute_ros_ellipse_feature(
         site_lat=site_lat,
         site_lng=site_lng,
@@ -219,4 +224,76 @@ def build_sample(
         w_mask=w_features.mask.tolist(),
         e_vector=e_vector.tolist(),
         y=label,
+        dist_source=dist_source,
+        spread_vector=None,
     )
+
+
+def attach_spread_vector(result: SampleBuildResult, spread) -> SampleBuildResult:
+    """Copy a delegated-field sample onto a training row. Does not invent values."""
+    if spread is None:
+        return result
+    result.spread_vector = [
+        float(spread.eta_hours) if spread.eta_hours is not None else 72.0,
+        float(spread.eta_sigma_hours) if spread.eta_sigma_hours is not None else 24.0,
+        float(spread.p_burn_24) if spread.p_burn_24 is not None else 0.0,
+        float(spread.p_burn_48) if spread.p_burn_48 is not None else 0.0,
+        float(spread.p_burn_72) if spread.p_burn_72 is not None else 0.0,
+    ]
+    return result
+
+
+def reconstruct_sample_point(
+    fire: MTBSFire,
+    dist_m: float,
+    y: int,
+    ros_target: float | None = None,
+    wind_u: float | None = None,
+    wind_v: float | None = None,
+    n_bearings: int = 360,
+) -> tuple[float, float] | None:
+    """Recover a site lat/lng from a V1 jsonl row that did not store coordinates.
+
+    V1 samples record geodesic distance to the ignition centroid (`e_vector` dist_perim_m)
+    and the in/out label `y`, but not (lat, lng). Path B needs a point to sample the
+    delegated field. Walk the centroid circle and keep points whose in/out status matches
+    `y`. When wind is available, break ties by the stored ROS-ellipse feature.
+
+    This is an honest reconstruction, not the original RNG point. Same radius from
+    ignition, same final-perimeter membership. Documented as `coords_source=
+    reconstructed_centroid_circle`.
+    """
+    if fire.centroid_lat is None or fire.centroid_lng is None:
+        return None
+    if dist_m is None or dist_m < 0:
+        dist_m = 0.0
+    want_inside = int(y) == 1
+    matches: list[tuple[float, float, float]] = []  # (score, lat, lng)
+    step = 360.0 / max(n_bearings, 1)
+    for i in range(max(n_bearings, 1)):
+        bearing = i * step
+        lng, lat, _ = _GEOD.fwd(fire.centroid_lng, fire.centroid_lat, bearing, dist_m)
+        inside = point_in_multipolygon(lat, lng, fire.geometry_rings)
+        if inside != want_inside:
+            continue
+        score = 0.0
+        if ros_target is not None:
+            ros = compute_ros_ellipse_feature(
+                site_lat=lat,
+                site_lng=lng,
+                fire_lat=fire.centroid_lat,
+                fire_lng=fire.centroid_lng,
+                wind_u=wind_u,
+                wind_v=wind_v,
+                acres=None,
+                dist_perim_m=dist_m,
+            )
+            score = -abs(float(ros) - float(ros_target))
+        matches.append((score, lat, lng))
+    if matches:
+        matches.sort(key=lambda item: item[0], reverse=True)
+        return matches[0][1], matches[0][2]
+    if want_inside:
+        return fire.centroid_lat, fire.centroid_lng
+    lng, lat, _ = _GEOD.fwd(fire.centroid_lng, fire.centroid_lat, 0.0, max(dist_m, 1.0))
+    return lat, lng

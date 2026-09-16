@@ -1,0 +1,791 @@
+"""JSON/npz → GeoTIFF + elmfire.data → ELMFIRE → spread_run outputs.json.
+
+ELMFIRE (EPL-2.0) is exec'd, never imported. Fortran lives outside this repo
+(``ELMFIRE_BIN`` / ``ELMFIRE_INSTALL_DIR``). Native I/O is namelist + GeoTIFF,
+not ``bin in.json out.json``; this wrapper is the contract adapter.
+"""
+from __future__ import annotations
+
+import json
+import math
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
+ENGINE_VERSION = "elmfire_2025.0212"
+MS_TO_MPH = 2.23694
+HORIZON_HOURS = 72.0
+
+
+class ElmfireAdapterError(RuntimeError):
+    """Raised when the wrapper cannot produce a field. Never falls back to Huygens."""
+
+
+def utm_epsg(lat: float, lng: float) -> int:
+    zone = int((lng + 180.0) // 6) + 1
+    return (32600 if lat >= 0 else 32700) + zone
+
+
+def dead_fuel_moisture(rh_pct: float | None) -> tuple[float, float, float]:
+    """1/10/100-hr dead FMC (%) from RH. Documented, not a live NFDRS station."""
+    if rh_pct is None or not math.isfinite(float(rh_pct)):
+        return 6.0, 7.0, 8.0
+    rh = float(np.clip(rh_pct, 1.0, 100.0))
+    m1 = float(np.clip(0.32 * rh, 3.0, 25.0))
+    return m1, float(np.clip(m1 + 1.0, 4.0, 28.0)), float(np.clip(m1 + 2.0, 5.0, 30.0))
+
+
+def wind_speed_dir_mph(wind_u: float, wind_v: float) -> tuple[float, float]:
+    """10 m earth-relative u/v → 10 m speed (mph) and meteorological FROM direction."""
+    speed_ms = math.hypot(float(wind_u), float(wind_v))
+    speed_mph = speed_ms * MS_TO_MPH
+    coming_from = (math.degrees(math.atan2(-float(wind_u), -float(wind_v)))) % 360.0
+    return speed_mph, coming_from
+
+
+def _as_array(value: Any, dtype=np.float64) -> np.ndarray | None:
+    if value is None:
+        return None
+    return np.asarray(value, dtype=dtype)
+
+
+def load_inputs(in_path: Path) -> dict[str, Any]:
+    body = json.loads(in_path.read_text(encoding="utf-8"))
+    rasters = body.get("rasters_path")
+    if rasters and Path(rasters).exists():
+        loaded = np.load(rasters, allow_pickle=True)
+        try:
+            for key in loaded.files:
+                body[key] = loaded[key]
+        finally:
+            loaded.close()
+        if "crs" in body and hasattr(body["crs"], "item"):
+            try:
+                body["crs"] = str(body["crs"].item())
+            except Exception:
+                body["crs"] = str(body["crs"])
+    return body
+
+
+def _affine_grid(transform: list[float], height: int, width: int) -> dict[str, float]:
+    a, _, c, _, e, f = (list(transform) + [0, 0, 0, 0, 0, 0])[:6]
+    west = float(c)
+    north = float(f)
+    east = west + width * float(a)
+    south = north + height * float(e)
+    if south > north:
+        south, north = north, south
+    return {"west": west, "south": south, "east": east, "north": north, "a": float(a), "e": float(e)}
+
+
+def rasterize_phi(
+    height: int,
+    width: int,
+    transform,
+    rings: list[list[list[float]]],
+    crs,
+) -> np.ndarray:
+    """+1 unburned, -1 inside the seed perimeter (ELMFIRE level-set convention)."""
+    phi = np.ones((height, width), dtype=np.float32)
+    if not rings:
+        return phi
+    try:
+        from rasterio.features import rasterize
+        from rasterio.transform import Affine
+        from shapely.geometry import mapping, Polygon
+        from shapely.ops import transform as shp_transform
+        from shapely.validation import make_valid
+        from pyproj import Transformer
+    except Exception as exc:
+        raise ElmfireAdapterError(f"rasterize_phi requires rasterio/shapely/pyproj: {exc}") from exc
+
+    if not isinstance(transform, Affine):
+        transform = Affine(*list(transform)[:6])
+
+    geoms = []
+    for ring in rings:
+        coords = [(float(pt[0]), float(pt[1])) for pt in ring if len(pt) >= 2]
+        if len(coords) < 3:
+            continue
+        if coords[0] != coords[-1]:
+            coords = coords + [coords[0]]
+        try:
+            geoms.append(make_valid(Polygon(coords)))
+        except Exception:
+            continue
+    if not geoms:
+        return phi
+    src_crs = str(crs) if crs else "EPSG:4326"
+    # rings are lon/lat; if the destination grid is projected, reproject vertices.
+    dst_crs = str(crs)
+    if "4326" not in src_crs and "WGS" not in src_crs.upper():
+        # Grid is projected; rings still arrive in lon/lat from spread_run.
+        to_dst = Transformer.from_crs("EPSG:4326", dst_crs, always_xy=True)
+
+        def _xy(x, y, z=None):
+            return to_dst.transform(x, y)
+
+        geoms = [shp_transform(_xy, g) for g in geoms]
+    shapes = [(mapping(g), -1.0) for g in geoms if not g.is_empty]
+    if not shapes:
+        return phi
+    burned = rasterize(
+        shapes,
+        out_shape=(height, width),
+        transform=transform,
+        fill=1.0,
+        dtype=np.float32,
+        all_touched=True,
+    )
+    return burned.astype(np.float32)
+
+
+def write_namelist(
+    path: Path,
+    *,
+    epsg: int,
+    cellsize: float,
+    xll: float,
+    yll: float,
+    tstop_s: float,
+    lh: float = 30.0,
+    lw: float = 60.0,
+) -> None:
+    text = f"""&INPUTS
+FUELS_AND_TOPOGRAPHY_DIRECTORY = './inputs'
+ASP_FILENAME                   = 'asp'
+CBD_FILENAME                   = 'cbd'
+CBH_FILENAME                   = 'cbh'
+CC_FILENAME                    = 'cc'
+CH_FILENAME                    = 'ch'
+DEM_FILENAME                   = 'dem'
+FBFM_FILENAME                  = 'fbfm40'
+SLP_FILENAME                   = 'slp'
+ADJ_FILENAME                   = 'adj'
+PHI_FILENAME                   = 'phi'
+DT_METEOROLOGY                 = 3600.0
+WEATHER_DIRECTORY              = './inputs'
+WS_FILENAME                    = 'ws'
+WD_FILENAME                   = 'wd'
+M1_FILENAME                   = 'm1'
+M10_FILENAME                  = 'm10'
+M100_FILENAME                 = 'm100'
+LH_MOISTURE_CONTENT            = {lh:.3f}
+LW_MOISTURE_CONTENT            = {lw:.3f}
+WS_AT_10M                     = .TRUE.
+/
+
+&OUTPUTS
+OUTPUTS_DIRECTORY    = './outputs'
+DTDUMP               = {tstop_s:.1f}
+DUMP_FLIN            = .FALSE.
+DUMP_SPREAD_RATE     = .FALSE.
+DUMP_TIME_OF_ARRIVAL = .TRUE.
+DUMP_BINARY_OUTPUTS  = .TRUE.
+FULL_BINARY_OUTPUTS  = .TRUE.
+MINIMUM_AREA_FOR_BINARY_OUTPUTS = 0.0
+BINARY_OUTPUTS_DUMP_FRACTION    = 1.0
+CONVERT_TO_GEOTIFF   = .TRUE.
+/
+
+&COMPUTATIONAL_DOMAIN
+A_SRS = 'EPSG: {epsg}'
+COMPUTATIONAL_DOMAIN_CELLSIZE = {cellsize:.3f}
+COMPUTATIONAL_DOMAIN_XLLCORNER = {xll:.3f}
+COMPUTATIONAL_DOMAIN_YLLCORNER = {yll:.3f}
+/
+
+&TIME_CONTROL
+SIMULATION_DT    = 5.0
+TARGET_CFL       = 0.4
+SIMULATION_TSTOP = {tstop_s:.1f}
+/
+
+&SIMULATOR
+NUM_IGNITIONS = 0
+WX_BILINEAR_INTERPOLATION=.TRUE.
+/
+
+&MISCELLANEOUS
+PATH_TO_GDAL                   = '/usr/bin'
+SCRATCH                        = './scratch'
+/
+"""
+    path.write_text(text, encoding="utf-8")
+
+
+def _write_tif(path: Path, array: np.ndarray, transform, crs, dtype, nodata) -> None:
+    import rasterio
+    from rasterio.crs import CRS
+
+    arr = np.asarray(array)
+    profile = {
+        "driver": "GTiff",
+        "height": int(arr.shape[0]),
+        "width": int(arr.shape[1]),
+        "count": 1,
+        "dtype": dtype,
+        "crs": CRS.from_user_input(crs) if not isinstance(crs, CRS) else crs,
+        "transform": transform,
+        "nodata": nodata,
+        "compress": "deflate",
+    }
+    with rasterio.open(path, "w", **profile) as ds:
+        ds.write(arr.astype(dtype), 1)
+
+
+def square_utm_transform(
+    utm_left: float,
+    utm_bottom: float,
+    utm_right: float,
+    utm_top: float,
+    max_dim: int = 800,
+    min_cell_m: float = 30.0,
+):
+    """Integer UTM grid with square cells.
+
+    ELMFIRE Fortran aborts with ``XDIM is not equal to YDIM`` if the GeoTIFF
+    pixel is a rectangle (coarsen-by-axis + ``from_bounds`` did that on wide
+    LANDFIRE tiles: 539×800, 578×800, no TOA).
+
+    Do not refine finer than LANDFIRE's 30 m. A 4 km pin-ignition AOI used to
+    become ~1 m × 800 cells; Fortran then ran a huge urban grid and often died
+    before dumping ``time_of_arrival.tif``.
+    """
+    from rasterio.transform import from_bounds
+
+    width_m = float(utm_right - utm_left)
+    height_m = float(utm_top - utm_bottom)
+    cell = max(width_m / max_dim, height_m / max_dim, float(min_cell_m), 1.0)
+    dst_w = max(32, min(max_dim, int(math.ceil(width_m / cell))))
+    dst_h = max(32, min(max_dim, int(math.ceil(height_m / cell))))
+    cell = max(width_m / dst_w, height_m / dst_h, float(min_cell_m), 1.0)
+    transform = from_bounds(
+        utm_left,
+        utm_bottom,
+        utm_left + dst_w * cell,
+        utm_bottom + dst_h * cell,
+        dst_w,
+        dst_h,
+    )
+    return transform, dst_w, dst_h, cell
+
+
+def _reproject_to_utm(
+    arrays: dict[str, np.ndarray],
+    src_transform,
+    src_crs: str,
+    dst_epsg: int,
+    max_dim: int = 800,
+):
+    import rasterio
+    from rasterio.crs import CRS
+    from rasterio.warp import Resampling, reproject, transform_bounds
+
+    height, width = next(iter(arrays.values())).shape
+    src_crs_obj = CRS.from_user_input(src_crs)
+    dst_crs = CRS.from_epsg(dst_epsg)
+    a, _, c, _, e, f = (list(src_transform) + [0, 0, 0])[:6]
+    west, north = float(c), float(f)
+    east = west + width * float(a)
+    south = north + height * float(e)
+    left, bottom, right, top = min(west, east), min(south, north), max(west, east), max(south, north)
+    # Projected metres, then a square cell. Do not from_bounds(lon, lat), and do
+    # not keep a rectangular pixel after fitting max_dim on one axis only.
+    utm_left, utm_bottom, utm_right, utm_top = transform_bounds(
+        src_crs_obj, dst_crs, left, bottom, right, top
+    )
+    transform, dst_w, dst_h, _cell = square_utm_transform(
+        utm_left, utm_bottom, utm_right, utm_top, max_dim=max_dim
+    )
+    out = {}
+    for name, src in arrays.items():
+        dst = np.zeros((dst_h, dst_w), dtype=np.float32)
+        reproject(
+            source=np.asarray(src, dtype=np.float32),
+            destination=dst,
+            src_transform=src_transform,
+            src_crs=src_crs_obj,
+            dst_transform=transform,
+            dst_crs=dst_crs,
+            resampling=Resampling.nearest,
+        )
+        out[name] = dst
+    cellsize = abs(float(transform.a))
+    xll = float(transform.c)
+    yll = float(transform.f) + dst_h * float(transform.e)
+    if float(transform.e) < 0:
+        yll = float(transform.f) + dst_h * float(transform.e)
+    return out, transform, dst_crs, cellsize, xll, yll, dst_h, dst_w
+
+
+def toa_seconds_to_hours(toa_s: np.ndarray, tstop_s: float) -> np.ndarray:
+    arr = np.asarray(toa_s, dtype=np.float64)
+    hours = np.full(arr.shape, np.nan, dtype=np.float64)
+    # Ignition cells can be T=0 s. Negative / nodata stay null — not a zero ETA.
+    ok = np.isfinite(arr) & (arr >= 0) & (arr <= tstop_s * 1.05)
+    hours[ok] = arr[ok] / 3600.0
+    hours[ok & (arr <= 1.0)] = 0.0
+    return hours
+
+
+def p_from_eta(eta_hours: np.ndarray, horizon: float) -> np.ndarray:
+    reached = np.isfinite(eta_hours) & (eta_hours <= horizon)
+    return reached.astype(np.float64)
+
+
+def find_elmfire_bin() -> Path:
+    env = os.environ.get("ELMFIRE_BIN")
+    if env:
+        path = Path(env)
+        if path.exists():
+            return path
+        raise ElmfireAdapterError(f"ELMFIRE_BIN={env} does not exist")
+    install = os.environ.get("ELMFIRE_INSTALL_DIR")
+    candidates = []
+    if install:
+        candidates.append(Path(install) / "elmfire")
+    candidates.extend(
+        [
+            Path("/home/ubuntu/elmfire/build/linux/bin/elmfire"),
+            Path("/usr/local/bin/elmfire"),
+        ]
+    )
+    for path in candidates:
+        if path.exists():
+            return path
+    raise ElmfireAdapterError(
+        "No ELMFIRE binary. Set ELMFIRE_BIN to the compiled Fortran executable "
+        "(clone https://github.com/lautenberger/elmfire outside this tree)."
+    )
+
+
+def _fortran_unformatted_records(path: Path) -> list[bytes]:
+    """Parse gfortran sequential unformatted records (4-byte, then 8-byte markers)."""
+    raw = path.read_bytes()
+    recs: list[bytes] = []
+    i = 0
+    n = len(raw)
+
+    def _try(marker_bytes: int) -> bool:
+        nonlocal i
+        if i + 2 * marker_bytes > n:
+            return False
+        marker = int.from_bytes(raw[i : i + marker_bytes], "little", signed=True)
+        if marker < 0 or i + 2 * marker_bytes + marker > n:
+            return False
+        trailer = int.from_bytes(
+            raw[i + marker_bytes + marker : i + 2 * marker_bytes + marker], "little", signed=True
+        )
+        if trailer != marker:
+            return False
+        recs.append(raw[i + marker_bytes : i + marker_bytes + marker])
+        i += 2 * marker_bytes + marker
+        return True
+
+    while i < n:
+        if _try(4) or _try(8):
+            continue
+        break
+    return recs
+
+
+def eta_from_elmfire_bin(path: Path, height: int, width: int, tstop_s: float) -> np.ndarray:
+    """Rebuild a north-up TOA grid from ELMFIRE ``toa_<band>_<case>.bin``.
+
+    The GeoTIFF dump only runs when ``IDUMPCOUNT == NDUMPS``. Pin ignitions in
+    urban/non-burnable fuel often die (``LIST_TAGGED <= 2``) and skip that dump,
+    leaving only ``fire_size_stats.csv``. The binary dump is written after the
+    timestep loop regardless. IX/IY are Fortran 1-based; IY=1 is south.
+    """
+    recs = _fortran_unformatted_records(path)
+    if len(recs) < 4:
+        raise ElmfireAdapterError(f"ELMFIRE toa bin has {len(recs)} records, need >=4: {path}")
+    header = recs[0]
+    if len(header) >= 8:
+        n = int(np.frombuffer(header[:8], dtype="<i8")[0])
+        if n <= 0 or n > height * width * 4:
+            n = int(np.frombuffer(header[:4], dtype="<i4")[0])
+    else:
+        n = int(np.frombuffer(header[:4], dtype="<i4")[0])
+    if n <= 0:
+        raise ElmfireAdapterError(f"ELMFIRE toa bin NUM_BURNED={n} in {path}")
+    ix_raw, iy_raw, toa_raw = recs[1], recs[2], recs[3]
+    if len(ix_raw) == n * 2:
+        ix = np.frombuffer(ix_raw, dtype="<i2")
+        iy = np.frombuffer(iy_raw, dtype="<i2")
+    elif len(ix_raw) == n * 4:
+        ix = np.frombuffer(ix_raw, dtype="<i4")
+        iy = np.frombuffer(iy_raw, dtype="<i4")
+    else:
+        raise ElmfireAdapterError(f"ELMFIRE toa bin IX len {len(ix_raw)} for n={n}")
+    if len(toa_raw) == n * 4:
+        toa = np.frombuffer(toa_raw, dtype="<f4").astype(np.float64)
+    elif len(toa_raw) == n * 8:
+        toa = np.frombuffer(toa_raw, dtype="<f8")
+    else:
+        raise ElmfireAdapterError(f"ELMFIRE toa bin TOA len {len(toa_raw)} for n={n}")
+    if int(ix.max()) == 0 and int(iy.max()) == 0:
+        raise ElmfireAdapterError(
+            f"ELMFIRE toa bin {path} has n={n} but IX/IY are all 0 (seed never entered LIST_BURNED spread)"
+        )
+    seconds = np.full((height, width), np.nan, dtype=np.float64)
+    for k in range(n):
+        col = int(ix[k]) - 1
+        south_row = int(iy[k]) - 1
+        row = height - 1 - south_row
+        if 0 <= row < height and 0 <= col < width:
+            seconds[row, col] = float(toa[k])
+    if not np.isfinite(seconds).any():
+        raise ElmfireAdapterError(
+            f"ELMFIRE toa bin {path} had n={n} ix=[{int(ix.min())},{int(ix.max())}] "
+            f"iy=[{int(iy.min())},{int(iy.max())}] but no cells in {height}x{width}"
+        )
+    return toa_seconds_to_hours(seconds, tstop_s)
+
+
+def _eta_from_phi_seed(work: Path, tstop_s: float) -> np.ndarray:
+    """Seed cells (phi < 0) arrived at T=0. Used when urban fuel never left the ignition.
+
+    ELMFIRE skips ``time_of_arrival.tif`` when the fire dies immediately, and
+    ``toa_*.bin`` only records cells *appended during spread* — not the phi seed.
+    A warehouse pin in FBFM 91 is that case: 26 ac of seed, no spread, all-zero bin.
+    """
+    import rasterio
+
+    phi_path = work / "inputs" / "phi.tif"
+    if not phi_path.is_file():
+        raise ElmfireAdapterError(f"no phi.tif at {phi_path} to recover seed arrival")
+    with rasterio.open(phi_path) as ds:
+        phi = ds.read(1)
+    seconds = np.full(phi.shape, np.nan, dtype=np.float64)
+    seconds[np.asarray(phi) < 0] = 0.0
+    if not np.isfinite(seconds).any():
+        raise ElmfireAdapterError("phi has no seed cells for seed-only TOA")
+    return toa_seconds_to_hours(seconds, tstop_s)
+
+
+def _read_toa(outputs: Path, tstop_s: float, height: int, width: int) -> np.ndarray:
+    import rasterio
+
+    raster_ext = {".tif", ".tiff", ".bil", ".img"}
+    rasters: list[Path] = []
+    bins: list[Path] = []
+    roots = [outputs]
+    parent = outputs.parent
+    if parent.exists():
+        roots.extend([parent / "scratch", parent])
+    for folder in roots:
+        if not folder.exists():
+            continue
+        for path in folder.rglob("*"):
+            if not path.is_file() or path.stat().st_size < 16:
+                continue
+            name = path.name.lower()
+            if name.startswith("toa_") and name.endswith(".bin"):
+                bins.append(path)
+                continue
+            if "time_of_arrival" in name or name.startswith("toa_"):
+                if path.suffix.lower() in raster_ext:
+                    rasters.append(path)
+    if rasters:
+        path = sorted(rasters)[0]
+        with rasterio.open(path) as ds:
+            arr = ds.read(1).astype(np.float64)
+            nodata = ds.nodata
+        if nodata is not None:
+            arr = np.where(arr == nodata, np.nan, arr)
+        return toa_seconds_to_hours(arr, tstop_s)
+    if bins:
+        return eta_from_elmfire_bin(sorted(bins)[0], height, width, tstop_s)
+    names = [p.name for p in outputs.iterdir()] if outputs.exists() else []
+    extra = []
+    if parent.exists():
+        extra = [str(p.relative_to(parent))[:80] for p in parent.rglob("*") if p.is_file()][:30]
+    raise ElmfireAdapterError(
+        f"ELMFIRE wrote no TOA raster or toa_*.bin in {outputs} (files={names} extra={extra})"
+    )
+
+
+def run_elmfire_workdir(work: Path, bin_path: Path, timeout_s: float) -> tuple[str, str]:
+    env = os.environ.copy()
+    env.setdefault("OMPI_MCA_btl", "^openib")
+    cmd_direct = [str(bin_path), str(work / "inputs" / "elmfire.data")]
+    try:
+        proc = subprocess.run(
+            cmd_direct,
+            cwd=str(work),
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+            check=False,
+            env=env,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ElmfireAdapterError(f"ELMFIRE timed out after {timeout_s}s") from exc
+    if proc.returncode == 0:
+        return proc.stdout or "", proc.stderr or ""
+    mpirun = shutil.which("mpirun")
+    if not mpirun:
+        raise ElmfireAdapterError(
+            f"ELMFIRE rc={proc.returncode} stderr={proc.stderr[-800:]} stdout={proc.stdout[-400:]}"
+        )
+    proc2 = subprocess.run(
+        [mpirun, "-n", os.environ.get("ELMFIRE_MPI_NP", "1"), str(bin_path), "./inputs/elmfire.data"],
+        cwd=str(work),
+        capture_output=True,
+        text=True,
+        timeout=timeout_s,
+        check=False,
+        env=env,
+    )
+    if proc2.returncode != 0:
+        raise ElmfireAdapterError(
+            f"ELMFIRE mpirun rc={proc2.returncode} stderr={proc2.stderr[-800:]} stdout={proc2.stdout[-400:]}"
+        )
+    return proc2.stdout or "", proc2.stderr or ""
+
+
+def build_result(eta: np.ndarray, inputs: dict[str, Any], horizon: float) -> dict[str, Any]:
+    sigma = np.where(np.isfinite(eta), 0.0, np.nan)
+    transform = list(inputs["transform"])
+    return {
+        "arrival_hours": eta,
+        "eta_sigma_hours": sigma,
+        "p_burn_24": p_from_eta(eta, 24.0),
+        "p_burn_48": p_from_eta(eta, 48.0),
+        "p_burn_72": p_from_eta(eta, min(72.0, horizon)),
+        "spread_field_version": f"{ENGINE_VERSION}:n1:h{int(horizon)}:grid{eta.shape[0]}x{eta.shape[1]}",
+        "engine": ENGINE_VERSION,
+        "n_members": 1,
+        "horizon_hours": horizon,
+        "west": float(inputs["west"]),
+        "south": float(inputs["south"]),
+        "east": float(inputs["east"]),
+        "north": float(inputs["north"]),
+        "transform": transform,
+        "shape": [int(eta.shape[0]), int(eta.shape[1])],
+    }
+
+
+ARRAY_KEYS = ("arrival_hours", "eta_sigma_hours", "p_burn_24", "p_burn_48", "p_burn_72")
+
+
+def write_adapter_outputs(result: dict[str, Any], out_path: Path) -> Path:
+    """Write grids as npz. Nested-list JSON of a LANDFIRE tile OOMs the service."""
+    arrays_path = out_path.with_suffix(".npz")
+    np.savez_compressed(
+        arrays_path,
+        **{key: np.asarray(result[key], dtype=np.float64) for key in ARRAY_KEYS},
+    )
+    meta = {key: result[key] for key in result if key not in ARRAY_KEYS}
+    meta["arrays_path"] = str(arrays_path)
+    for key in ARRAY_KEYS:
+        # Presence satisfies the JSON contract; values live in the sidecar.
+        meta[key] = None
+    out_path.write_text(json.dumps(meta, default=str), encoding="utf-8")
+    return arrays_path
+
+
+def _jsonable(result: dict[str, Any]) -> dict[str, Any]:
+    out = dict(result)
+    for key in ARRAY_KEYS:
+        grid = np.asarray(out[key], dtype=np.float64)
+        out[key] = np.where(np.isfinite(grid), grid, None).tolist()
+    return out
+
+
+def run_from_inputs(inputs: dict[str, Any], work: Path | None = None) -> dict[str, Any]:
+    fbfm = _as_array(inputs.get("fbfm40"))
+    if fbfm is None:
+        raise ElmfireAdapterError("inputs missing fbfm40")
+    height, width = fbfm.shape
+    transform = inputs.get("transform")
+    if hasattr(transform, "tolist"):
+        transform = list(transform)
+    src_crs = str(inputs.get("crs") or "EPSG:4326")
+    weather = inputs.get("weather") or {}
+    wind_u = float(weather.get("wind_u") or 0.0)
+    wind_v = float(weather.get("wind_v") or 0.0)
+    rh = weather.get("rh_pct")
+    ws, wd = wind_speed_dir_mph(wind_u, wind_v)
+    m1, m10, m100 = dead_fuel_moisture(rh if rh is None else float(rh))
+    horizon = float(inputs.get("horizon_hours") or HORIZON_HOURS)
+    tstop_s = horizon * 3600.0
+
+    slope = _as_array(inputs.get("slope_deg"))
+    aspect = _as_array(inputs.get("aspect_deg"))
+    elev = _as_array(inputs.get("elev_m"))
+    cc = _as_array(inputs.get("cc_pct"))
+    ch = _as_array(inputs.get("ch_m"))
+    cbh = _as_array(inputs.get("cbh_m"))
+    cbd = _as_array(inputs.get("cbd_kg_m3"))
+    if slope is None:
+        slope = np.zeros_like(fbfm)
+    if aspect is None:
+        aspect = np.zeros_like(fbfm)
+    if elev is None:
+        elev = np.zeros_like(fbfm)
+    if cc is None:
+        cc = np.zeros_like(fbfm)
+    if ch is None:
+        ch = np.zeros_like(fbfm)
+    if cbh is None:
+        cbh = np.zeros_like(fbfm)
+    if cbd is None:
+        cbd = np.zeros_like(fbfm)
+
+    lat0 = (float(inputs["south"]) + float(inputs["north"])) / 2.0
+    lng0 = (float(inputs["west"]) + float(inputs["east"])) / 2.0
+    epsg = utm_epsg(lat0, lng0)
+
+    arrays = {
+        "fbfm40": np.nan_to_num(fbfm, nan=91),
+        "slp": np.nan_to_num(slope, nan=0.0),
+        "asp": np.nan_to_num(aspect, nan=0.0),
+        "dem": np.nan_to_num(elev, nan=0.0),
+        "cc": np.nan_to_num(cc, nan=0.0),
+        "ch": np.nan_to_num(ch, nan=0.0) * 10.0,  # ELMFIRE: 10 * meters
+        "cbh": np.nan_to_num(cbh, nan=0.0) * 10.0,
+        "cbd": np.nan_to_num(cbd, nan=0.0) * 100.0,
+    }
+    import rasterio
+    from rasterio.transform import Affine
+
+    src_transform = Affine(*list(transform)[:6]) if not isinstance(transform, Affine) else transform
+    projected, dst_transform, dst_crs, cellsize, xll, yll, dst_h, dst_w = _reproject_to_utm(
+        arrays, src_transform, src_crs, epsg
+    )
+    rings = inputs.get("perimeter_rings") or []
+    ring_list = rings
+    if rings and isinstance(rings[0], (list, tuple)):
+        first = rings[0]
+        # Already a list of rings (each ring is a list of [lng, lat]).
+        if first and isinstance(first[0], (list, tuple)) and len(first[0]) >= 2:
+            ring_list = rings
+        # Single ring passed as [[lng, lat], ...].
+        elif first and isinstance(first[0], (int, float)):
+            ring_list = [rings]
+    phi = rasterize_phi(dst_h, dst_w, dst_transform, ring_list, dst_crs)
+    if not np.any(phi < 0):
+        ignitions = inputs.get("ignition_points") or []
+        if ignitions:
+            from pyproj import Transformer
+
+            to_utm = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg}", always_xy=True)
+            inv = ~dst_transform
+            for pt in ignitions:
+                if isinstance(pt, dict):
+                    lng_i, lat_i = float(pt["lng"]), float(pt["lat"])
+                else:
+                    lng_i, lat_i = float(pt[0]), float(pt[1])
+                x, y = to_utm.transform(lng_i, lat_i)
+                col, row = inv * (x, y)
+                r = int(np.clip(row, 0, dst_h - 1))
+                c = int(np.clip(col, 0, dst_w - 1))
+                phi[max(0, r - 1) : min(dst_h, r + 2), max(0, c - 1) : min(dst_w, c + 2)] = -1.0
+    if not np.any(phi < 0):
+        raise ElmfireAdapterError("no seed cells in phi (empty perimeter and ignition)")
+
+    ws_grid = np.full((dst_h, dst_w), ws, dtype=np.float32)
+    wd_grid = np.full((dst_h, dst_w), wd, dtype=np.float32)
+    m1_grid = np.full((dst_h, dst_w), m1, dtype=np.float32)
+    m10_grid = np.full((dst_h, dst_w), m10, dtype=np.float32)
+    m100_grid = np.full((dst_h, dst_w), m100, dtype=np.float32)
+    adj = np.ones((dst_h, dst_w), dtype=np.float32)
+
+    own = work is None
+    work = Path(work) if work is not None else Path(tempfile.mkdtemp(prefix="elmfire_job_"))
+    try:
+        (work / "inputs").mkdir(parents=True, exist_ok=True)
+        (work / "outputs").mkdir(parents=True, exist_ok=True)
+        (work / "scratch").mkdir(parents=True, exist_ok=True)
+        int16_maps = {
+            "asp": projected["asp"],
+            "cbd": projected["cbd"],
+            "cbh": projected["cbh"],
+            "cc": projected["cc"],
+            "ch": projected["ch"],
+            "dem": projected["dem"],
+            "fbfm40": projected["fbfm40"],
+            "slp": projected["slp"],
+        }
+        for name, arr in int16_maps.items():
+            _write_tif(work / "inputs" / f"{name}.tif", np.clip(np.rint(arr), -32768, 32767), dst_transform, dst_crs, "int16", -9999)
+        float_maps = {
+            "adj": adj,
+            "phi": phi,
+            "ws": ws_grid,
+            "wd": wd_grid,
+            "m1": m1_grid,
+            "m10": m10_grid,
+            "m100": m100_grid,
+        }
+        for name, arr in float_maps.items():
+            _write_tif(work / "inputs" / f"{name}.tif", arr, dst_transform, dst_crs, "float32", -9999.0)
+        write_namelist(
+            work / "inputs" / "elmfire.data",
+            epsg=epsg,
+            cellsize=cellsize,
+            xll=xll,
+            yll=yll,
+            tstop_s=tstop_s,
+        )
+        bin_path = find_elmfire_bin()
+        timeout_s = float(os.environ.get("SPREAD_ENGINE_TIMEOUT_S", "1800"))
+        stdout, stderr = run_elmfire_workdir(work, bin_path, timeout_s)
+        try:
+            eta_utm = _read_toa(work / "outputs", tstop_s, dst_h, dst_w)
+        except ElmfireAdapterError:
+            try:
+                eta_utm = _eta_from_phi_seed(work, tstop_s)
+            except ElmfireAdapterError as exc:
+                raise ElmfireAdapterError(
+                    f"{exc} stdout={(stdout or '')[-600:]} stderr={(stderr or '')[-600:]}"
+                ) from exc
+        # Warp TOA back to the caller's WGS84 grid so SpreadField.sample still uses lat/lng.
+        from rasterio.warp import Resampling, reproject
+
+        eta_src = np.where(np.isfinite(eta_utm), eta_utm.astype(np.float32), -1.0)
+        eta_dst = np.full((height, width), np.nan, dtype=np.float32)
+        reproject(
+            source=eta_src,
+            destination=eta_dst,
+            src_transform=dst_transform,
+            src_crs=dst_crs,
+            dst_transform=src_transform,
+            dst_crs=src_crs,
+            resampling=Resampling.nearest,
+        )
+        eta = np.where(eta_dst < 0, np.nan, eta_dst.astype(np.float64))
+        return build_result(eta, inputs, horizon)
+    finally:
+        keep = os.environ.get("ELMFIRE_KEEP_WORKDIR")
+        if own and not keep:
+            shutil.rmtree(work, ignore_errors=True)
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if len(argv) != 2:
+        sys.stderr.write("usage: elmfire_adapter in.json out.json\n")
+        return 2
+    in_path, out_path = Path(argv[0]), Path(argv[1])
+    try:
+        inputs = load_inputs(in_path)
+        result = run_from_inputs(inputs)
+        write_adapter_outputs(result, out_path)
+    except Exception as exc:
+        sys.stderr.write(f"elmfire_adapter: {exc}\n")
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

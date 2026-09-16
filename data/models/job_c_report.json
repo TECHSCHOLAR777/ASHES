@@ -1,0 +1,577 @@
+{
+  "n_evaluable": 7947,
+  "n_events": 283,
+  "n_pos": 2099,
+  "n_neg": 5848,
+  "pos_rate": 0.26412482697873413,
+  "n_eta_imputed_to_72h": 5693,
+  "n_p72_imputed_to_0": 905,
+  "w_allowed_dim": 24,
+  "w_allowed_fields": [
+    "nearest_fire_station_distance_m",
+    "nearest_gas_pipeline_distance_m",
+    "nearest_osm_transmission_line_distance_m",
+    "nearest_usgs_gage_daily_discharge_cfs",
+    "nearest_ust_facility_distance_m",
+    "soil_available_water_capacity",
+    "surface_management_agency",
+    "within_water_service_area"
+  ],
+  "w_allowed_columns": [
+    "soil_available_water_capacity",
+    "soil_available_water_capacity_conf",
+    "nearest_osm_transmission_line_distance_m",
+    "nearest_osm_transmission_line_distance_m_conf",
+    "nearest_fire_station_distance_m",
+    "nearest_fire_station_distance_m_conf",
+    "nearest_gas_pipeline_distance_m",
+    "nearest_gas_pipeline_distance_m_conf",
+    "nearest_ust_facility_distance_m",
+    "nearest_ust_facility_distance_m_conf",
+    "nearest_usgs_gage_daily_discharge_cfs",
+    "nearest_usgs_gage_daily_discharge_cfs_conf",
+    "surface_management_agency__BLM",
+    "surface_management_agency__USFS",
+    "surface_management_agency__NPS",
+    "surface_management_agency__FWS",
+    "surface_management_agency__DOD",
+    "surface_management_agency__state",
+    "surface_management_agency__local",
+    "surface_management_agency__private_or_unknown",
+    "surface_management_agency__other",
+    "surface_management_agency_conf",
+    "within_water_service_area",
+    "within_water_service_area_conf"
+  ],
+  "w_include_fields": [
+    "nearest_usgs_gage_daily_discharge_cfs",
+    "nearest_gas_pipeline_distance_m",
+    "nearest_ust_facility_distance_m",
+    "within_water_service_area",
+    "nearest_fire_station_distance_m",
+    "surface_management_agency",
+    "nearest_osm_transmission_line_distance_m",
+    "soil_available_water_capacity"
+  ],
+  "engine_identity_required": "elmfire (SPREAD_ENGINE_REQUIRED; Huygens rows dropped)",
+  "protocol": {
+    "primary": "leave_one_event_out Brier / log-loss of a logistic calibrator",
+    "engine_features": [
+      "eta_hours",
+      "log1p(eta)",
+      "eta_sigma_hours",
+      "p_burn_24",
+      "p_burn_48",
+      "p_burn_72"
+    ],
+    "head": "LogisticRegression on StandardScaler features; isotonic(eta) as a one-D engine baseline",
+    "kill_brier": 0.005,
+    "not_a_218d_gbm": true,
+    "w_subset": true
+  },
+  "scores": {
+    "raw_engine_p72": {
+      "brier": 0.24688561721404303,
+      "log_loss": 3.4108516043410684,
+      "pr_auc": 0.4157224922073119
+    },
+    "isotonic_eta": {
+      "brier": 0.1632785305413758,
+      "log_loss": 0.5039880074132107,
+      "pr_auc": 0.4858076126980925
+    },
+    "logistic_engine": {
+      "brier": 0.16296542683437668,
+      "log_loss": 0.5030459920093303,
+      "pr_auc": 0.4654421700012285
+    },
+    "logistic_engine_w_allowed": {
+      "brier": 0.1682164498696035,
+      "log_loss": 0.5424084192979589,
+      "pr_auc": 0.44713796352903823
+    },
+    "logistic_engine_shuffled_w": {
+      "brier": 0.16375662261130683,
+      "log_loss": 0.5058443775279234,
+      "pr_auc": 0.46208393035462236
+    }
+  },
+  "deltas": {
+    "brier_engine_minus_engine_w": -0.005251023035226815,
+    "brier_shuffled_minus_engine_w": -0.004459827258296661,
+    "log_loss_engine_minus_engine_w": -0.0393624272886286,
+    "w_kill_test_passed": false
+  },
+  "reliability": {
+    "logistic_engine": {
+      "n_bins": 10,
+      "ece": 0.0032848032539866297,
+      "bins": [
+        {
+          "lo": 0.0,
+          "hi": 0.1,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.1,
+          "hi": 0.2,
+          "n": 5694,
+          "pred": 0.15876387785364582,
+          "obs": 0.15876361081840534
+        },
+        {
+          "lo": 0.2,
+          "hi": 0.30000000000000004,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.30000000000000004,
+          "hi": 0.4,
+          "n": 463,
+          "pred": 0.36307428710785034,
+          "obs": 0.38876889848812096
+        },
+        {
+          "lo": 0.4,
+          "hi": 0.5,
+          "n": 508,
+          "pred": 0.4444732339432148,
+          "obs": 0.43700787401574803
+        },
+        {
+          "lo": 0.5,
+          "hi": 0.6000000000000001,
+          "n": 503,
+          "pred": 0.5534354046885726,
+          "obs": 0.5526838966202783
+        },
+        {
+          "lo": 0.6000000000000001,
+          "hi": 0.7000000000000001,
+          "n": 570,
+          "pred": 0.6503247308256307,
+          "obs": 0.6526315789473685
+        },
+        {
+          "lo": 0.7000000000000001,
+          "hi": 0.8,
+          "n": 209,
+          "pred": 0.7259372778029259,
+          "obs": 0.6842105263157895
+        },
+        {
+          "lo": 0.8,
+          "hi": 0.9,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.9,
+          "hi": 1.0,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        }
+      ]
+    },
+    "logistic_engine_w_allowed": {
+      "n_bins": 10,
+      "ece": 0.014285167956848793,
+      "bins": [
+        {
+          "lo": 0.0,
+          "hi": 0.1,
+          "n": 191,
+          "pred": 0.029201332228493252,
+          "obs": 0.2774869109947644
+        },
+        {
+          "lo": 0.1,
+          "hi": 0.2,
+          "n": 5441,
+          "pred": 0.15603284002966208,
+          "obs": 0.1600808674875942
+        },
+        {
+          "lo": 0.2,
+          "hi": 0.30000000000000004,
+          "n": 48,
+          "pred": 0.24703082893218378,
+          "obs": 0.3333333333333333
+        },
+        {
+          "lo": 0.30000000000000004,
+          "hi": 0.4,
+          "n": 498,
+          "pred": 0.35991263679140906,
+          "obs": 0.3654618473895582
+        },
+        {
+          "lo": 0.4,
+          "hi": 0.5,
+          "n": 534,
+          "pred": 0.44605603207016464,
+          "obs": 0.43258426966292135
+        },
+        {
+          "lo": 0.5,
+          "hi": 0.6000000000000001,
+          "n": 476,
+          "pred": 0.5529378545554643,
+          "obs": 0.5399159663865546
+        },
+        {
+          "lo": 0.6000000000000001,
+          "hi": 0.7000000000000001,
+          "n": 529,
+          "pred": 0.6500613097138856,
+          "obs": 0.6427221172022685
+        },
+        {
+          "lo": 0.7000000000000001,
+          "hi": 0.8,
+          "n": 218,
+          "pred": 0.7280784262665173,
+          "obs": 0.6651376146788991
+        },
+        {
+          "lo": 0.8,
+          "hi": 0.9,
+          "n": 12,
+          "pred": 0.8478725051968526,
+          "obs": 0.3333333333333333
+        },
+        {
+          "lo": 0.9,
+          "hi": 1.0,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        }
+      ]
+    },
+    "raw_engine_p72": {
+      "n_bins": 10,
+      "ece": 0.246885617214043,
+      "bins": [
+        {
+          "lo": 0.0,
+          "hi": 0.1,
+          "n": 5694,
+          "pred": 0.0,
+          "obs": 0.15876361081840534
+        },
+        {
+          "lo": 0.1,
+          "hi": 0.2,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.2,
+          "hi": 0.30000000000000004,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.30000000000000004,
+          "hi": 0.4,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.4,
+          "hi": 0.5,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.5,
+          "hi": 0.6000000000000001,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.6000000000000001,
+          "hi": 0.7000000000000001,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.7000000000000001,
+          "hi": 0.8,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.8,
+          "hi": 0.9,
+          "n": 0,
+          "pred": null,
+          "obs": null
+        },
+        {
+          "lo": 0.9,
+          "hi": 1.0,
+          "n": 2253,
+          "pred": 1.0,
+          "obs": 0.5304039059032402
+        }
+      ]
+    }
+  },
+  "same_eta_slices": [
+    {
+      "eta_lo": 0.0,
+      "eta_hi": 6.0,
+      "n": 542,
+      "n_pos": 376,
+      "obs_rate": 0.6937269372693727,
+      "engine_mean_p": 0.6922806100456024,
+      "engine_w_mean_p": 0.6872593245848562,
+      "engine_brier": 0.21515225137971428,
+      "engine_w_brier": 0.22177026301640634,
+      "delta_brier": -0.006618011636692067
+    },
+    {
+      "eta_lo": 6.0,
+      "eta_hi": 12.0,
+      "n": 332,
+      "n_pos": 207,
+      "obs_rate": 0.6234939759036144,
+      "engine_mean_p": 0.6128440786722167,
+      "engine_w_mean_p": 0.5974747912481781,
+      "engine_brier": 0.23728814553822636,
+      "engine_w_brier": 0.2581483251624247,
+      "delta_brier": -0.02086017962419834
+    },
+    {
+      "eta_lo": 12.0,
+      "eta_hi": 18.0,
+      "n": 243,
+      "n_pos": 135,
+      "obs_rate": 0.5555555555555556,
+      "engine_mean_p": 0.5619032738890036,
+      "engine_w_mean_p": 0.5468778600430239,
+      "engine_brier": 0.2500285451574566,
+      "engine_w_brier": 0.2720439338546032,
+      "delta_brier": -0.022015388697146587
+    },
+    {
+      "eta_lo": 18.0,
+      "eta_hi": 24.0,
+      "n": 180,
+      "n_pos": 90,
+      "obs_rate": 0.5,
+      "engine_mean_p": 0.516711689102737,
+      "engine_w_mean_p": 0.4912642291867461,
+      "engine_brier": 0.25347091365126057,
+      "engine_w_brier": 0.2859346741299875,
+      "delta_brier": -0.032463760478726955
+    },
+    {
+      "eta_lo": 24.0,
+      "eta_hi": 36.0,
+      "n": 332,
+      "n_pos": 150,
+      "obs_rate": 0.45180722891566266,
+      "engine_mean_p": 0.4581456826017262,
+      "engine_w_mean_p": 0.44801862785900143,
+      "engine_brier": 0.2511488794746136,
+      "engine_w_brier": 0.2653277408616284,
+      "delta_brier": -0.014178861387014796
+    },
+    {
+      "eta_lo": 36.0,
+      "eta_hi": 48.0,
+      "n": 244,
+      "n_pos": 97,
+      "obs_rate": 0.3975409836065574,
+      "engine_mean_p": 0.38895236310836306,
+      "engine_w_mean_p": 0.3794339826113059,
+      "engine_brier": 0.242664438094397,
+      "engine_w_brier": 0.25342131555753017,
+      "delta_brier": -0.010756877463133169
+    },
+    {
+      "eta_lo": 48.0,
+      "eta_hi": 72.0,
+      "n": 380,
+      "n_pos": 140,
+      "obs_rate": 0.3684210526315789,
+      "engine_mean_p": 0.3669477010111426,
+      "engine_w_mean_p": 0.36783203785601887,
+      "engine_brier": 0.2345061623558558,
+      "engine_w_brier": 0.24006178505062867,
+      "delta_brier": -0.00555562269477286
+    },
+    {
+      "eta_lo": 72.0,
+      "eta_hi": 96.0,
+      "n": 5694,
+      "n_pos": 904,
+      "obs_rate": 0.15876361081840534,
+      "engine_mean_p": 0.15876387785364582,
+      "engine_w_mean_p": 0.15569742417172233,
+      "engine_brier": 0.13375631699683463,
+      "engine_w_brier": 0.13561457570311178,
+      "delta_brier": -0.0018582587062771494
+    }
+  ],
+  "constant_prevalence_brier": 0.19436290275218787,
+  "engines_seen": [
+    "elmfire_2025.0212"
+  ],
+  "input": "data/training/job_c_2023/book_elmfire_w.jsonl",
+  "w_selection": {
+    "correlation": "/workspace/data/models/job_c_w_correlation.json",
+    "rule": "FDR survivors of within-fire residual Spearman (q<=0.10 and |rho|>=0.05) if any; else exploratory top-8 by |rho_residual|",
+    "selected_fdr_fields": [],
+    "head_fields": [
+      "nearest_usgs_gage_daily_discharge_cfs",
+      "nearest_gas_pipeline_distance_m",
+      "nearest_ust_facility_distance_m",
+      "within_water_service_area",
+      "nearest_fire_station_distance_m",
+      "surface_management_agency",
+      "nearest_osm_transmission_line_distance_m",
+      "soil_available_water_capacity"
+    ],
+    "not_a_218d_gbm": true
+  },
+  "scores_full_w_allowed_n247": {
+    "raw_engine_p72": {
+      "brier": 0.24648896531957581,
+      "log_loss": 3.405371656301959,
+      "pr_auc": 0.4226381179637112
+    },
+    "isotonic_eta": {
+      "brier": 0.16528437570847362,
+      "log_loss": 0.5087390242025256,
+      "pr_auc": 0.4878085772145333
+    },
+    "logistic_engine": {
+      "brier": 0.1650937418568854,
+      "log_loss": 0.5080776340724702,
+      "pr_auc": 0.4659398331543747
+    },
+    "logistic_engine_w_allowed": {
+      "brier": 0.1742547207276005,
+      "log_loss": 0.5811820384772566,
+      "pr_auc": 0.4296905055533169
+    },
+    "logistic_engine_shuffled_w": {
+      "brier": 0.16772475302709977,
+      "log_loss": 0.5271908309366844,
+      "pr_auc": 0.4591894687964332
+    }
+  },
+  "deltas_full_w_allowed_n247": {
+    "brier_engine_minus_engine_w": -0.009160978870715097,
+    "brier_shuffled_minus_engine_w": -0.006529967700500738,
+    "log_loss_engine_minus_engine_w": -0.07310440440478638,
+    "w_kill_test_passed": false
+  },
+  "n_events_full_w_allowed": 247,
+  "gbm_calibrator": {
+    "report": "data/models/job_c_gbm_report.json",
+    "n_events": 283,
+    "n_evaluable": 7947,
+    "scores": {
+      "raw_engine_p72": {
+        "brier": 0.24688561721404303,
+        "log_loss": 3.4108516043410684,
+        "pr_auc": 0.4157224922073119
+      },
+      "isotonic_eta": {
+        "brier": 0.1632785305413758,
+        "log_loss": 0.5039880074132107,
+        "pr_auc": 0.4858076126980925
+      },
+      "gbm_engine": {
+        "brier": 0.1640621157553662,
+        "log_loss": 0.5054921137636968,
+        "pr_auc": 0.45133801636773163
+      },
+      "gbm_engine_w_allowed": {
+        "brier": 0.16621809942607121,
+        "log_loss": 0.5131195659343217,
+        "pr_auc": 0.43642878119394857
+      },
+      "gbm_engine_shuffled_w": {
+        "brier": 0.1644866416996907,
+        "log_loss": 0.507423161364084,
+        "pr_auc": 0.44719601381618795
+      }
+    },
+    "deltas": {
+      "brier_engine_minus_engine_w": -0.0021559836707050195,
+      "brier_shuffled_minus_engine_w": -0.001731457726380503,
+      "log_loss_engine_minus_engine_w": -0.007627452170624882,
+      "w_kill_test_passed": false
+    },
+    "w_ablation_keep": [],
+    "ablation_top": [
+      {
+        "field": "surface_management_agency",
+        "brier_when_permuted": 0.16670995598821384,
+        "delta_brier_perm_minus_full": 0.000491856562142623,
+        "earns_keep": false
+      },
+      {
+        "field": "total_road_length_within_500m_m",
+        "brier_when_permuted": 0.16648423099582418,
+        "delta_brier_perm_minus_full": 0.0002661315697529698,
+        "earns_keep": false
+      },
+      {
+        "field": "nearest_school_distance_m",
+        "brier_when_permuted": 0.166339389943354,
+        "delta_brier_perm_minus_full": 0.00012129051728279605,
+        "earns_keep": false
+      },
+      {
+        "field": "lightning_annual_flash_days",
+        "brier_when_permuted": 0.16629986623846713,
+        "delta_brier_perm_minus_full": 8.176681239591144e-05,
+        "earns_keep": false
+      },
+      {
+        "field": "aspect_degrees",
+        "brier_when_permuted": 0.16626922592202073,
+        "delta_brier_perm_minus_full": 5.1126495949516126e-05,
+        "earns_keep": false
+      },
+      {
+        "field": "wildfire_annual_frequency",
+        "brier_when_permuted": 0.16625534420533292,
+        "delta_brier_perm_minus_full": 3.7244779261702554e-05,
+        "earns_keep": false
+      },
+      {
+        "field": "aspect_cardinal",
+        "brier_when_permuted": 0.16625000431612685,
+        "delta_brier_perm_minus_full": 3.190489005563957e-05,
+        "earns_keep": false
+      },
+      {
+        "field": "domestic_well_households_per_km2",
+        "brier_when_permuted": 0.16623675474635247,
+        "delta_brier_perm_minus_full": 1.8655320281252274e-05,
+        "earns_keep": false
+      }
+    ]
+  }
+}

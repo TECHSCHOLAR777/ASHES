@@ -61,6 +61,8 @@ def log_model_call(
     sigma: float,
     baseline_y: float,
     model_version: str,
+    eta_hours: float | None = None,
+    spread_field_version: str | None = None,
 ) -> None:
     _append(
         {
@@ -72,6 +74,8 @@ def log_model_call(
             "sigma": sigma,
             "baseline_y": baseline_y,
             "model_version": model_version,
+            "eta_hours": eta_hours,
+            "spread_field_version": spread_field_version,
         }
     )
 

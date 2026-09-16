@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dotenv import load_dotenv  # noqa: E402
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from src.agents.main_agent import MainAgentDeps, Site, response_cards, run_site  # noqa: E402
 from src.logging_ import tool_logger  # noqa: E402
@@ -38,6 +38,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--q", type=str, default="Is this site at risk?")
     parser.add_argument("--name", type=str, default="ask-mode-site")
     parser.add_argument("--slack-channel", type=str, default="#fire-alerts")
+    parser.add_argument("--agentic", action="store_true", help="OpenAI tool-calling loop over live tools")
+    parser.add_argument("--simulate", action="store_true", help="Run ELMFIRE from an ignition pin")
+    parser.add_argument("--ignition-lat", type=float, default=None)
+    parser.add_argument("--ignition-lng", type=float, default=None)
+    parser.add_argument("--buffer-km", type=float, default=None)
     return parser.parse_args()
 
 
@@ -46,10 +51,33 @@ def main() -> None:
     site = Site(site_id=f"ask_{uuid.uuid4().hex[:8]}", name=args.name, lat=args.lat, lng=args.lng, slack_channel=args.slack_channel)
 
     deps = MainAgentDeps()
+    if args.agentic or args.simulate:
+        from src.agents.agent_loop import run_agentic
+
+        report = run_agentic(
+            deps,
+            site,
+            args.q,
+            simulate=args.simulate,
+            ignition_lat=args.ignition_lat if args.simulate else None,
+            ignition_lng=args.ignition_lng if args.simulate else None,
+            buffer_km=args.buffer_km,
+        )
+        print(json.dumps(report, indent=2, default=str))
+        tool_logger.log_event(
+            "ask_mode_query",
+            question=args.q,
+            site_id=site.site_id,
+            action=(report.get("action_card") or {}).get("action"),
+            agentic=True,
+            simulate=args.simulate,
+        )
+        return
+
     card = run_site(deps, site, mode="ask")
 
     print("=== ActionCard ===")
-    print(card.model_dump_json(indent=2))
+    print(card.model_dump_json(indent=2, by_alias=True))
 
     response_card = response_cards.pop(card.card_id, None)
     if response_card is not None:

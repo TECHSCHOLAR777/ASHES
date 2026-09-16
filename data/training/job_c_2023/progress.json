@@ -1,0 +1,63 @@
+{
+  "as_of": "2026-08-29T08:09:00Z",
+  "book": {
+    "rows": 7987,
+    "events": 283,
+    "evaluable_72": 7947,
+    "y_72_pos": 2099,
+    "skipped_no_tape": 34,
+    "skipped_sparse_early_tape": 90
+  },
+  "elmfire": {
+    "rows": 7987,
+    "ok_events": 283,
+    "engine": "elmfire_2025.0212",
+    "huygens_rows": 0,
+    "loop": "283/283",
+    "n_failures_unique": 0
+  },
+  "w": {
+    "rows": 7947,
+    "events": 283,
+    "y_72_pos": 2099,
+    "batch_size": 10,
+    "note": "caught up on evaluable_72 rows"
+  },
+  "eval": {
+    "status": "subset_top8_after_residual_correlation",
+    "snapshot_events": 283,
+    "snapshot_rows": 7947,
+    "w_kill_test_passed": false,
+    "fdr_selected_fields": [],
+    "head_fields": [
+      "nearest_usgs_gage_daily_discharge_cfs",
+      "nearest_gas_pipeline_distance_m",
+      "nearest_ust_facility_distance_m",
+      "within_water_service_area",
+      "nearest_fire_station_distance_m",
+      "surface_management_agency",
+      "nearest_osm_transmission_line_distance_m",
+      "soil_available_water_capacity"
+    ],
+    "brier": {
+      "raw_p72": 0.247,
+      "isotonic_eta": 0.163,
+      "logistic_engine": 0.163,
+      "logistic_engine_w_subset": 0.168,
+      "logistic_shuffled_w": 0.164
+    },
+    "report": "data/models/job_c_report.json",
+    "correlation": "data/models/job_c_w_correlation.json",
+    "gbm": {
+      "report": "data/models/job_c_gbm_report.json",
+      "w_kill_test_passed": false,
+      "w_ablation_keep": [],
+      "brier": {
+        "isotonic_eta": 0.163,
+        "gbm_engine": 0.164,
+        "gbm_engine_w_allowed": 0.166,
+        "gbm_shuffled_w": 0.164
+      }
+    }
+  }
+}

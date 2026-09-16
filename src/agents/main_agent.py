@@ -19,15 +19,17 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Optional, get_args
 
 import yaml
 
 from src.cache.w_cache import WCache
 from src.clients.firms import FIRMSClient, FIRMSResult
 from src.clients.hrrr import HRRRClient, HRRRWeather
+from src.clients.landfire import LANDFIREClient, LandfireRequestFailed
 from src.clients.mireye import MireyeClient
 from src.clients.nws import NWSClient
+from src.clients.osm import OSMClient
 from src.clients.usgs import USGSClient
 from src.clients.wfigs import WFIGSClient, WFIGSIncident, distance_to_perimeter_m, geodesic_distance_m
 from src.delivery.email_delivery import deliver_cards_by_email
@@ -35,18 +37,22 @@ from src.delivery.slack_delivery import deliver_action_card
 from src.features.e_packer import pack_e
 from src.features.ros_ellipse import compute_ros_ellipse_feature
 from src.features.w_encoder import load_field_catalog, ordered_model_fields, encode_w
+from src.geometry.aoi import Geometry, aoi_bbox_for_fetch, build_incident_aoi, point_geometry
 from src.logging_ import tool_logger
 from src.model.h_fire import model_infer
-from src.policy.engine import PolicyInput, apply_policy
+from src.policy.engine import PolicyInput, apply_policy, load_policy_config
 from src.schemas.action_card import (
     ActionCard,
     Citation,
     EProductTime,
+    FlagEnum,
     IncidentInfo,
+    PBurnByT,
     SiteRef,
     WeatherInfo,
     WSource,
 )
+from src.spread.client import SpreadSiteSample, spread_run
 from src.state.site_state import SiteStateStore
 from src.validator.brief_validator import safe_brief
 
@@ -118,6 +124,8 @@ class MainAgentDeps:
         self.wfigs = WFIGSClient()
         self.hrrr = HRRRClient()
         self.usgs = USGSClient()
+        self.landfire = LANDFIREClient()
+        self.osm = OSMClient()
         self.w_cache = WCache()
         self.site_state = SiteStateStore()
         self.field_catalog = load_field_catalog()
@@ -285,7 +293,9 @@ def build_action_card(deps: MainAgentDeps, site: Site) -> ActionCard:
 
     w_features = encode_w(raw_w, deps.field_catalog, now=now)
 
-    model_output = model_infer(site.site_id, w_features, e_features, w_features.vintages)
+    spread_sample, geom = _try_spread(deps, site, nearest_incident, perimeters, hrrr_weather, flags)
+
+    model_output = model_infer(site.site_id, w_features, e_features, w_features.vintages, spread=spread_sample)
     tool_logger.log_model_call(
         site.site_id,
         w_features.vector.shape,
@@ -294,6 +304,8 @@ def build_action_card(deps: MainAgentDeps, site: Site) -> ActionCard:
         model_output.sigma,
         model_output.baseline_y,
         model_output.model_version,
+        eta_hours=model_output.eta_hours,
+        spread_field_version=model_output.spread_field_version,
     )
 
     prior_state = deps.site_state.get_state(site.site_id)
@@ -312,6 +324,8 @@ def build_action_card(deps: MainAgentDeps, site: Site) -> ActionCard:
         road_access_limited=road_access_limited,
         containment_pct=e_features.containment_pct,
         previously_in_play=previously_in_play,
+        eta_hours=model_output.eta_hours,
+        eta_sigma_hours=model_output.eta_sigma_hours,
     )
     policy_result = apply_policy(model_output.y_hat, model_output.sigma, pin)
     tool_logger.log_policy_call(
@@ -339,11 +353,14 @@ def build_action_card(deps: MainAgentDeps, site: Site) -> ActionCard:
             name=site.name,
             lat=site.lat,
             lng=site.lng,
-            mode="point",
+            mode="aoi" if geom.mode == "aoi" and geom.contains_point(site.lat, site.lng) else "point",
             geocode_confidence=geocode_confidence,
             range_interpolation=range_interpolation,
         ),
         action=policy_result.action,
+        eta_hours=model_output.eta_hours,
+        eta_sigma_hours=model_output.eta_sigma_hours,
+        p_burn_by_T=PBurnByT.model_validate(model_output.p_burn_by_T) if model_output.p_burn_by_T else None,
         y_hat=model_output.y_hat,
         sigma=model_output.sigma,
         baseline_y=model_output.baseline_y,
@@ -366,11 +383,12 @@ def build_action_card(deps: MainAgentDeps, site: Site) -> ActionCard:
         ),
         recommended_actions=RECOMMENDED_ACTIONS.get(policy_result.action, []),
         reasons=policy_result.reasons,
-        flags=list(dict.fromkeys(flags)),  # de-dupe, preserve order
+        flags= [f for f in dict.fromkeys(flags) if f in set(get_args(FlagEnum))],
         citations=citations,
         e_product_times=e_product_times,
         w_sources=w_sources,
         model_version=model_output.model_version,
+        spread_field_version=model_output.spread_field_version,
         policy_version=policy_result.policy_version,
     )
 
@@ -392,6 +410,88 @@ card_briefs: dict[str, str] = {}
 
 
 card_thread_ts: dict[str, str] = {}  # card_id -> Slack thread_ts, so the Response Agent can reply into it
+
+site_aois: dict[str, Geometry] = {}  # site_id -> incident AOI for the Response Agent water map
+
+
+def _try_spread(
+    deps: MainAgentDeps,
+    site: Site,
+    nearest_incident: Optional[WFIGSIncident],
+    perimeters: list,
+    hrrr_weather: Optional[HRRRWeather],
+    flags: list[str],
+) -> tuple[SpreadSiteSample | None, Geometry]:
+    """Incident-first AOI + spread_run. Failures degrade to point geometry (FR-33)."""
+    geom = point_geometry(site.lat, site.lng)
+    if nearest_incident is None or not perimeters:
+        return None, geom
+
+    matching = [p for p in perimeters if p.irwin_id and p.irwin_id == nearest_incident.irwin_id]
+    perimeter = matching[0] if matching else perimeters[0]
+    policy_cfg = load_policy_config()
+    aoi_cfg = policy_cfg.get("aoi") or {}
+    ens_cfg = policy_cfg.get("spread_ensemble") or {}
+    wind_u = hrrr_weather.wind_u_10m if hrrr_weather else None
+    wind_v = hrrr_weather.wind_v_10m if hrrr_weather else None
+
+    bbox = aoi_bbox_for_fetch(
+        perimeter,
+        wind_u,
+        wind_v,
+        base_buffer_km=float(aoi_cfg.get("base_buffer_km", 5)),
+        downwind_buffer_km=float(aoi_cfg.get("downwind_buffer_km", 25)),
+        upwind_buffer_km=float(aoi_cfg.get("upwind_buffer_km", 2)),
+    )
+    if bbox is None:
+        return None, geom
+
+    try:
+        stack = deps.landfire.fetch_aoi(
+            *bbox,
+            site_id=site.site_id,
+            resample_m=int(aoi_cfg.get("resample_m", 90)),
+        )
+        geom = build_incident_aoi(
+            perimeter,
+            stack,
+            wind_u=wind_u,
+            wind_v=wind_v,
+            base_buffer_km=float(aoi_cfg.get("base_buffer_km", 5)),
+            downwind_buffer_km=float(aoi_cfg.get("downwind_buffer_km", 25)),
+            upwind_buffer_km=float(aoi_cfg.get("upwind_buffer_km", 2)),
+            max_cells=int(aoi_cfg.get("max_cells", 12000)),
+        )
+        flags.extend(geom.flags)
+        rings = [list(ring) for ring in perimeter.geometry_rings]
+        field = spread_run(
+            incident_id=nearest_incident.irwin_id or nearest_incident.name,
+            landfire=stack,
+            aoi=geom,
+            weather={
+                "wind_u": wind_u or 0.0,
+                "wind_v": wind_v or 0.0,
+                "rh_pct": hrrr_weather.rh_pct if hrrr_weather else None,
+                "temp_c": hrrr_weather.temp_c if hrrr_weather else None,
+                "valid_time": hrrr_weather.hrrr_valid_time if hrrr_weather else None,
+            },
+            perimeter_rings=rings,
+            ignition_points=[{"lat": nearest_incident.lat, "lng": nearest_incident.lng}],
+            ensemble={
+                "n_members": int(ens_cfg.get("n_members", 7)),
+                "wind_speed_frac": float(ens_cfg.get("wind_speed_frac", 0.2)),
+                "wind_dir_deg": float(ens_cfg.get("wind_dir_deg", 20)),
+                "moisture_frac": float(ens_cfg.get("moisture_frac", 0.15)),
+            },
+            site_id=site.site_id,
+        )
+        sample = field.sample(site.lat, site.lng)
+        site_aois[site.site_id] = geom
+        return sample, geom
+    except (LandfireRequestFailed, Exception) as exc:
+        logger.warning("spread_run/LANDFIRE failed for %s: %s; continuing without arrival field", site.site_id, exc)
+        flags.append("degraded")
+        return None, geom
 
 
 def deliver_action_card_and_state(

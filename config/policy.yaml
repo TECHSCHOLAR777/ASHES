@@ -1,4 +1,4 @@
-version: "v1.0.0"
+version: "v2.0.0"
 dedup_window_minutes: 30
 poll_interval_minutes: 5
 poll_idempotency_minutes: 4
@@ -11,6 +11,7 @@ distance_thresholds:
   protect_km: 4
   firms_urban_suppress: true
 
+# Agentic copilot passes y_hat=None. Watch/h_fire tests may still set these.
 y_hat_thresholds:
   prepare: 0.4
   protect: 0.7
@@ -20,11 +21,33 @@ ndvi_high_fuel_threshold: 0.5
 sigma_thresholds:
   evacuate_suppress: 0.35
 
+eta_thresholds:
+  evacuate_hours: 6
+  prepare_min_hours: 24
+  prepare_max_hours: 72
+
+eta_sigma_thresholds:
+  evacuate_suppress_hours: 12
+
 housing_density_evacuate_threshold_per_km2: 500
 
 ros_ellipse:
   duration_hours: 72
   ros_wind_factor: 0.5
+
+aoi:
+  base_buffer_km: 5
+  downwind_buffer_km: 25
+  upwind_buffer_km: 2
+  max_cells: 12000
+  resample_m: 90
+  water_grid_max_cells: 25
+
+spread_ensemble:
+  n_members: 7
+  wind_speed_frac: 0.2
+  wind_dir_deg: 20
+  moisture_frac: 0.15
 
 hazmat_priority_tiers_m:
   critical: 500

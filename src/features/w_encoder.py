@@ -67,6 +67,40 @@ def ordered_model_fields(catalog: dict[str, Any] | None = None) -> list[tuple[st
     return out
 
 
+def model_feature_layout(catalog: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """Column spans for every encoded W field, including one-hot slots and `_conf`.
+
+    Mirrors `encode_w` widths so ablation/importance can group columns by field
+    and by role without a dummy fetch.
+    """
+    catalog = catalog or load_field_catalog()
+    layout: list[dict[str, Any]] = []
+    idx = 0
+    for role, name, meta in ordered_model_fields(catalog):
+        ftype = meta["type"]
+        if name == "most_recent_burn_year":
+            col_names = ["years_since_burn"]
+        elif ftype == "unordered_categorical":
+            col_names = [f"{name}__{slot}" for slot in _category_slots(meta["categories"])]
+        elif ftype in {"float", "int", "bool", "ordered_categorical"}:
+            col_names = [name]
+        else:
+            continue
+        col_names.append(f"{name}_conf")
+        width = len(col_names)
+        layout.append(
+            {
+                "role": role,
+                "field": name,
+                "start": idx,
+                "end": idx + width,
+                "columns": col_names,
+            }
+        )
+        idx += width
+    return layout
+
+
 def _confidence_bit(raw_w: dict[str, Any], field_name: str) -> float:
     conf = raw_w.get(f"{field_name}_confidence")
     if conf is None:

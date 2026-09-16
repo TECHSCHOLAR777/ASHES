@@ -1,0 +1,14 @@
+# One showcase case: Idyllwild the community, ignition in chaparral west of town.
+# Urban warehouse FBFM 91 is seed-only T=0 and is not this case.
+# Community pin vs west-chaparral ignition. ELMFIRE playback is the engine case unfolding in time.
+id: idyllwild_chaparral
+name: Idyllwild
+place: Idyllwild, California
+lat: 33.7461
+lng: -116.7139
+ignition_lat: 33.7440
+ignition_lng: -116.7320
+simulate: true
+buffer_km: 8
+q: "Idyllwild is the community. If the chaparral west of town ignites, is the town in play?"
+honesty: "Community pin is Idyllwild (33.7461, -116.7139). Ignition is west in San Jacinto chaparral (33.7440, -116.7320). ELMFIRE playback is the engine case unfolding in time."

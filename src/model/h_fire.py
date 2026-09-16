@@ -38,6 +38,10 @@ class ModelOutput:
     sigma: float
     baseline_y: float
     model_version: str
+    eta_hours: float | None = None
+    eta_sigma_hours: float | None = None
+    p_burn_by_T: dict[str, float | None] | None = None
+    spread_field_version: str | None = None
 
 
 def compute_baseline(e_features: EFeatures) -> float:
@@ -80,42 +84,120 @@ class _ModelRegistry:
 _REGISTRY = _ModelRegistry()
 
 
+def _spread_features(spread: Any | None) -> np.ndarray:
+    """Fixed-order raw-field features the V2 calibration head concatenates onto [g(W); E].
+
+    Missing field uses the same outside-AOI placeholders as `attach_spread_vector`
+    so a V2 pickle (220-D) still scores a site that is not in any incident raster.
+    """
+    if spread is None:
+        return np.array([72.0, 24.0, 0.0, 0.0, 0.0], dtype=np.float64)
+    eta = spread.eta_hours if spread.eta_hours is not None else 72.0
+    sig = spread.eta_sigma_hours if spread.eta_sigma_hours is not None else 24.0
+    p24 = spread.p_burn_24 if spread.p_burn_24 is not None else 0.0
+    p48 = spread.p_burn_48 if spread.p_burn_48 is not None else 0.0
+    p72 = spread.p_burn_72 if spread.p_burn_72 is not None else 0.0
+    return np.array([eta, sig, p24, p48, p72], dtype=np.float64)
+
+
+def _p_burn_dict(spread: Any | None) -> dict[str, float | None] | None:
+    if spread is None:
+        return None
+    payload = {"24": spread.p_burn_24, "48": spread.p_burn_48, "72": spread.p_burn_72}
+    if all(v is None for v in payload.values()):
+        return None
+    return payload
+
+
+def _sigma_from_eta(eta_sigma_hours: float | None, y_hat: float) -> float:
+    """Map arrival-time ensemble sigma (hours) onto the 0-1 ActionCard sigma.
+
+    12 h of ETA sigma (the policy evacuate-suppress cutoff) maps to ~0.35, so the
+    existing NFR-17 suppress rule still fires when the field is uncertain. Missing
+    ensemble sigma falls back to the V1 distance-from-0.5 proxy.
+    """
+    if eta_sigma_hours is None:
+        return max(0.1, 0.5 - abs(y_hat - 0.5))
+    return float(min(0.9, max(0.05, eta_sigma_hours / 12.0 * 0.35)))
+
+
 def model_infer(
     site_id: str,
     w_features: WFeatures,
     e_features: EFeatures,
     vintages: dict[str, Any] | None = None,
+    spread: Any | None = None,
 ) -> ModelOutput:
-    """{site_id, X|null, W, E, vintages} -> {y_hat, sigma, model_version, baseline_y}.
+    """{site_id, X|null, W, E, spread, vintages} -> {y_hat, sigma, baseline_y, eta_*, p_burn_by_T, versions}.
 
-    V1 has no X (EO embedding); the contract accepts it as `vintages`-adjacent metadata
-    only, never as a live image (SRS 6.3 / 2.6.3).
+    Signature is stable: `spread` is optional so V1 callers keep working. V2
+    `baseline_y` is the raw delegated p_burn_72 when a field exists (FR-27).
     """
     baseline_y = compute_baseline(e_features)
+    if spread is not None and spread.p_burn_72 is not None:
+        baseline_y = float(spread.p_burn_72)
+
     artefact = _REGISTRY.get()
+    p_burn = _p_burn_dict(spread)
+    eta = spread.eta_hours if spread is not None else None
+    eta_sigma = spread.eta_sigma_hours if spread is not None else None
+    field_version = spread.spread_field_version if spread is not None else None
 
     if artefact is None:
-        return ModelOutput(y_hat=0.1, sigma=0.5, baseline_y=baseline_y, model_version=DUMMY_MODEL_VERSION)
+        y_hat = float(spread.p_burn_72) if (spread is not None and spread.p_burn_72 is not None) else 0.1
+        sigma = _sigma_from_eta(eta_sigma, y_hat) if spread is not None else 0.5
+        return ModelOutput(
+            y_hat=y_hat,
+            sigma=sigma,
+            baseline_y=baseline_y,
+            model_version=DUMMY_MODEL_VERSION,
+            eta_hours=eta,
+            eta_sigma_hours=eta_sigma,
+            p_burn_by_T=p_burn,
+            spread_field_version=field_version,
+        )
 
     pipeline = artefact["pipeline"]
     model_version = artefact.get("model_version", "h_fire_unknown")
-
     e_vec = e_features_to_vector(e_features)
     masked_w = w_features.vector * w_features.mask
-    feature_vec = np.concatenate([masked_w, e_vec]).reshape(1, -1)
+
+    if artefact.get("v2_calibration"):
+        feature_vec = np.concatenate([masked_w, e_vec, _spread_features(spread)]).reshape(1, -1)
+    else:
+        feature_vec = np.concatenate([masked_w, e_vec]).reshape(1, -1)
 
     try:
+        # V2 calibration is still a probability head (FR-26): it conditions on the
+        # raw arrival field, it does not replace the engine's ETA / P(burn by T).
         proba = pipeline.predict_proba(feature_vec)[0]
         y_hat = float(proba[1]) if len(proba) > 1 else float(proba[0])
     except Exception as exc:  # a shape/version mismatch must degrade, never crash the agent
         logger.warning("model_infer prediction failed for %s: %s; falling back to baseline", site_id, exc)
-        return ModelOutput(y_hat=baseline_y, sigma=0.5, baseline_y=baseline_y, model_version=model_version)
+        y_hat = baseline_y
+        return ModelOutput(
+            y_hat=y_hat,
+            sigma=0.5,
+            baseline_y=baseline_y,
+            model_version=model_version,
+            eta_hours=eta,
+            eta_sigma_hours=eta_sigma,
+            p_burn_by_T=p_burn,
+            spread_field_version=field_version,
+        )
 
     sigma = artefact.get("sigma_estimate")
     if sigma is None:
-        # Ensemble-free calibrated models: use distance from 0.5 as an inverse confidence
-        # proxy, clipped to a sane uncertainty range, rather than fabricating a sigma.
-        sigma = max(0.1, 0.5 - abs(y_hat - 0.5))
+        sigma = _sigma_from_eta(eta_sigma, y_hat) if spread is not None else max(0.1, 0.5 - abs(y_hat - 0.5))
         logger.warning("model_infer: no persisted sigma_estimate for %s; using proxy sigma", model_version)
 
-    return ModelOutput(y_hat=y_hat, sigma=float(sigma), baseline_y=baseline_y, model_version=model_version)
+    return ModelOutput(
+        y_hat=y_hat,
+        sigma=float(sigma),
+        baseline_y=baseline_y,
+        model_version=model_version,
+        eta_hours=eta,
+        eta_sigma_hours=eta_sigma,
+        p_burn_by_T=p_burn,
+        spread_field_version=field_version,
+    )

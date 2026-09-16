@@ -1,0 +1,10 @@
+{
+  "n_rows": 7987,
+  "n_events_written": 283,
+  "evaluable_72": 7947,
+  "y_72_pos": 2099,
+  "skipped_no_tape": 34,
+  "skipped_sparse_early_tape": 90,
+  "output": "data/training/job_c_2023/book.jsonl",
+  "tape_dir": "/workspace/data/cache/job_c_tapes"
+}

@@ -1,6 +1,109 @@
 # V1 → V2 Handoff
 
+## Job C (2026-08-28, in progress)
+
+Showcase is **not** “a GBM ranks 72 h arrival.” It is:
+
+`P(y_72 | ELMFIRE eta, σ, p_T, W_allowed)` vs `P(y_72 | eta, σ, p_T)` vs raw `p_T`,
+event-held-out, Brier / log-loss / reliability, shuffle-W kill. Same ETA, different
+parcel, different hit probability.
+
+**Book:** WFIGS Daily 2023–2026, exact UniqueFireIdentifier. Inventory:
+`data/training/job_c_2023/tape_inventory.json` (407 usable CONUS fires; 404 tapes on
+disk, 3 empty IDs). After all tapes: **7987 rows / 283 events / 2099 positives /
+7947 evaluable_72** (`book_summary.json`). Points are the 72 h growth annulus, not
+the final ring. LANDFIRE AOI is that same 72 h envelope ∪ seed. ELMFIRE: compile
+https://github.com/lautenberger/elmfire branch `2025.0212` *outside* this repo, then
+
+```
+export SPREAD_ENGINE_BIN=$PWD/spread_service/elmfire_bin.py
+export SPREAD_ENGINE_REQUIRED=1
+export ELMFIRE_BIN=/home/ubuntu/elmfire/build/linux/bin/elmfire
+export SPREAD_SERVICE_PORT=8766
+python scripts/enrich_job_c_elmfire.py --resume
+```
+
+Huygens is not the claim. If the binary is missing the Job C script fails closed.
+
+**W:** new Mireye spend on new coordinates (`scripts/encode_job_c_w.py --resume --batch-size 10`).
+Fetch A–I; the head subsets W_allowed (`src/model/w_allowed.py`). Snapshot
+`data/training/job_c_2023/progress.json`. Encoder waits on Mireye 429 (in-process
+limiter now blocks when both keys are at cap; `--startup-pause` after a restart).
+If W exits after its pending list, `--resume` again against the growing elmfire
+book. Huygens rows are skipped. Failed ELMFIRE fires are not written so
+`--resume` retries them (empty PHI before the coarsen fix; a few Fortran runs
+with no TOA).
+
+**Eval (LOGO, 283 events / 7947 rows, `elmfire_2025.0212` only, 0 Huygens).**
+The 171-D W_allowed dump never had a top-k (the head is logistic, not a GBM).
+Within-fire Spearman vs the engine residual + FDR: **no field survived**. Exploratory
+top-8 still used for the same LOGO protocol. Map: `data/models/job_c_w_correlation.json`.
+
+| Head | Brier | log-loss | PR-AUC (side) |
+|---|---|---|---|
+| Raw engine p72 | 0.247 | 3.411 | 0.416 |
+| Isotonic(eta) | 0.163 | 0.504 | 0.486 |
+| Logistic P(y\|engine) | **0.163** | **0.503** | 0.465 |
+| Logistic P(y\|engine, top-8 W) | 0.168 | 0.542 | 0.447 |
+| Logistic shuffled top-8 W | 0.164 | 0.506 | 0.462 |
+
+Kill still **failed**. FDR selected **nothing** (within-fire perm p ≈ 1: the tiny |ρ| is between-fire, not parcel). Top-8 ΔBrier **−0.005**. Shuffled W still beats real W. 5693/7947 rows never received a 72 h TOA.
+
+**GBM calibrator (same task, 283 / 7947, Huygens 0):** HistGradientBoosting
+`predict_proba`, LOGO Brier, OOS permute-each-field ablation. Kill still **failed**.
+No field earned keep (threshold ΔBrier 0.001). Report: `data/models/job_c_gbm_report.json`.
+
+| Head | Brier | log-loss |
+|---|---|---|
+| Raw engine p72 | 0.247 | 3.411 |
+| Isotonic(eta) | **0.163** | **0.504** |
+| GBM P(y\|engine) | 0.164 | 0.505 |
+| GBM P(y\|engine, W_allowed 171-D) | 0.166 | 0.513 |
+| GBM shuffled W | 0.164 | 0.507 |
+
+Closest-to-useful ablation (still below keep): surface management +0.0005, road length +0.0003. Climate (temp, snow) **hurts** when left in. Switching logistic → GBM did not create a Mireye parcel effect.
+
+Do not re-run Path A / Path B / R0–R4 on the 2015–2022 MTBS book for this claim.
+
+---
+
+## V2 status (2026-08-28)
+
+V2 Path B is closed. `scripts/enrich_spread_vectors.py` labeled all **4,300** V1 samples
+across **458** MTBS events with a delegated `spread_vector` and **no extra Mireye credits**.
+`python scripts/evaluate_h2.py` reports **`h2_status: validated`**:
+
+| Metric | Value |
+|---|---|
+| Samples / events | 4300 / 458 |
+| Calibrated PR-AUC | 0.865 |
+| Raw engine p72 PR-AUC | 0.637 |
+| Calibrated − raw ΔAP | +0.228 |
+| Random-W collapse ΔAP | +0.079 |
+| Brier (calibrated) | 0.119 |
+| Model | `h_fire_v20260828T012333Z` (`v2_calibration: true`) |
+
+Honest limits (also in `DECISIONS.md` / `V2_END.md`): ignition-centroid seed (not gold
+final perimeter), 0.35° historic AOI clamp, 2.2 m/s reference wind, Rothermel-Huygens not
+compiled ELMFIRE, reconstructed sample coordinates. Live `ask` still uses the full
+wind-projected WFIGS AOI + HRRR.
+
+**R0–R4 (timed arrival, 2026-08-28):** those H2 numbers are on V1 `y` = inside the final
+MTBS scar. Ranking by `-dist_perim_m` already scores ~0.96 there. Timed GeoMAC/WFIGS Daily
+labels give **246 evaluable rows / 32 events / 27 positives**. R1 re-seeded `spread_run`
+from the first operational ring with HRRR-at-seed (35 fires, hrrr_fail=0). Full-W leave-one-
+event-out GBM PR-AUC **0.282** beats p72 rank (0.221) and shuffled W (0.165) but **loses to
+ranking by `-eta_hours` (0.422)**. Only lightning-flash-days and near-surface wind
+climatology help by >0.01 when every role and field is retrain-ablated.
+`data/models/arrival_head_report.json`.
+
+Do not re-run Path A (`build_training_set.py --with-spread`) unless you intend to spend
+Mireye credits. Resume Path B with `--resume` if a sidecar already exists.
+
+---
+
 ## Where things stand
+
 
 V1 (the wildfire site-event copilot) is complete and pushed to
 `https://github.com/TECHSCHOLAR777/ASHES` as of commit `aca8b16` (37 commits on
@@ -99,10 +202,9 @@ SRS itself, not a shortcut. A real MTBS-labeled dataset was being collected at h
 across thousands of real fire samples). Read `src/model/training_data.py`'s module docstring
 for the one honest limitation in that pipeline: `dist_perim_m` is proxied off the fire's
 ignition centroid, not a true t0 perimeter, because MTBS publishes only ignition date +
-final perimeter, not a time series. **V2's incident-first AOI and ELMFIRE work makes this
-proxy unnecessary** - once ELMFIRE runs are available, real perimeter time series (or
-ELMFIRE's own arrival field) become the ground truth for `dist_perim_m`/E features, which is
-a strictly better foundation than continuing to refine the MTBS proxy.
+final perimeter, not a time series. Timed GeoMAC/WFIGS Daily series now exist for 35 of 458
+events (`scripts/label_arrival_times.py`); 246 sites are evaluable at 72 h. That is the
+arrival label. It is not a substitute for a compiled ELMFIRE field.
 
 ## Getting started
 

@@ -1,0 +1,1 @@
+# LANDFIRE GeoTIFF cache (npz + json). Safe to delete; the client will refetch.

@@ -1,209 +1,124 @@
-# Wildfire Site-Event Copilot (V1)
+# ASHES
 
-An unattended, cited fire-week copilot for a book of named US sites. While a wildfire is
-live or imminent near a site, it joins live fire signals (NWS Red Flag alerts, NASA FIRMS
-thermal hotspots, WFIGS incidents and operational perimeters, HRRR wind/weather), cited
-site physics from the Mireye API (fuels, terrain, hazard zone, access, burn history), and a
-trained model into a closed, cited ActionCard: monitor, prepare, protect_asset,
-evacuate_site, inspect_after, or no_action. When a site escalates to protect_asset or
-evacuate_site, a second Response Support Agent produces a ResponseCard: ranked water
-sources, access routes, fire-station ETA, hazmat priorities, environmental constraints, and
-responsible agency, all deterministic and cited, no trained model involved. The action is
-always decided by a versioned policy table, never the LLM; the LLM only writes a copy-only
-prose brief, which is rejected and replaced if it introduces a single number not already on
-the card.
+**(By Team OpenAEye)**
 
-This is a decision tool for a known book of commercial/industrial sites, not a public safety
-broadcaster. It never downgrades or suppresses an NWS warning and never substitutes for an
-evacuation order.
+ASHES is a wildfire site-event copilot for organisations across the United States. It watches a book of known sites (campuses, warehouses, plants, yards) and turns live fire conditions plus what actually sits around each location into one cited **ActionCard**: how serious this is, and what to do next.
 
-## Prerequisites
+---
 
-- Python 3.11+ (built and tested on 3.12.13)
-- Three Mireye API keys (round-robin rotation; this build assumes a Growth-plan key, 300
-  requests/minute each)
-- A NASA FIRMS `MAP_KEY` (free, register at https://firms.modaps.eosdis.nasa.gov/api/map_key/)
-- An OpenAI API key (for the copy-only brief; the system runs without one, using a
-  deterministic fallback brief)
-- Optionally: a Slack bot token and SMTP credentials for real delivery (both delivery
-  channels run in log-only mode without them - see `config/README_MISSING.md`)
+## Summary of the Idea
 
-## Installation
+Wildfires become difficult for organisations when a fire approaches a facility. Alerts, satellite hotspots, weather, perimeters, terrain, roads, and site facts live in different systems. The question that matters is simple and time-sensitive: **how serious is the threat, and what should we do next?**
+
+ASHES answers that question for a configured site, not for the public internet. It joins two kinds of evidence:
+
+- **What is happening now:** warnings, thermal detections, incidents, perimeters, and wind.
+- **What exists around the site:** fuel, terrain, hazard, access, water, and governance.
+
+**Mireye** supplies the site-world layer: sourced geospatial facts (roads, land, exposure, infrastructure, habitat, and related fields) so the system knows not only where fire is, but what sits next to the pin.
+
+**ELMFIRE** is the live spread engine. It is a production-grade, industry-standard wildfire model: vegetation, slope, and fire physics are native to the solve. For a live or simulated ignition it returns arrival time at the community pin and burn probability at 24, 48, and 72 hours.
+
+A **Pareto checks policy table** (perimeter distance, red-flag weather, thermal hotspots, engine ETA and ETA uncertainty, housing density, road access, containment, and prior site state) then places the site in a bucket (`no_action`, `monitor`, `prepare`, `protect_asset`, `evacuate_site`, `inspect_after`). An **agent** uses that bucket, the engine clock, and the Mireye facts to write a cited playbook: the ActionCard. Serious buckets also get a **ResponseCard**: access, water, hazmat priorities, and responsible agency.
+
+The result is an auditable operating picture: live signals, live site context, live physics, a deterministic bucket, and a playbook a team can act on before the threat becomes a crisis.
+
+---
+
+## Impact
+
+When an organisation runs many sites, the work is triage: watch changing conditions, interpret local risk, and decide where attention goes first. ASHES makes that a repeatable workflow instead of a one-off map session.
+
+The same evidence and the same bucket rules run across the site book, so operators can see which locations need watching, preparation, protection, or escalation. ActionCards are short enough for a handoff or a management update: action, why, engine ETA, P(burn), and sources. When the bucket is serious, ResponseCards add the operational layer: how you get there, where water is, what is hazardous, who owns the land.
+
+ASHES does not replace incident command or an official evacuation order. It reduces the scramble of gathering fragments, and it leaves a record of what the system knew when it spoke.
+
+---
+
+## Technicality
+
+ASHES is a live pipeline. Clock and probability come from ELMFIRE. The bucket comes from a Pareto checks policy table. The agent is the bridge that fetches, runs the engine, and writes the card.
+
+**1. Live event signals.**  
+NWS CAP alerts, SPC fire-weather outlook, NASA FIRMS hotspots, WFIGS incidents and operational perimeters, and HRRR wind/humidity are fetched together for the site. Failures degrade the card with flags; they do not invent a missing feed.
+
+**2. Live Mireye fetch.**  
+The Mireye Fire Intelligence Set fills site-world context: fuel and vegetation, terrain, fire-hazard class, exposure, roads and egress, compounding hazards, water, and governance. Fields are typed, cited, and cached with role-specific freshness. Mireye is a fact source, never asked as a free-text question.
+
+**3. Live ELMFIRE.**  
+ELMFIRE is a production-grade, industry-standard wildfire spread engine. For a suitable incident or a stated ignition, ASHES runs it live. Vegetation, slope, and fire physics are native to the solve. The engine returns arrival time, uncertainty, and P(burn) by 24, 48, and 72 hours at the community pin, plus an hour-by-hour field for map playback. The UI clock is that ELMFIRE sample.
+
+**4. Pareto checks policy table.**  
+A deterministic Pareto checks policy table is the only authority for the action (perimeter distance, red-flag weather, thermal hotspots, engine ETA and ETA uncertainty, housing density, road access, containment, and prior site state). The language model cannot pick or override the bucket. High uncertainty can clamp an overconfident evacuate down to protect.
+
+**5. Agentic ActionCard.**  
+The agent orchestrates the live tools: parse the place, pull event feeds and Mireye, run ELMFIRE, apply the Pareto checks, then write the playbook from the bucket plus cited Mireye fields (agency, roads, water, only if fetched). A validator rejects new numbers or a severity the policy did not choose. On protect or evacuate, a separate response path adds water, access, hazmat, and agency into a ResponseCard.
+
+Operationally: SQLite for site state and role cache, daily JSONL audit logs, log-only Slack/email until credentials exist, and cards that carry source URLs, vintages, policy version, spread-field version, and degraded flags.
+
+```text
+  site pin + question
+           |
+           v
+  live E (NWS, FIRMS, WFIGS, HRRR)     live W (Mireye)
+           |                                    |
+           +----------------+-------------------+
+                            v
+                   live ELMFIRE
+              ETA · P(burn 24/48/72) · hour field
+                            |
+                            v
+         Pareto checks policy table  ->  bucket
+                            |
+                            v
+         agent writes cited ActionCard / playbook
+              (+ ResponseCard when escalated)
+                            |
+                            v
+              UI · Slack/email · JSONL audit
+```
+
+---
+
+## Getting started
+
+Python 3.11+ (developed on 3.12). You need Mireye key(s), optional FIRMS `MAP_KEY`, OpenAI for the agentic loop, and a compiled ELMFIRE binary for the live engine (`ELMFIRE_BIN`, `SPREAD_ENGINE_BIN`, `SPREAD_ENGINE_REQUIRED=1`).
 
 ```bash
-git clone <this repo>
-cd fire_copilot
+git clone <repository-url>
+cd ASHES
 python -m venv .venv
-.venv/Scripts/activate   # or source .venv/bin/activate on Linux/Mac
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
-# fill in MIREYE_KEY_1/2/3, OPENAI_KEY, FIRMS_MAP_KEY in .env
+cp .env.example .env        # Windows: copy .env.example .env
 ```
 
-## Quick start
+Fill `.env`. Keep it out of git.
 
 ```bash
-python scripts/generate_synthetic_training_data.py
-python scripts/train_model.py
-python scripts/watch_loop.py
+python scripts/ask.py --agentic --simulate --lat 33.7461 --lng -116.7139 \
+  --q "Idyllwild is the community. If chaparral west of town ignites, is the town in play?"
+python scripts/serve.py
 ```
 
-The synthetic data generator and trainer bootstrap a real, versioned `h_fire_v*.pkl` model
-artifact so the watch loop has something to call from the first run, before any historical
-fire data has been collected (see "Known limitations" below - this model has no real skill
-yet, it exists so the pipeline is runnable end to end).
-
-## Ask mode
+UI: `http://127.0.0.1:8080`. Watch, Ask, Simulator, Audit.
 
 ```bash
-python scripts/ask.py --lat 33.98 --lng -117.37 --q "Is the site at risk?"
+pytest
 ```
 
-Runs the full pipeline once for that coordinate: fetches live E and cited W, scores it,
-applies the policy, prints the ActionCard JSON and its brief, and - if the action is
-`protect_asset` or `evacuate_site` - the ResponseCard JSON as well.
+- `data/logs/YYYY-MM-DD.jsonl`: tool calls, policy, delivery (no raw keys).
+- `data/cache/w_cache.db` / `site_state.db`: Mireye cache and watch state.
 
-## Config
+## Repository
 
-- `config/sites.yaml` - the book of sites for watch mode. Add a site with `site_id`, `name`,
-  `lat`/`lng` (or `address`, geocoded via Mireye), `slack_channel`, `email`.
-- `config/policy.yaml` - every tunable policy threshold (distance cutoffs, y_hat cutoffs,
-  sigma suppression, dedup window, hazmat tiers, fire-station speed assumptions). Change
-  numbers here, not in code, and bump `version` when you do - it is stamped onto every
-  ActionCard as `policy_version`.
-- `config/field_sets.yaml` - the ~60-field Mireye Fire Intelligence Set, grouped by role
-  (A-J per the SRS), with each field's encoding type and (for categoricals) its real
-  taxonomy, verified against the live API.
-
-## Output
-
-- `data/logs/YYYY-MM-DD.jsonl` - append-only log of every tool call (request/response),
-  model call, policy decision, and credit spend. Never contains a raw API key, only a key
-  index. This is the audit trail: every card is reconstructable from these logs.
-- `data/models/h_fire_v*.pkl` + `data/models/metrics_*.json` - trained model artifacts and
-  their evaluation metrics (PR-AUC, Brier score, random-W collapse probe).
-- `data/cache/w_cache.db` - the SQLite W cache (role-dependent TTL: 30 days for static
-  roles, 3-14 days for vintage-dynamic roles depending on fire season).
-- `data/cache/site_state.db` - per-site state (last poll, last action, last delivery) used
-  for watch-loop idempotency and de-duplication.
-
-## Credit usage
-
-```bash
-python scripts/credit_report.py --days 30
-```
-
-Sums the `quote`-before-`fetch` credit log entries and reports spend against the V1
-quality envelope (~300,000-400,000 credits, SRS NFR-6). Credits are not rationed - this is
-a visibility tool, not a spending cap.
-
-## Architecture
-
-```
-book of sites (config/sites.yaml)
-        |
-        v
-  +-----------------------------------------------------------+
-  |                     MAIN AGENT (watch | ask)               |
-  |  geocode -> nws_alerts -> [firms | wfigs | wfigs  | hrrr]  |
-  |                            hotspots  incidents perimeters  |  (parallel)
-  |         -> pack_e -> ros_ellipse -> quote+fetch W (cached) |
-  |         -> encode_w -> model_infer -> policy -> ActionCard |
-  |         -> LLM brief -> brief_validator -> deliver          |
-  +-----------------------------------------------------------+
-        |                                   |
-        | (protect_asset / evacuate_site)   |
-        v                                   v
-  +----------------------+          Slack / email (or log-only)
-  | RESPONSE AGENT        |
-  | role-J W + live USGS  |
-  | gage -> water/access/ |
-  | hazmat/constraints/   |
-  | agency/comms -> Card  |
-  +----------------------+
-        |
-        v
-  Slack thread reply / email (or log-only)
-```
-
-`model_infer`, the ActionCard schema, and the policy contract are stable; everything behind
-`model_infer` (currently a small MLP + isotonic calibration) can be swapped for a richer
-model without touching the agent.
-
-## Known limitations
-
-- ~~The shipped model has no real skill yet~~ - updated 2026-08-27: `h_fire` has been
-  retrained on 4,300 real MTBS-labeled samples across 458 real fires (2015-2023, CONUS-wide).
-  Real result: **PR-AUC 0.7414, Brier 0.1666, random-W collapse delta AP 0.103** - shuffling
-  the Mireye W fields measurably hurts the score on held-out fires, which is the SRS's own
-  H1 validation gate (AC-7). H1 is validated on this data, not just pipeline-tested. The
-  synthetic 500-sample bootstrap (`generate_synthetic_training_data.py`) still exists for
-  fast local smoke-testing without live API calls, but is no longer what's trained on by
-  default - see `HANDOFF.md` for the real dataset's location and the honest caveats on its
-  `dist_perim_m` proxy.
-- ~~FIRMS MAP_KEY quota is UNVERIFIED~~ - fixed 2026-08-27: it's a real, documented,
-  checkable limit (`GET /mapserver/mapkey_status/?MAP_KEY=...` returns 5,000
-  transactions/10 minutes). `FIRMSClient` self-throttles against it and exposes
-  `get_quota_status()` for a live check; the `firms_unavailable` degraded-flag path is kept
-  as defense in depth, not because the limit is unknown.
-- **No ELMFIRE / delegated spread engine in V1.** The spread signal is a wind-projected ROS
-  ellipse feature (a crude proxy, explicitly not Rothermel physics) - see
-  `src/features/ros_ellipse.py`. The delegated operational engine is V2 scope.
-- **HRRR's grid is Lambert Conformal** (2D curvilinear lat/lon), so nearest-point lookup is
-  done by brute-force distance argmin, not `xarray.sel(method="nearest")` - see
-  `src/clients/hrrr.py` and `DECISIONS.md`.
-- **Mireye has no waterbody/flowline distance field**, only the name - `ResponseCard`'s
-  `WaterSource.distance_m` is `null` for those two source types rather than a guess.
-- **SPC's Day-1 fire weather outlook has no reliable plain-text feed.** The client points at
-  the real serving HTML page and does best-effort keyword extraction, which is biased
-  toward false negatives (never a fabricated "elevated" reading). This is an explicitly
-  low-priority slow signal (SRS 2.2.1) and never blocks the pipeline either way.
-- Slack and email delivery run in log-only mode until `SLACK_BOT_TOKEN`/`SMTP_*` are set in
-  `.env` (see `config/README_MISSING.md`).
-
-## How to collect real training data
-
-This is implemented, not just described - `scripts/build_training_set.py` builds real
-samples from MTBS's final-perimeter database (30,000+ fires nationally, public domain):
-
-```bash
-python scripts/build_training_set.py \
-  --bbox -125 24 -66 49 \
-  --year-start 2010 --year-end 2023 \
-  --min-acres 1000 \
-  --max-fires 1000 \
-  --positives-per-fire 3 --hard-negatives-per-fire 3 --easy-negatives-per-fire 2 \
-  --credit-target 290000 \
-  --output data/training/real_conus_2010_2023.jsonl
-```
-
-For each matching fire it samples points inside the final perimeter (positive), 2-20 km
-outside it (hard negative), and far from any known fire (easy negative, per SRS 6.2), then
-builds one real sample per point: a real Mireye `fetch` for W, a real FIRMS-archive query
-for historical hotspots at that date, and a real HRRR-archive fetch for wind at that hour.
-`--credit-target` stops the run once cumulative Mireye spend hits a target (credits are
-priced at 1/field/location, confirmed live, so cost is exact, not estimated).
-
-**Read `src/model/training_data.py`'s module docstring before trusting the labels for a
-real H1 claim.** The honest limitation: MTBS publishes only the fire's ignition *date* and
-*final* perimeter, not a perimeter time series, so `dist_perim_m` here is distance to the
-fire's ignition centroid, not "distance to the perimeter as it existed at t0" (SRS 6.3's
-actual definition) - using the *final* perimeter's distance would leak the outcome (SRS
-6.1's leakage rule), so the weaker ignition-centroid proxy is used instead. `acres` and
-`containment_pct` are left null for the same reason, not backfilled from the final MTBS
-acreage. Vintage-dynamic W fields (`ndvi_current`, `ndvi_change_5y`, `drought_category`)
-are stripped before encoding since Mireye only serves today's value for those, never a
-historical one (SRS 6.2: "never use 2026 NDVI on a 2018 fire"). A stronger version of this
-pipeline would reconstruct t0 from a real historical WFIGS/NIFC perimeter-snapshot archive
-instead of proxying off MTBS's ignition date alone - that is the next real improvement, not
-yet built.
-
-Once a real set exists at `data/training/*.jsonl`, run:
-
-```bash
-python scripts/train_model.py
-```
-
-It evaluates on an event-held-out split and reports PR-AUC, Brier score, and the random-W
-collapse probe (SRS AC-7/AC-8: this is exactly what settles whether cited W earns its keep,
-or whether the system should ship as honest orchestration alone).
+| Path | Purpose |
+| --- | --- |
+| `src/agents/` | Agentic loop, tools, playbooks, response dossier |
+| `src/clients/` | NWS, FIRMS, WFIGS, HRRR, Mireye, USGS, OSM |
+| `src/policy/` | Pareto checks policy table |
+| `src/spread/` + `spread_service/` | HTTP `spread_run`; ELMFIRE adapter |
+| `src/serve/` | FastAPI UI |
+| `src/schemas/` + `src/validator/` | ActionCard / ResponseCard; grounded brief |
+| `config/` | Sites, policy, showcase case, field catalogue |
+| `tests/` | Policy, clients, spread, agent boundaries |

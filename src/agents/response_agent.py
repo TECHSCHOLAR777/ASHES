@@ -14,6 +14,7 @@ from typing import Any, TYPE_CHECKING
 
 import yaml
 
+from src.geometry.aoi import dense_grid_in_geom
 from src.delivery.email_delivery import deliver_cards_by_email
 from src.delivery.slack_delivery import deliver_response_card
 from src.logging_ import tool_logger
@@ -39,7 +40,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("fire_copilot.response_agent")
 
-RESPONSE_CARD_VERSION = "v1.0.0"
+RESPONSE_CARD_VERSION = "v2.0.0"
 
 RESPONSE_BRIEF_SYSTEM_PROMPT = (
     "You are a tactical fire-response briefer. You receive a fully populated ResponseCard "
@@ -57,6 +58,23 @@ ROAD_CLASS_PRIORITY = {
     "track": 0, "unknown": 0,
 }
 SURFACE_PRIORITY = {"paved": 2, "unpaved": 1, "unknown": 0}
+
+# Role I/J water fields fetched on the FR-56 AOI grid. Kept well under the live
+# Mireye 50-field cap. No distance fields that the API does not actually serve.
+WATER_GRID_FIELDS = [
+    "nearest_flowline_name",
+    "nearest_waterbody_name",
+    "wetlands_within_100m_count",
+    "wetland_acres",
+    "within_water_service_area",
+    "nearest_usgs_gage_id",
+    "high_hazard_dams_within_10km",
+    "nearest_wastewater_plant_name",
+    "nearest_wastewater_plant_distance_m",
+    "drought_category",
+    "surface_water_permanence_pct",
+    "domestic_well_households_per_km2",
+]
 
 
 def _load_policy_cfg() -> dict[str, Any]:
@@ -115,28 +133,34 @@ def _water_availability(discharge_cfs: float | None, drought_category: str | Non
     return avail, note
 
 
-def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, Any], now_iso: str) -> list[WaterSource]:
-    gage_id = raw_w.get("nearest_usgs_gage_id")
-    gage = deps.usgs.get_gage_discharge(gage_id, site_id=site.site_id)
+def _water_sources_from_raw(
+    raw_w: dict[str, Any],
+    now_iso: str,
+    gage_discharge_cfs: float | None = None,
+    lat: float | None = None,
+    lng: float | None = None,
+) -> list[WaterSource]:
     drought = raw_w.get("drought_category")
     permanence = raw_w.get("surface_water_permanence_pct")
     within_service = raw_w.get("within_water_service_area")
-
+    gage_id = raw_w.get("nearest_usgs_gage_id")
     sources: list[WaterSource] = []
 
     if raw_w.get("nearest_flowline_name") or gage_id:
-        avail, note = _water_availability(gage.discharge_cfs, drought, permanence, within_service)
+        avail, note = _water_availability(gage_discharge_cfs, drought, permanence, within_service)
         sources.append(
             WaterSource(
                 type="stream",
                 name=raw_w.get("nearest_flowline_name"),
-                distance_m=None,  # Mireye has no flowline distance field, only the name
-                discharge_cfs=gage.discharge_cfs,
+                distance_m=None,
+                discharge_cfs=gage_discharge_cfs,
                 permanence_pct=permanence,
                 availability=avail,
                 note=note,
                 source_url=raw_w.get("nearest_flowline_name_source_url", "https://waterservices.usgs.gov/nwis/iv/"),
                 fetched_at=now_iso,
+                lat=lat,
+                lng=lng,
             )
         )
 
@@ -146,13 +170,15 @@ def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, A
             WaterSource(
                 type="lake_reservoir",
                 name=raw_w.get("nearest_waterbody_name"),
-                distance_m=None,  # Mireye has no waterbody distance field, only the name
+                distance_m=None,
                 discharge_cfs=None,
                 permanence_pct=permanence,
                 availability=avail,
                 note=note,
                 source_url="https://mireye.com",
                 fetched_at=now_iso,
+                lat=lat,
+                lng=lng,
             )
         )
 
@@ -169,6 +195,8 @@ def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, A
                 note=note,
                 source_url="https://mireye.com",
                 fetched_at=now_iso,
+                lat=lat,
+                lng=lng,
             )
         )
 
@@ -177,13 +205,15 @@ def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, A
             WaterSource(
                 type="municipal_water",
                 name="municipal water service area",
-                distance_m=None,  # within_water_service_area is boolean; no distance field
+                distance_m=None,
                 discharge_cfs=None,
                 permanence_pct=None,
                 availability="high",
                 note=None,
                 source_url="https://mireye.com",
                 fetched_at=now_iso,
+                lat=lat,
+                lng=lng,
             )
         )
 
@@ -199,6 +229,8 @@ def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, A
                 note=None,
                 source_url="https://mireye.com",
                 fetched_at=now_iso,
+                lat=lat,
+                lng=lng,
             )
         )
 
@@ -214,9 +246,70 @@ def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, A
                 note=None,
                 source_url="https://mireye.com",
                 fetched_at=now_iso,
+                lat=lat,
+                lng=lng,
             )
         )
 
+    wells = raw_w.get("domestic_well_households_per_km2")
+    if wells:
+        sources.append(
+            WaterSource(
+                type="well_field",
+                name=f"domestic wells ({wells} households/km2)",
+                distance_m=None,
+                discharge_cfs=None,
+                permanence_pct=None,
+                availability="unknown",
+                note=None,
+                source_url="https://mireye.com",
+                fetched_at=now_iso,
+                lat=lat,
+                lng=lng,
+            )
+        )
+
+    return sources
+
+
+def _build_water_sources(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, Any], now_iso: str, gage=None) -> list[WaterSource]:
+    if gage is None:
+        gage_id = raw_w.get("nearest_usgs_gage_id")
+        gage = deps.usgs.get_gage_discharge(gage_id, site_id=site.site_id)
+    return _water_sources_from_raw(raw_w, now_iso, gage_discharge_cfs=gage.discharge_cfs, lat=site.lat, lng=site.lng)
+
+
+def _aoi_water_map(deps: "MainAgentDeps", site: "Site", now_iso: str, policy_cfg: dict[str, Any]) -> list[WaterSource]:
+    """FR-56: Mireye water fields on a dense grid across the incident AOI.
+
+    Bounded by `aoi.water_grid_max_cells` (default 25, matching Mireye's live
+    batch cap). USGS is queried only at the site point (FR-45); grid cells
+    carry Mireye names plus the cell lat/lng, never a fabricated discharge.
+    """
+    from src.agents.main_agent import site_aois
+
+    geom = site_aois.get(site.site_id)
+    if geom is None or geom.mode != "aoi":
+        return []
+    max_cells = int((policy_cfg.get("aoi") or {}).get("water_grid_max_cells", 25))
+    points = dense_grid_in_geom(geom, max_cells)
+    if not points:
+        return []
+    try:
+        rows = deps.mireye.fetch_batch(points, WATER_GRID_FIELDS)
+    except Exception as exc:
+        logger.warning("AOI water-map Mireye batch failed for %s: %s", site.site_id, exc)
+        return []
+
+    sources: list[WaterSource] = []
+    seen: set[tuple[str, str | None]] = set()
+    for (lat, lng), raw in zip(points, rows):
+        for src in _water_sources_from_raw(raw or {}, now_iso, lat=lat, lng=lng):
+            key = (src.type, src.name)
+            if key in seen:
+                continue
+            seen.add(key)
+            sources.append(src)
     return sources
 
 
@@ -260,10 +353,31 @@ def _build_access_routes(raw_w: dict[str, Any]) -> list[AccessRoute]:
     return routes
 
 
-def _fire_station_eta(raw_w: dict[str, Any], policy_cfg: dict[str, Any]) -> FireStation:
+def _fire_station_eta(deps: "MainAgentDeps", site: "Site", raw_w: dict[str, Any], policy_cfg: dict[str, Any]) -> FireStation:
+    """FR-57: OSM road-network ETA when Overpass returns a graph; V1 distance/speed proxy otherwise."""
+    osm = getattr(deps, "osm", None)
+    if osm is not None:
+        try:
+            route = osm.route_to_nearest_station(site.lat, site.lng, site_id=site.site_id)
+        except Exception as exc:
+            logger.warning("OSM routing failed for %s: %s; falling back to distance proxy", site.site_id, exc)
+            route = None
+        if route is not None:
+            return FireStation(
+                name=route.station.name,
+                distance_m=float(route.distance_m),
+                eta_minutes_estimate=float(route.eta_minutes),
+                eta_source="osm_network",
+            )
+
     distance_m = raw_w.get("nearest_fire_station_distance_m")
     if distance_m is None:
-        return FireStation(name=raw_w.get("nearest_fire_station_name"), distance_m=0.0, eta_minutes_estimate=None)
+        return FireStation(
+            name=raw_w.get("nearest_fire_station_name"),
+            distance_m=0.0,
+            eta_minutes_estimate=None,
+            eta_source=None,
+        )
 
     speed_kmh = (
         policy_cfg["fire_station_eta"]["speed_paved_kmh"]
@@ -271,7 +385,12 @@ def _fire_station_eta(raw_w: dict[str, Any], policy_cfg: dict[str, Any]) -> Fire
         else policy_cfg["fire_station_eta"]["speed_unpaved_kmh"]
     )
     eta_minutes = (float(distance_m) / 1000.0) / speed_kmh * 60.0
-    return FireStation(name=raw_w.get("nearest_fire_station_name"), distance_m=float(distance_m), eta_minutes_estimate=eta_minutes)
+    return FireStation(
+        name=raw_w.get("nearest_fire_station_name"),
+        distance_m=float(distance_m),
+        eta_minutes_estimate=eta_minutes,
+        eta_source="distance_proxy",
+    )
 
 
 def _hazmat_priority(distance_m: float, tiers: dict[str, float]) -> str:
@@ -372,9 +491,20 @@ def run_response_agent(deps: "MainAgentDeps", site: "Site", action_card: ActionC
 
     raw_w = _fetch_response_w(deps, site)
 
-    water_sources = _build_water_sources(deps, site, raw_w, now_iso)
+    gage_id = raw_w.get("nearest_usgs_gage_id")
+    gage = deps.usgs.get_gage_discharge(gage_id, site_id=site.site_id)
+
+    water_sources = _build_water_sources(deps, site, raw_w, now_iso, gage=gage)
+    aoi_sources = _aoi_water_map(deps, site, now_iso, policy_cfg)
+    if aoi_sources:
+        seen = {(w.type, w.name) for w in water_sources}
+        for src in aoi_sources:
+            if (src.type, src.name) in seen:
+                continue
+            seen.add((src.type, src.name))
+            water_sources.append(src)
     access_routes = _build_access_routes(raw_w)
-    fire_station = _fire_station_eta(raw_w, policy_cfg)
+    fire_station = _fire_station_eta(deps, site, raw_w, policy_cfg)
     airport = Airport(name=raw_w.get("nearest_airport_name"), distance_m=float(raw_w.get("nearest_airport_distance_m", 0.0) or 0.0))
     hazmat_sites = _build_hazmat_sites(raw_w, policy_cfg)
     environmental_constraints = _build_environmental_constraints(raw_w)
@@ -396,8 +526,6 @@ def run_response_agent(deps: "MainAgentDeps", site: "Site", action_card: ActionC
         footprint_sqm=raw_w.get("primary_building_footprint_sqm"),
         overture_class=raw_w.get("primary_building_overture_class"),
     )
-    gage_id = raw_w.get("nearest_usgs_gage_id")
-    gage = deps.usgs.get_gage_discharge(gage_id, site_id=site.site_id)
     usgs_summary = USGSGaugeSummary(
         gage_name=gage_id, distance_m=None, discharge_cfs=gage.discharge_cfs, discharge_class=gage.discharge_class, fetched_at=gage.fetched_at
     )
@@ -405,7 +533,7 @@ def run_response_agent(deps: "MainAgentDeps", site: "Site", action_card: ActionC
     citations = [
         {"source": "mireye", "url": raw_w.get(f"{k}_source_url"), "fetched_at": now_iso, "field": k}
         for k in raw_w
-        if k.endswith("_source_url") is False and raw_w.get(f"{k}_source_url")
+        if not k.endswith("_source_url") and raw_w.get(f"{k}_source_url")
     ]
     w_sources = [
         {"field": k, "source_url": raw_w.get(f"{k}_source_url", "n/a"), "vintage": raw_w.get(f"{k}_vintage"), "confidence": raw_w.get(f"{k}_confidence")}

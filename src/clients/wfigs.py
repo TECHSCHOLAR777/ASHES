@@ -23,6 +23,18 @@ WFIGS_PERIMETERS_URL = (
     "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/"
     "WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query"
 )
+# Live-verified 2026-08-27: NIFC Interagency Fire Perimeter History (all years).
+# Field names are IRWINID/INCIDENT/GIS_ACRES/FIRE_YEAR_INT/DATE_CUR/FEATURE_CA.
+# Native CRS is not guaranteed WGS84; callers MUST pass outSR=4326 (verified:
+# a ToDate query without outSR is meters, with outSR=4326 is lon/lat degrees).
+# FEATURE_CA values include "Wildfire Final Fire Perimeter" - these are final
+# mapped perimeters, not t0 operational snapshots. Do not use them as t0
+# dist_perim_m (that leaks the outcome into E). They are a gold-label geometry
+# source when MTBS is missing.
+WFIGS_HISTORIC_PERIMETERS_URL = (
+    "https://services3.arcgis.com/T4QMspbfLg3qTGWY/ArcGIS/rest/services/"
+    "InterAgencyFirePerimeterHistory_All_Years_View/FeatureServer/0/query"
+)
 
 _GEOD = Geod(ellps="WGS84")
 
@@ -44,6 +56,10 @@ class WFIGSPerimeter:
     name: str
     geometry_rings: list[list[tuple[float, float]]]
     perimeter_unofficial: bool = True
+    feature_category: str | None = None
+    fire_year: int | None = None
+    date_cur: str | None = None
+    acres: float | None = None
 
 
 def geodesic_distance_m(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -120,9 +136,9 @@ class WFIGSClient:
                     name=str(attrs.get("IncidentName") or attrs.get("incident_name") or "unknown"),
                     acres=attrs.get("DailyAcres") or attrs.get("acres"),
                     containment_pct=(
-                        (attrs.get("PercentContained") or attrs.get("containment_pct") or 0) / 100.0
-                        if attrs.get("PercentContained") is not None or attrs.get("containment_pct") is not None
-                        else None
+                        attrs.get("PercentContained") / 100.0
+                        if attrs.get("PercentContained") is not None
+                        else attrs.get("containment_pct")
                     ),
                     discovery_datetime=attrs.get("FireDiscoveryDateTime") or attrs.get("discovery_datetime"),
                     lat=geom.get("y", lat),
@@ -167,6 +183,77 @@ class WFIGSClient:
                     irwin_id=str(attrs.get("IrwinID") or attrs.get("irwin_id") or ""),
                     name=str(attrs.get("IncidentName") or attrs.get("incident_name") or "unknown"),
                     geometry_rings=rings,
+                )
+            )
+        return perimeters
+
+    def get_historic_perimeters(
+        self,
+        lat: float,
+        lng: float,
+        year: int | None = None,
+        radius_km: float = 50,
+        site_id: str | None = None,
+    ) -> list[WFIGSPerimeter]:
+        """NIFC Interagency Fire Perimeter History (final mapped perimeters).
+
+        Live-verified 2026-08-27 against InterAgencyFirePerimeterHistory_All_Years_View.
+        `outSR=4326` is required (native coordinates are not WGS84). These polygons
+        are final fire perimeters (`FEATURE_CA` typically "Wildfire Final Fire
+        Perimeter"), not t0 operational snapshots - using them as E-side
+        `dist_perim_m` at ignition would leak the outcome (SRS 6.1). Callers that
+        need a t0 distance must keep the ignition-centroid proxy or a true
+        operational time series.
+        """
+        where = "1=1"
+        if year is not None:
+            where = f"FIRE_YEAR_INT={int(year)}"
+        params = {
+            "geometry": _bbox_str(lat, lng, radius_km),
+            "geometryType": "esriGeometryEnvelope",
+            "inSR": "4326",
+            "outSR": "4326",
+            "spatialRel": "esriSpatialRelIntersects",
+            "where": where,
+            "outFields": "IRWINID,INCIDENT,GIS_ACRES,FIRE_YEAR_INT,DATE_CUR,FEATURE_CA,UNQE_FIRE_ID",
+            "f": "json",
+        }
+        start = time.monotonic()
+        try:
+            resp = self._client.get(WFIGS_HISTORIC_PERIMETERS_URL, params=params)
+            resp.raise_for_status()
+            data = resp.json()
+        except httpx.HTTPError as exc:
+            latency_ms = (time.monotonic() - start) * 1000
+            tool_logger.log_tool_call("wfigs:historic_perimeters", params, None, site_id, latency_ms, error=str(exc))
+            return []
+        if data.get("error"):
+            latency_ms = (time.monotonic() - start) * 1000
+            tool_logger.log_tool_call(
+                "wfigs:historic_perimeters", params, {"error": data.get("error")}, site_id, latency_ms, error=str(data.get("error"))
+            )
+            return []
+
+        latency_ms = (time.monotonic() - start) * 1000
+        tool_logger.log_tool_call(
+            "wfigs:historic_perimeters", params, {"count": len(data.get("features", []))}, site_id, latency_ms
+        )
+
+        perimeters: list[WFIGSPerimeter] = []
+        for feature in data.get("features", []):
+            attrs = feature.get("attributes", {}) or {}
+            geom = feature.get("geometry", {}) or {}
+            rings = [[(pt[0], pt[1]) for pt in ring] for ring in geom.get("rings", [])]
+            perimeters.append(
+                WFIGSPerimeter(
+                    irwin_id=str(attrs.get("IRWINID") or attrs.get("UNQE_FIRE_ID") or ""),
+                    name=str(attrs.get("INCIDENT") or "unknown"),
+                    geometry_rings=rings,
+                    perimeter_unofficial=False,
+                    feature_category=attrs.get("FEATURE_CA"),
+                    fire_year=attrs.get("FIRE_YEAR_INT"),
+                    date_cur=str(attrs.get("DATE_CUR")) if attrs.get("DATE_CUR") is not None else None,
+                    acres=attrs.get("GIS_ACRES"),
                 )
             )
         return perimeters

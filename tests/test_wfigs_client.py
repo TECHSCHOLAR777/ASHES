@@ -89,10 +89,48 @@ def test_get_perimeters_parses_rings(mocker):
     client.close()
 
 
+def test_get_historic_perimeters_uses_out_sr_4326_and_final_fields(mocker):
+    client = WFIGSClient()
+    body = {
+        "features": [
+            {
+                "attributes": {
+                    "IRWINID": "IR-HIST",
+                    "INCIDENT": "August Complex",
+                    "GIS_ACRES": 100000.0,
+                    "FIRE_YEAR_INT": 2020,
+                    "DATE_CUR": "20201101000000",
+                    "FEATURE_CA": "Wildfire Final Fire Perimeter",
+                    "UNQE_FIRE_ID": "CA-123",
+                },
+                "geometry": {"rings": [[[-123.2, 39.5], [-123.1, 39.5], [-123.1, 39.6]]]},
+            }
+        ]
+    }
+    captured = {}
+
+    def fake_get(url, params=None, **kwargs):
+        captured["url"] = url
+        captured["params"] = params
+        return make_response(body)
+
+    mocker.patch.object(client._client, "get", side_effect=fake_get)
+    perims = client.get_historic_perimeters(39.5, -123.2, year=2020)
+    assert captured["params"]["outSR"] == "4326"
+    assert "FIRE_YEAR_INT=2020" in captured["params"]["where"]
+    assert len(perims) == 1
+    assert perims[0].name == "August Complex"
+    assert perims[0].feature_category == "Wildfire Final Fire Perimeter"
+    assert perims[0].perimeter_unofficial is False
+    assert perims[0].fire_year == 2020
+    client.close()
+
+
 def test_wfigs_http_failure_returns_empty(mocker):
     client = WFIGSClient()
     mocker.patch.object(client._client, "get", side_effect=httpx.ConnectError("down"))
 
     assert client.get_incidents(34.0, -118.0) == []
     assert client.get_perimeters(34.0, -118.0) == []
+    assert client.get_historic_perimeters(34.0, -118.0, year=2020) == []
     client.close()
